@@ -44,7 +44,8 @@ class OptionListItem(QtWidgets.QListWidgetItem):
 
         self.option_name = option_name
 
-        self.setText(richtext.get_option_html(option_name))
+        child_count = api.get_option_count(option_name)
+        self.setText(richtext.get_option_html(option_name, child_count))
         if icon_path:
             self.setIcon(QtGui.QIcon(icon_path))
 

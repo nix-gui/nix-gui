@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtGui
 
-import api
+import api, richtext
 
 
 class GenericOptionDisplay(QtWidgets.QWidget):
@@ -8,15 +8,21 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         super().__init__(*args, **kwargs)
         assert option or option_type
 
-
         lay = QtWidgets.QHBoxLayout()
-
-        lay.addWidget(QtWidgets.QLabel(option))
 
         if option:
             leaf = api.get_leaf(option)
             option_type = leaf['type']
-            print(leaf)
+            option_description = leaf['description']
+            text = QtWidgets.QLabel(richtext.get_option_html(option, type_label=option_type, description=option_description))
+            #doc = QtGui.QTextDocument()
+            #doc.setHtml(richtext.get_option_html(option, type_label=option_type, description=option_description))
+            #text = QtWidgets.QGraphicsTextItem()
+            #text.setDocument(doc)
+        else:
+            text = QtWidgets.QLabel(option_type)
+
+        lay.addWidget(text)
 
         # or
         if ' or ' in option_type:
