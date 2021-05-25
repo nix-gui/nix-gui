@@ -1,0 +1,109 @@
+Objective: Make nixos usable for non-technical users through a settings / package management GUI.
+
+=nix_gui= is a configuration management tool for those who don't know the nix language. It is an attempt to replicate the ease of use of popular configuration systems like Ubuntu's Unity System Settings, Mint's Cinnimon Settings, Synaptic Package Manager, etc.
+An additional motive for this project is to enable system management for [[https://mobile.nixos.org/][mobile devices]] without having to type code on your phone.
+
+The mentioned popular configuration systems are limited in scope and advanced functionality often requires copying and pasting configuration from stack overflow. In the majority of cases, nixpkgs abstracts away file configuration, or makes it implicit through defining =settings=.
+
+Its declarative nature provides nixos the capability of being *the most user friendly linux distro.*
+
+
+* Usage
+** Running
+Currently nix-gui isn't packaged properly (TODO violates goal 0)
+- 1. Clone the repo
+- 2. =cd src/=
+- 3. =./load.sh=
+- 4. =nix-shell --run "python3 gui.py"=
+
+** Navigation
+TODO: animated gif of use
+
+** Editing
+TODO: more docs
+
+* Goals
+** 0) Intuition
+=nix-gui= is UX focused. All counterintuitive elements should be considered a bug. Bug reports can be filed at https://github.com/lapp0/nix-gui/issues There are no stupid questions. This program is intended to make nixos usable by someone with basic competence in Ubuntu, Mint, Windows, or OS X.
+
+** 1) Comprehension
+=nix-gui= strives to provide the ability to make any system changes that are possible with editing =configuration.nix=.
+
+** 2) Simple Code
+=nix-gui= is a relatively simple graphical program written in python with recursively defined elements to explore and define options.
+
+** 3) Speed
+Once built, =nix-gui= targets a 10ms load time for all form changes.
+
+* Function
+Note, this is a spec of the final product, many of these features are yet to be implemented
+** Categorization into files and sections within settings tool
+=nix-gui= categorizes different components of nixos into system settings based on the options, but recategorized based on frequency of use.
+- Packages: environment.systemPackages
+- Users: users
+- Interface: xserver
+- Fonts: fonts
+- ... (TODO)
+- All Configurations: (nixpkgs.config basic tree layout)
+
+*** Custom Categorization
+There is a lot of noise in <nixpkgs>.config. So not only will we want to have the option to prioritize certain settings, but we will also want to be able to move things around and create our own categories, for example
+- environment.systemPackages is now its own category
+- networking.networkmanager, hardware.bluetooth, are all within their own new tree
+
+*** Easy Settings
+Rather than relying on the user providing sane settings, we want to allow a sane set of defaults that can be refined. This may be considered a project unto itself, or an improvement in nixos in general. NUR and nix-home have some good examples.
+
+Example of unnecessarily complex setting:
+
+  hardware.bluetooth.settings.General.Enable = "Source,Sink,Media,Socket";
+
+*** Safety
+There must be a system which identifies options or option sets which are risky to change
+
+** Configuration
+Configurations are ordered and categorized with multiple precedents. The top ranking priority order is used first if available, otherwise the following is used:
+- =nix_gui= includes a hardcoded priority / grouping configuration for the most obvious settings
+- Github provides hints at the settings which are most frequently used (scraping can be done with https://github.com/shobrook/git-pull)
+- For options which aren't hardcoded or frequently used, alphabetical ordering is utilized.
+
+*** Hardcoded
+Packages are configured in two ways:
+- install: add to environment.systemPackages
+- configure: update the related configuration
+  - this part is much more difficult, we must determine where the cfg for the installed package lives, for example [[https://github.com/NixOS/nixpkgs/blob/8284fc30c84ea47e63209d1a892aca1dfcd6bdf3/nixos/modules/services/networking/networkmanager.nix#L6][in networkmanager it lives in networking.networkmanager]].
+  - configure
+
+At some point it may be worthwhile to even include icons.
+
+*** From Github
+A crawl of github will be used to determine the options which are most frequently defined. The cached rate of option use will be provided to users. Options which are most frequently used will be listed first.
+
+Thankfully many users have included their system configuration files making this possible.
+
+*** Fallback
+Alphabetical.
+
+
+
+* Structure
+- =load.sh=: Build =release.nix= and store as parsable json.
+- =api.py=: Retrieve release option tree and query.
+- =tree.py=: Data structure for storing and querying option tree.
+- =gui.py=: Start =nix-gui= and load all components including the main functionality - the option tree explorer.
+- =heirarchale_widgets.py=: Widgets to recursively navigate the option tree structure via list-views and tab-views.
+- =option_widgets.py=: Render widgets for editing configuration based on the type of the option.
+- =richtext.py=: Helper to render rich text in QT.
+- =icons/=: Icons used in the GUI.
+
+* Misc
+** Inspiration
+- [[https://1.bp.blogspot.com/-swnGgdPeWOY/Wbf17eWgVeI/AAAAAAAAMDM/buRYvp78ZBggPFFZL4J_LKjMsF0qmQk1ACLcBGAs/s1600/Peek%2B2017-09-12%2B21-39.gif][Intuitive controls, good search functionality]]
+- [[https://149366088.v2.pressablecdn.com/wp-content/uploads/2017/03/linux-mint-lightdm-settings.png][Good Widgets and layout]]
+- [[https://i.stack.imgur.com/WQOmV.png][Good information display]]
+- [[https://www.ics.com/sites/default/files/pictures/snapshot1.png][Pretty layout]]
+- [[https://4.bp.blogspot.com/-GTgr9qvp5Pg/Wbf30hX74PI/AAAAAAAAMDY/3aT6O7E3C1IaSteDuTO4fSGSobjFrk6hQCLcBGAs/s1600/Peek%2B2017-09-12%2B22-03.gif][Pretty layout]]
+- [[https://wiki.manjaro.org/images/5/58/Time_date_screen.png][Good time(/zone) settings screen]]
+
+* Credit
+Icons: https://publicdomainvectors.org/
