@@ -99,8 +99,3 @@ def get_leaf(option):
     branch = [] if option is None else option.split('.')
     node = get_option_tree().get_node(branch)
     return node.get_leaf()
-
-
-#ty = get_used_types()
-#import pdb;pdb.set_trace()
-#print()
