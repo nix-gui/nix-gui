@@ -4,7 +4,7 @@ import api, richtext, option_widgets
 
 
 class GenericOptionSetDisplay(QtWidgets.QWidget):
-    def __init__(self, option=None, *args, **kwargs):
+    def __init__(self, option=None, is_base_viewer=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         option = api.get_next_branching_option(option)
@@ -20,7 +20,10 @@ class GenericOptionSetDisplay(QtWidgets.QWidget):
                 # if the option set contains fewer than 20 child options, render a form for option setting
                 view = QtWidgets.QLabel(option + str(api.get_option_count(option)))
             elif api.get_option_count(option) < 20:
-                view = OptionGroupBox(option)
+                if is_base_viewer != False:
+                    view = OptionGroupBox(option, is_base_viewer=True)
+                else:
+                    view = OptionGroupBox(option)
             else:
                 child_options = api.get_child_options(option)
                 if len(child_options) < 10 and all([api.get_option_count(opt) < 20 for opt in child_options]):
@@ -113,8 +116,8 @@ class OptionTabs(QtWidgets.QTabWidget):
             self.addTab(GenericOptionSetDisplay(child_option), child_option)
 
 
-class OptionGroupBox(QtWidgets.QScrollArea):
-    def __init__(self, option=None, *args, **kwargs):
+class OptionGroupBox(QtWidgets.QWidget):
+    def __init__(self, option=None, is_base_viewer=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         group_box = QtWidgets.QGroupBox()
@@ -123,8 +126,16 @@ class OptionGroupBox(QtWidgets.QScrollArea):
         vbox = QtWidgets.QVBoxLayout()
 
         for child_option in api.get_child_options(option):
-            vbox.addWidget(GenericOptionSetDisplay(child_option))
+            vbox.addWidget(GenericOptionSetDisplay(child_option, is_base_viewer=False))
 
         group_box.setLayout(vbox)
 
-        self.setWidget(group_box)
+        lay = QtWidgets.QHBoxLayout()
+        if is_base_viewer:
+            scroll_area = QtWidgets.QScrollArea()
+            lay.addWidget(scroll_area)
+            scroll_area.setWidget(group_box)
+        else:
+            lay.addWidget(group_box)
+
+        self.setLayout(lay)
