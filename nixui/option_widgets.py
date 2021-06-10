@@ -65,7 +65,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
             entry_widget = QtWidgets.QLineEdit()
             entry_widget.setValidator(QtGui.QIntValidator())
 
-        # option selection
+        # selectable
         elif option_type.startswith('one of '):
             choices = [choice.strip('" ') for choice in option_type.split('one of ', 1)[1].split(',')]
             if len(choices) < 5:
@@ -77,6 +77,18 @@ class GenericOptionDisplay(QtWidgets.QWidget):
                 entry_widget = QtWidgets.QComboBox()
                 for choice in choices:
                     entry_widget.addItem(choice)
+
+        # submodules
+        elif option_type == 'list of submodules':
+            pass  # TODO: list containing full attribute definition
+        elif option_type == 'attribute set of submodules':
+            pass  # TODO: list containing name of attribute set
+
+        # packages
+        elif option_type == 'list of packages':
+            pass
+        elif option_type == 'package':
+            pass
 
         else:
             entry_widget = QtWidgets.QLabel(option)

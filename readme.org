@@ -96,6 +96,14 @@ Alphabetical.
 - =richtext.py=: Helper to render rich text in QT.
 - =icons/=: Icons used in the GUI.
 
+* Related
+** Discussions
+- https://github.com/NixOS/nixpkgs/issues/21662
+- https://github.com/NixOS/nixpkgs/issues/15573
+- https://discourse.nixos.org/t/is-anyone-working-on-a-gui-tool-to-manage-packages/5540/2
+** Projects
+- https://github.com/pmiddend/nixos-manager
+- https://blog.matejc.com/blogs/myblog/graphical-ui-for-nix
 * Misc
 ** Inspiration
 - [[https://1.bp.blogspot.com/-swnGgdPeWOY/Wbf17eWgVeI/AAAAAAAAMDM/buRYvp78ZBggPFFZL4J_LKjMsF0qmQk1ACLcBGAs/s1600/Peek%2B2017-09-12%2B21-39.gif][Intuitive controls, good search functionality]]

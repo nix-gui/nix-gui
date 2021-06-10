@@ -1,10 +1,8 @@
 import collections
 import json
 import functools
-import re
 
-
-import containers
+from nixui import containers, parser
 
 
 #############################
@@ -12,7 +10,10 @@ import containers
 #############################
 @functools.lru_cache(1)
 def get_options_dict():
-    return json.load(open('./release_out/share/doc/nixos/options.json'))
+    res = json.load(open('./release_out/share/doc/nixos/options.json'))
+    #option_values = parser.get_option_values()
+    # TODO: apply option_values to res
+    return res
 
 
 @functools.lru_cache(1)
@@ -26,7 +27,17 @@ def get_option_tree():
     return options_tree
 
 
-def get_used_types():
+@functools.lru_cache(1)
+def get_all_packages_map():
+    path_name_map = {}
+    for package in open('./all_packages_out').readlines():
+        pkg_name, pkg_str, store_path = [x.strip() for x in package.split(' ') if x]
+        path_name_map[store_path] = pkg_name
+    return path_name_map
+
+
+# TODO: remove
+def get_types():
     argumented_types = ['one of', 'integer between', 'string matching the pattern']
     types = collections.Counter()
     for v in get_options_dict().values():
@@ -99,3 +110,8 @@ def get_leaf(option):
     branch = [] if option is None else option.split('.')
     node = get_option_tree().get_node(branch)
     return node.get_leaf()
+
+
+tree = get_option_tree()
+import pdb;pdb.set_trace()
+print()

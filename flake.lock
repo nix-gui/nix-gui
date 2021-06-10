@@ -1,0 +1,93 @@
+{
+  "nodes": {
+    "flake-utils": {
+      "locked": {
+        "lastModified": 1622445595,
+        "narHash": "sha256-m+JRe6Wc5OZ/mKw2bB3+Tl0ZbtyxxxfnAWln8Q5qs+Y=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "7d706970d94bc5559077eb1a6600afddcd25a7c8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "flake-utils_2": {
+      "locked": {
+        "lastModified": 1618217525,
+        "narHash": "sha256-WGrhVczjXTiswQaoxQ+0PTfbLNeOQM6M36zvLn78AYg=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "c6169a2772643c4a93a0b5ac1c61e296cba68544",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "nix-eval-lsp": {
+      "inputs": {
+        "flake-utils": "flake-utils_2",
+        "nixpkgs": "nixpkgs"
+      },
+      "locked": {
+        "lastModified": 1621045360,
+        "narHash": "sha256-f9wdwbmX3pe2wVKvPGXVoejsduWeW9KMII0sv2o/8GE=",
+        "owner": "aaronjanse",
+        "repo": "nix-eval-lsp",
+        "rev": "0c263b802d83b3988924d6db55a6a0ca60faf578",
+        "type": "github"
+      },
+      "original": {
+        "owner": "aaronjanse",
+        "ref": "main",
+        "repo": "nix-eval-lsp",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1618528968,
+        "narHash": "sha256-UI9tCylyzApZyo2sqXXJjXQOzzg3i97qod2CVmH5y0Q=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "3015c5f9f8f522a71db882bcd1e9401e6b5a41e3",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1623304913,
+        "narHash": "sha256-utltyZjSbz6eJ7aF412VEyR+AWNlY1GoB8P7fd4xFYA=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "b4fd0a9118f91a0b8523dc48c22b18c82409ae68",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "flake-utils": "flake-utils",
+        "nix-eval-lsp": "nix-eval-lsp",
+        "nixpkgs": "nixpkgs_2"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
