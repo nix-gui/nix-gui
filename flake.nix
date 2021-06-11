@@ -5,9 +5,10 @@
     nixpkgs.url = "github:nixos/nixpkgs";
     flake-utils.url = "github:numtide/flake-utils";
     nix-eval-lsp.url = "github:aaronjanse/nix-eval-lsp/main";
+    rnix-lsp.url = "github:nix-community/rnix-lsp";
   };
 
-  outputs = { self, nixpkgs, nix-eval-lsp, flake-utils }:
+  outputs = { self, nixpkgs, nix-eval-lsp, rnix-lsp, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
@@ -30,14 +31,20 @@
               pname = "nix-gui";
               version = "0.1.0";
               src = ./.;
-              propagatedBuildInputs = [ pkgs.python3Packages.pyqt5 pylspclient nix-eval-lsp ];
+              propagatedBuildInputs = [
+                pkgs.python3Packages.pyqt5
+                pylspclient
+                nix-eval-lsp.defaultPackage."${system}"
+                rnix-lsp.defaultPackage."${system}"
+              ];
               QT_PLUGIN_PATH = with pkgs.qt5; "${qtbase}/${qtbase.qtPluginPrefix}";
+              RUST_LOG = "trace";
             }) { };
         defaultPackage = self.packages.${system}.nix-gui;
         apps.nix-gui = flake-utils.lib.mkApp {
-          drv = self.packages.nix-gui;
+          drv = self.packages."${system}".nix-gui;
         };
-        defaultApp = apps.nix-gui;
+        defaultApp = self.apps."${system}".nix-gui;
       }
     );
 }
