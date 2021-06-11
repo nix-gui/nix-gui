@@ -21,11 +21,11 @@ def get_imported_modules():
 def get_rnix_parser_lib_path():
     #TODO: hack - fix this so we don't have to copy the dir
     tmp_dir = 'rnix-compiled-hack'
-    #shutil.copytree(os.environ['RNIX_PARSER_PATH'], tmp_dir, dirs_exist_ok=True)
-    #os.chmod(
-    #    os.path.join(tmp_dir, 'target'),
-    #    0o777
-    #)
+    shutil.copytree(os.environ['RNIX_PARSER_PATH'], tmp_dir, dirs_exist_ok=True)
+    os.chmod(
+        os.path.join(tmp_dir, 'target'),
+        0o777
+    )
     return tmp_dir
 
 
@@ -360,6 +360,10 @@ def process_with_node(node, scope):
     # with cannot override existing scope
     node_ident, node_inner = get_child_nodes(node)
     with_scope_key = process_node(node_ident, scope)
+
+    # TODO: in the final stage of processing do (e.g.)
+    # `nix-instantiate --eval -E 'builtins.attrNames (import <nixpkgs> {}).python3Packages'` for the
+    # with pkgs.python3Packages;
 
     if with_scope_key not in scope:
         scope[('with', with_scope_key)] = scope[with_scope_key]
