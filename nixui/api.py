@@ -10,8 +10,8 @@ from nixui import containers, parser
 #############################
 @functools.lru_cache(1)
 def get_options_dict():
-    res = json.load(open('./release_out/share/doc/nixos/options.json'))
-    #option_values = parser.get_option_values()
+    #res = json.load(open('./release_out/share/doc/nixos/options.json'))
+    option_values = parser.get_option_values()
     # TODO: apply option_values to res
     return res
 
@@ -111,7 +111,7 @@ def get_leaf(option):
     node = get_option_tree().get_node(branch)
     return node.get_leaf()
 
-
-tree = get_option_tree()
-import pdb;pdb.set_trace()
-print()
+def main():
+    tree = get_option_tree()
+    import pdb;pdb.set_trace()
+    print()

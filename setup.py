@@ -10,6 +10,6 @@ setup(
     url='',
     packages=['nixui'],
     entry_points={
-        'console_scripts': ['nix-gui=nixui.lang:get_language_server_client'],
+        'console_scripts': ['nix-gui=nixui.api:main'],
     }
 )

@@ -9,7 +9,7 @@ import tempfile
 import glob
 import parsimonious
 
-from containers import Tree
+from nixui.containers import Tree
 
 
 def get_imported_modules():
