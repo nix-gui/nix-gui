@@ -168,6 +168,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
             self.setStyleSheet("")
         """
 
+    @property
     def value(self):
         return self.entry_stack.currentWidget().current_value
 
