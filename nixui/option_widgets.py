@@ -1,226 +1,430 @@
-from PyQt5 import QtWidgets, QtGui
+from operator import eq
+from functools import partial, lru_cache
+import re
 
-import api, richtext
+from PyQt5 import QtWidgets, QtGui, QtCore
+
+from nixui import api, richtext, generic_widgets
+
+
+# tuples of (match fn, widget)
+@lru_cache
+def get_field_type_widget_map():
+    return [
+        [
+            partial(eq, 'null'),
+            NullField,
+        ],
+        [
+            partial(eq, 'boolean'),
+            BooleanField,
+        ],
+        [
+            partial(eq, 'string'),
+            TextField,
+        ],
+        [
+            partial(eq, 'string, not containing newlines or colons'),
+            partial(SingleLineTextField, regexp=r"^[^(:|\n|(\r\n)]*$")
+        ],
+        [
+            partial(eq, 'YAML value'),
+            partial(TextField, regexp=r"([ ]+)?((\w+|[^\w\s\r\n])([ ]*))?(?:\r)?(\n)?")
+        ],
+        [
+            partial(eq, 'JSON value'),
+            partial(TextField, regexp=r"\{.*\:\{.*\:.*\}\}")
+        ],
+        [
+            partial(eq, 'signed integer'),
+            IntegerField,
+        ],
+        [
+            partial(eq, 'integer'),
+            IntegerField,
+        ],
+        [
+            lambda f: f.startswith('one of '),
+            OneOfField,
+        ],
+        [
+            partial(eq, 'list of strings'),
+            StringListField,
+        ],
+        [
+            partial(eq, 'reference'),
+            ReferenceField,
+        ],
+        [
+            partial(eq, 'expression'),
+            ExpressionField
+        ],
+    ]
+
+
+def get_field_widget(field_type, option):
+    for type_label_validator, widget_constructor in get_field_type_widget_map():
+        if type_label_validator(field_type):
+            return widget_constructor(option)
+    else:
+        return NotImplementedField(option)
+
+
+def get_field_types(option_type):
+    if ' or ' in option_type:
+        possible_types = option_type.split(' or ')
+    else:
+        possible_types = [option_type]
+
+    universal_fields = ['expression', 'reference']
+
+    return possible_types + universal_fields
+
+
+def get_field_color(field_type):
+    field_colors = {
+        'expression': QtGui.QColor(193, 236, 245),
+        'reference': QtGui.QColor(174, 250, 174),
+        None: QtGui.QColor(255, 255, 240),  # default
+    }
+    return field_colors.get(field_type, field_colors[None])
 
 
 class GenericOptionDisplay(QtWidgets.QWidget):
-    def __init__(self, option=None, option_type=None, *args, **kwargs):
+    def __init__(self, slotmapper, option, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        assert option or option_type
 
-        lay = QtWidgets.QHBoxLayout()
+        self.slotmapper = slotmapper
+        self.option = option
 
-        if option:
-            leaf = api.get_leaf(option)
-            option_type = leaf['type']
-            option_description = leaf['description']
-            text = QtWidgets.QLabel(richtext.get_option_html(option, type_label=option_type, description=option_description))
-            #doc = QtGui.QTextDocument()
-            #doc.setHtml(richtext.get_option_html(option, type_label=option_type, description=option_description))
-            #text = QtWidgets.QGraphicsTextItem()
-            #text.setDocument(doc)
-        else:
-            text = QtWidgets.QLabel(option_type)
+        field_types = get_field_types(api.get_option_type(option))
 
-        lay.addWidget(text)
+        # set title and description
+        text = QtWidgets.QLabel(richtext.get_option_html(
+            option,
+            type_label=api.get_option_type(option),
+            description=api.get_option_description(option),
+        ))
+        text.setWordWrap(True)
+        text.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
 
-        # or
-        if ' or ' in option_type:
-            possible_types = option_type.split(' or ')
-            entry_widget = OrEditorWidget(option, list(set(possible_types)))
+        # set type selector
+        self.field_type_selector = generic_widgets.ExclusiveButtonGroup(
+            choices=[
+                (
+                    'one of' if t.startswith('one of ') else t,
+                    self.set_type,
+                    get_field_color(t)
+                )
+                for t in field_types
+            ]
+        )
+        # TODO: remove this expression and reference editor are done
+        self.field_type_selector.btn_group.buttons()[-2].setEnabled(False)
+        self.field_type_selector.btn_group.buttons()[-1].setEnabled(False)
 
-        # null
-        elif option_type == 'null':
-            entry_widget = QtWidgets.QLabel('Null')
-
-        # boolean
-        elif option_type == 'boolean':
-            entry_widget = QtWidgets.QCheckBox()
-
-        # text
-        elif option_type == 'string':
-            entry_widget = QtWidgets.QTextEdit()
-        elif option_type == 'string, not containing newlines or colons':
-            entry_widget = QtWidgets.QLineEdit()
-            entry_widget.setValidator(
-                QtGui.QRegExpValidator(QtGui.QRegExp(r"^[^(:|\n|(\r\n)]*$"))
-            )
-        elif option_type == 'YAML value':
-            entry_widget = QtWidgets.QTextEdit()
-            entry_widget.setValidator(
-                QtGui.QRegExpValidator(QtGui.QRegExp(r"([ ]+)?((\w+|[^\w\s\r\n])([ ]*))?(?:\r)?(\n)?"))
-            )
-        elif option_type == 'JSON value':
-            entry_widget = QtWidgets.QTextEdit()
-            entry_widget.setValidator(
-                QtGui.QRegExpValidator(QtGui.QRegExp(r"\{.*\:\{.*\:.*\}\}"))
-            )
-
-        # list of
-        elif option_type == 'list of strings':
-            entry_widget = StringListEditorWidget(option)
-
-        # numbers
-        elif option_type in ('integer', 'signed integer'):
-            entry_widget = QtWidgets.QLineEdit()
-            entry_widget.setValidator(QtGui.QIntValidator())
-
-        # selectable
-        elif option_type.startswith('one of '):
-            choices = [choice.strip('" ') for choice in option_type.split('one of ', 1)[1].split(',')]
-            if len(choices) < 5:
-                entry_widget = QtWidgets.QGroupBox()
-                entry_lay = QtWidgets.QVBoxLayout(entry_widget)
-                for choice in choices:
-                    entry_lay.addWidget(QtWidgets.QRadioButton(choice))
-            else:
-                entry_widget = QtWidgets.QComboBox()
-                for choice in choices:
-                    entry_widget.addItem(choice)
-
-        # submodules
-        elif option_type == 'list of submodules':
-            pass  # TODO: list containing full attribute definition
-        elif option_type == 'attribute set of submodules':
-            pass  # TODO: list containing name of attribute set
-
-        # packages
-        elif option_type == 'list of packages':
-            pass
-        elif option_type == 'package':
-            pass
-
-        else:
-            entry_widget = QtWidgets.QLabel(option)
-
-        lay.addWidget(entry_widget)
-        self.setLayout(lay)
-
-
-class OrEditorWidget(QtWidgets.QWidget):
-    def __init__(self, option, possible_types):
-        super().__init__()
-
-        self.type_btn_group = QtWidgets.QButtonGroup()
-
+        # set fields for entry editing
         self.entry_stack = QtWidgets.QStackedWidget()
-
-        self.type_radio_box = QtWidgets.QGroupBox()
-        self.type_radio_box.setTitle(str(possible_types))
-        type_radio_layout = QtWidgets.QVBoxLayout(self.type_radio_box)
-        type_radio_layout.addWidget(QtWidgets.QLabel('test'))
-        for t in possible_types:
-            entry_widget = GenericOptionDisplay(option_type=t)
-            btn = QtWidgets.QRadioButton(t)
-            btn.clicked.connect(self.set_type)
-
-            type_radio_layout.addWidget(btn)
-
-            self.type_btn_group.addButton(btn, id=len(self.entry_stack))
+        for t in field_types:
+            entry_widget = get_field_widget(t, self.option)
+            entry_widget.focus_change.connect(self.handle_focus_change)
             self.entry_stack.addWidget(entry_widget)
+        self.stacked_widgets = list(map(self.entry_stack.widget, range(self.entry_stack.count())))
 
-        layout = QtWidgets.QVBoxLayout()
-        layout.addWidget(self.type_radio_box)
-        layout.addWidget(self.entry_stack)
+        # add all to layout
+        description_layout = QtWidgets.QVBoxLayout()
+        description_layout.addWidget(text, stretch=3)
+        description_layout.addWidget(self.field_type_selector, stretch=1)
+        layout = QtWidgets.QHBoxLayout()
+        layout.addLayout(description_layout)
+        layout.addWidget(self.entry_stack, stretch=8)
         self.setLayout(layout)
+
+        self._load_value()
+
+    def _load_value(self):
+        option_value = api.get_option_value(self.option)
+
+        for i, field in enumerate(self.stacked_widgets):
+            if field.validate_field(option_value):
+                self.field_type_selector.select(i)
+                field.load_value(option_value)
+                break
 
     def set_type(self, arg):
         self.entry_stack.setCurrentIndex(
-            self.type_btn_group.checkedId()
+            self.field_type_selector.checked_index()
         )
+        self.slotmapper('value_changed')(self.option, self.value)
 
 
-# modified version of https://github.com/abrytanczyk/JPWP---zadania
-class StringListEditorWidget(QtWidgets.QWidget):
-    def __init__(self, option, validator=None):
+    def handle_focus_change(self):
+        self.slotmapper('value_changed')(self.option, self.value)
+        """
+        # TODO: change background color of active field
+        if to_widget in self.stacked_widgets + self.field_type_selector.btn_group.buttons():
+            self.setStyleSheet("QWidget#centralWidget {background-color:blue;}")
+        elif from_widget in self.stacked_widgets + self.field_type_selector.btn_group.buttons():
+            self.setStyleSheet("")
+        """
+
+    def value(self):
+        return self.entry_stack.currentWidget().current_value
+
+
+class Field:
+    focus_change = QtCore.pyqtSignal()
+
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        self.focus_change.emit()
+
+
+class NullField(QtWidgets.QLabel, Field):
+    def __init__(self, option, **constraints):
         super().__init__()
+        self.option = option
+        self.constraints = constraints
+        self.loaded_value = None
 
-        # TODO: load option strings
-        self.string_list = ['aa', 'bb']
-        self.initUI()
+    @staticmethod
+    def validate_field(value):
+        return value is None
 
-    def initUI(self):
-        layout = QtWidgets.QHBoxLayout(self)
-        buttons_layout = QtWidgets.QVBoxLayout(self)
+    def load_value(self, value):
+        self.setText('NULL')
+        self.loaded_value = value
 
-        self.list_widget = QtWidgets.QListWidget(self)
-        self.list_widget.itemSelectionChanged.connect(self.item_selection_changed)
+    @property
+    def current_value(self):
+        return None
 
-        self.add_btn = QtWidgets.QPushButton("", self)
-        self.add_btn.setIcon(QtGui.QIcon('icons/plus.png'))
-        self.add_btn.clicked.connect(self.add_clicked)
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        self.focus_change.emit()
 
-        self.edit_btn = QtWidgets.QPushButton("", self)
-        self.edit_btn.setIcon(QtGui.QIcon('icons/edit.png'))
-        self.edit_btn.clicked.connect(self.edit_clicked)
 
-        self.remove_btn = QtWidgets.QPushButton("", self)
-        self.remove_btn.setIcon(QtGui.QIcon('icons/trash.png'))
-        self.remove_btn.clicked.connect(self.remove_clicked)
+class BooleanField(QtWidgets.QCheckBox, Field):
+    def __init__(self, option, **constraints):
+        super().__init__()
+        self.option = option
+        self.constraints = constraints
+        self.loaded_value = None
 
-        buttons_layout.addWidget(self.add_btn)
-        buttons_layout.addWidget(self.edit_btn)
-        buttons_layout.addWidget(self.remove_btn)
-        buttons_layout.addStretch()
+    @staticmethod
+    def validate_field(value):
+        return isinstance(value, bool)
 
-        layout.addWidget(self.list_widget)
-        layout.addLayout(buttons_layout)
+    def load_value(self, value):
+        self.setChecked(value)
+        self.loaded_value = value
 
-        self.setLayout(layout)
+    @property
+    def current_value(self):
+        return self.isChecked()
 
-        # Insert strings into list
-        for item in self.string_list:
-            self.list_widget.addItem(QtWidgets.QListWidgetItem(item, self.list_widget))
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        self.focus_change.emit()
 
-    def update_buttons(self):
-        any_items = self.list_widget.count() > 0
 
-        self.edit_btn.setEnabled(any_items)
-        self.remove_btn.setEnabled(any_items)
+class TextField(QtWidgets.QTextEdit, Field):
+    def __init__(self, option, **constraints):
+        super().__init__()
+        self.option = option
+        self.constraints = constraints
+        self.loaded_value = None
 
-        self.update_list()
-
-    def update_list(self):
-        new_arguments = []
-        for i in range(self.list_widget.count()):
-            new_arguments.append(self.list_widget.item(i).text())
-
-        self.string_list.clear()
-        self.string_list.extend(new_arguments)
-
-    def item_selection_changed(self, *args):
-        self.update_buttons()
-
-    def add_clicked(self):
-        text, okPressed = QtWidgets.QInputDialog.getText(self, "Add Item", "Item Value:", QtWidgets.QLineEdit.Normal, "")
-
-        if okPressed and text != '' and not str.isspace(text):
-            self.list_widget.addItem(QtWidgets.QListWidgetItem(text, self.list_widget))
-            self.list_widget.setCurrentRow(self.list_widget.count() - 1)
-            self.list_widget.scrollToItem(self.list_widget.currentItem())
-
-            self.update_buttons()
-
-    def edit_clicked(self):
-        current = self.list_widget.currentItem()
-        original = current.text()
-        if str.isspace(original) or original == '':
-            self.add_clicked()
+    def validate_field(self, value):
+        if not isinstance(value, str):
+            return False
+        if 'regexp' in self.constraints:
+            return re.match(self.constraints['regexp'], value)
         else:
-            text, okPressed = QtWidgets.QInputDialog.getText(self, "Edit Item", "Item Value:", QtWidgets.QLineEdit.Normal, original)
+            return True
 
-            if okPressed and text != '' and not str.isspace(text):
-                current.setText(text)
-                self.update_buttons()
+    def load_value(self, value):
+        self.setText(value)
+        self.loaded_value = value
 
-    def remove_clicked(self):
-        current = self.list_widget.currentItem()
-        original = current.text()
+    @property
+    def current_value(self):
+        return self.toPlainText()
 
-        if original == '' or \
-            str.isspace(original) or \
-            QtWidgets.QMessageBox.question(self, "Remove", f"Remove Item: `{original}`",
-                                           QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
-                                           QtWidgets.QMessageBox.Yes) == QtWidgets.QMessageBox.Yes:
-            self.list_widget.takeItem(self.list_widget.currentRow())
-            self.update_buttons()
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        self.focus_change.emit()
+
+
+class SingleLineTextField(QtWidgets.QLineEdit, Field):
+    validate_field = TextField.validate_field
+    load_value = TextField.load_value
+    current_value = TextField.current_value
+
+    def __init__(self, option, **constraints):
+        super().__init__()
+        self.option = option
+        self.constraints = constraints
+        self.loaded_value = None
+
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        self.focus_change.emit()
+
+
+class IntegerField(QtWidgets.QSpinBox, Field):
+    def __init__(self, option, **constraints):
+        super().__init__()
+        self.option = option
+        self.constraints = constraints
+        self.loaded_value = None
+
+    def validate_field(self, value):
+        if not isinstance(value, int):
+            return False
+        minimum = self.constraints.get('minimum', float('-inf'))
+        maximum = self.constraints.get('maximum', float('inf'))
+        return minimum <= value <= maximum
+
+    def load_value(self, value):
+        self.setValue(value)
+        self.loaded_value = value
+
+    @property
+    def current_value(self):
+        return self.value()
+
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        self.focus_change.emit()
+
+# TODO: load option strings with self.add_item
+class StringListField(generic_widgets.StringListEditorWidget, Field):
+    def __init__(self, option, **constraints):
+        super().__init__()
+        self.option = option
+        self.constraints = constraints
+        self.loaded_value = None
+
+    @staticmethod
+    def validate_field(value):
+        if not isinstance(value, list):
+            return False
+        return all([
+            isinstance(item, str)
+            for item in value
+        ])
+
+    def load_value(self, value):
+        pass  # TODO
+        # self.loaded_value = value
+
+    @property
+    def current_value(self):
+        pass  # TODO
+
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        self.focus_change.emit()
+
+
+class OneOfRadioFrameField(QtWidgets.QFrame, Field):
+    def __init__(self, option, choices):
+        super().__init__()
+        self.option = option
+        self.choices = choices
+
+        self.choice_button_map = {}
+
+        layout = QtWidgets.QVBoxLayout(self)
+        for choice in self.choices:
+            btn = QtWidgets.QRadioButton(choice)
+            self.choice_button_map[choice] = btn
+            layout.addWidget(btn)
+
+    def validate_field(self, value):
+        return value in self.choices
+
+    def load_value(self, value):
+        self.choice_button_map[value].setChecked(True)
+        self.loaded_value = value
+
+    @property
+    def current_value(self):
+        for value, button in self.choice_button_map.items():
+            if button.isChecked():
+                return value
+
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        self.focus_change.emit()
+
+
+class OneOfComboBoxField(QtWidgets.QComboBox, Field):
+    def __init__(self, option, choices):
+        super().__init__()
+        self.option = option
+        self.choices = choices
+
+        for choice in self.choices:
+            self.addItem(choice)
+
+    def validate_field(self, value):
+        return value in self.choices
+
+    def load_value(self, value):
+        self.setCurrentIndex(self.choices.index(value))
+        self.loaded_value = value
+
+    @property
+    def current_value(self):
+        return self.currentText
+
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        self.focus_change.emit()
+
+
+class OneOfField:
+    def __new__(cls, option):
+        field_type = api.get_option_type(option)
+        choices = [choice.strip('" ') for choice in field_type.split('one of ', 1)[1].split(',')]
+
+        if len(choices) < 5:
+            return OneOfRadioFrameField(option, choices)
+        else:
+            return OneOfComboBoxField(option, choices)
+
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        self.focus_change.emit()
+
+
+# TODO
+class NotImplementedField(QtWidgets.QLabel, Field):
+    def __init__(self, option, **constraints):
+        super().__init__()
+        self.option = option
+        self.constraints = constraints
+        self.loaded_value = None
+
+    @staticmethod
+    def validate_field(value):
+        return False
+
+    def load_value(self, value):
+        self.setText('TODO')
+        self.loaded_value = value
+
+    @property
+    def current_value(self):
+        return None
+
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        self.focus_change.emit()
+
+
+# TODO
+ReferenceField = NotImplementedField
+ExpressionField = NotImplementedField

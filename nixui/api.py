@@ -10,8 +10,8 @@ from nixui import containers, parser
 #############################
 @functools.lru_cache(1)
 def get_options_dict():
-    #res = json.load(open('./release_out/share/doc/nixos/options.json'))
-    option_values = parser.get_option_values()
+    res = json.load(open('./release_out/share/doc/nixos/options.json'))
+    # option_values = parser.get_option_values()
     # TODO: apply option_values to res
     return res
 
@@ -56,9 +56,9 @@ def get_types():
     return types
 
 
-#####
-# api
-#####
+################
+# get values api
+################
 def full_option_name(parent_option, sub_option):
     if parent_option and sub_option:
         return '.'.join([parent_option, sub_option])
@@ -94,7 +94,6 @@ def get_child_options(parent_option):
     return sorted(child_options, key=lambda x: -get_option_count(x))
 
 
-
 def get_option_count(parent_option):
     branch = [] if parent_option is None else parent_option.split('.')
     return get_option_tree().get_count(branch)
@@ -111,7 +110,22 @@ def get_leaf(option):
     node = get_option_tree().get_node(branch)
     return node.get_leaf()
 
-def main():
-    tree = get_option_tree()
-    import pdb;pdb.set_trace()
-    print()
+
+def get_option_type(option):
+    return get_leaf(option)['type']
+
+
+def get_option_description(option):
+    return get_leaf(option)['description']
+
+
+def get_option_value(option):
+    # TODO: fix - it isn't always the default
+    if 'default' in get_leaf(option):
+        return get_leaf(option)['default']
+    else:
+        print()
+        print(option)
+        print(get_leaf(option))
+
+

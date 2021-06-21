@@ -1,10 +1,10 @@
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui, QtCore
 
-import api, richtext, option_widgets
+from nixui import api, richtext, option_widgets, generic_widgets
 
 
 class GenericOptionSetDisplay(QtWidgets.QWidget):
-    def __init__(self, option=None, is_base_viewer=None, *args, **kwargs):
+    def __init__(self, slotmapper, option=None, is_base_viewer=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         option = api.get_next_branching_option(option)
@@ -21,19 +21,20 @@ class GenericOptionSetDisplay(QtWidgets.QWidget):
                 view = QtWidgets.QLabel(option + str(api.get_option_count(option)))
             elif api.get_option_count(option) < 20:
                 if is_base_viewer != False:
-                    view = OptionGroupBox(option, is_base_viewer=True)
+                    view = OptionGroupBox(slotmapper, option, is_base_viewer=True)
                 else:
-                    view = OptionGroupBox(option)
+                    view = OptionGroupBox(slotmapper, option)
             else:
                 child_options = api.get_child_options(option)
                 if len(child_options) < 10 and all([api.get_option_count(opt) < 20 for opt in child_options]):
                     # if there are fewer than 10 child options and each child  contains fewer than 20 options show a tab view
-                    view = OptionTabs(option)
+                    view = OptionTabs(slotmapper, option)
                 else:
-                    view = OptionChildViewer(option)
+                    view = OptionChildViewer(slotmapper, option)
         else:
-            view = option_widgets.GenericOptionDisplay(option)
+            view = option_widgets.GenericOptionDisplay(slotmapper, option)
 
+        lay.setAlignment(QtCore.Qt.AlignTop)
         lay.setSpacing(0)
         lay.setContentsMargins(0, 0, 0, 0)
 
@@ -58,9 +59,10 @@ class OptionChildViewer(QtWidgets.QWidget):
     # TODO: proper sizing
     # TODO: set option selection color to light green
     # TODO: don't automatically select first row
-    def __init__(self, option=None, *args, **kwargs):
+    def __init__(self, slotmapper, option=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.slotmapper = slotmapper
         self.option_str = option
 
         self.child_options = QtWidgets.QLabel()
@@ -73,6 +75,9 @@ class OptionChildViewer(QtWidgets.QWidget):
         self.option_list.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
         self.option_list.setItemDelegate(richtext.HTMLDelegate())
         self.option_list.currentItemChanged.connect(self.change_base_option_set)
+
+        self.option_list.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.option_list.setMinimumWidth(self.option_list.sizeHintForColumn(0))
 
         self.current_option = None
 
@@ -92,12 +97,12 @@ class OptionChildViewer(QtWidgets.QWidget):
 
     def insert_child_options(self, option):
         for text in api.get_child_options(option):
-            icon_path = None  # "/home/andrew/img/tim/long_leg.png"
+            icon_path = None
             it = OptionListItem(text, icon_path)
             self.option_list.addItem(it)
 
     def change_option_view(self, full_option_name):
-        view = GenericOptionSetDisplay(full_option_name)
+        view = GenericOptionSetDisplay(slotmapper=self.slotmapper, option=full_option_name)
 
         old_options = self.child_options
         self.child_options_container.addWidget(view)
@@ -107,17 +112,17 @@ class OptionChildViewer(QtWidgets.QWidget):
 
 
 class OptionTabs(QtWidgets.QTabWidget):
-    def __init__(self, option, *args, **kwargs):
+    def __init__(self, slotmapper, option, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.option_str = option
 
         for child_option in api.get_child_options(option):
-            self.addTab(GenericOptionSetDisplay(child_option), child_option)
+            self.addTab(GenericOptionSetDisplay(slotmapper, child_option), child_option)
 
 
 class OptionGroupBox(QtWidgets.QWidget):
-    def __init__(self, option=None, is_base_viewer=False, *args, **kwargs):
+    def __init__(self, slotmapper, option=None, is_base_viewer=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         group_box = QtWidgets.QGroupBox()
@@ -126,16 +131,23 @@ class OptionGroupBox(QtWidgets.QWidget):
         vbox = QtWidgets.QVBoxLayout()
 
         for child_option in api.get_child_options(option):
-            vbox.addWidget(GenericOptionSetDisplay(child_option, is_base_viewer=False))
+            vbox.addWidget(GenericOptionSetDisplay(slotmapper, child_option, is_base_viewer=False))
+            vbox.addWidget(generic_widgets.SeparatorLine())
 
         group_box.setLayout(vbox)
 
         lay = QtWidgets.QHBoxLayout()
         if is_base_viewer:
             scroll_area = QtWidgets.QScrollArea()
+            scroll_area.setWidgetResizable(True)
+            scroll_area.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
             lay.addWidget(scroll_area)
             scroll_area.setWidget(group_box)
         else:
             lay.addWidget(group_box)
 
+        vbox.setContentsMargins(0, 0, 0, 0)
+        vbox.setSpacing(0)
         self.setLayout(lay)
+
+        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
