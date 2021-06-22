@@ -96,6 +96,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
 
         self.slotmapper = slotmapper
         self.option = option
+        self.starting_value = None
 
         field_types = get_field_types(api.get_option_type(option))
 
@@ -151,6 +152,8 @@ class GenericOptionDisplay(QtWidgets.QWidget):
                 field.load_value(option_value)
                 break
 
+        self.starting_value = self.value
+
     def set_type(self, arg):
         self.entry_stack.setCurrentIndex(
             self.field_type_selector.checked_index()
@@ -171,6 +174,31 @@ class GenericOptionDisplay(QtWidgets.QWidget):
     @property
     def value(self):
         return self.entry_stack.currentWidget().current_value
+
+    def contains_focus(self):
+        return (
+            self.hasFocus() or
+            any(w.hasFocus() for w in self.stacked_widgets) or
+            any(w.hasFocus() for w in self.field_type_selector.btn_group.buttons())
+        )
+
+    def paint_background_color(self, *bg_color_tuple):
+        qp = QtGui.QPainter(self)
+        r = QtCore.QRect(0, 0, self.width(), self.height())
+        qp.fillRect(r, QtGui.QColor.fromRgb(*bg_color_tuple))
+        qp.end()
+
+    def paintEvent(self, ev):
+        super().paintEvent(ev)
+        if self.contains_focus():
+            self.paint_background_color(233, 245, 248, 255)
+        elif self.starting_value != self.value:
+            self.paint_background_color(194, 249, 197, 255)
+        else:
+            return
+        #elif api.default_value(self.option) != api.value(self.option):
+        #    TODO
+        self.update()
 
 
 class Field:
