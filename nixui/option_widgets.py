@@ -136,7 +136,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
                 for t in field_types
             ]
         )
-        # TODO: remove this expression and reference editor are done
+        # TODO: remove this when expression and reference editor are done
         self.field_type_selector.btn_group.buttons()[-2].setEnabled(False)
         self.field_type_selector.btn_group.buttons()[-1].setEnabled(False)
 

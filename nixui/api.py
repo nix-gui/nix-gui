@@ -2,7 +2,7 @@ import collections
 import json
 import functools
 
-from nixui import containers, parser
+from nixui import containers
 
 
 #############################
@@ -82,11 +82,12 @@ def get_next_branching_option(option):
         branch += [key]
     return '.'.join(branch)
 
+
 @functools.lru_cache(1000)
 def get_child_options(parent_option):
     # child options sorted by count
-    # TODO: sort by hardcoded priority per reodme too
-    if parent_option is None:
+    # TODO: sort by hardcoded priority per readme too
+    if not parent_option:
         child_options = get_option_tree().get_children([])
     else:
         branch = parent_option.split('.')
@@ -95,20 +96,18 @@ def get_child_options(parent_option):
 
 
 def get_option_count(parent_option):
-    branch = [] if parent_option is None else parent_option.split('.')
+    branch = parent_option.split('.') if parent_option else []
     return get_option_tree().get_count(branch)
 
 
-def get_type(option):
-    branch = [] if option is None else option.split('.')
-    tree = get_option_tree().get_node(branch)
-    return tree.get_leaf().get('type', 'PARENT')
-
-
 def get_leaf(option):
-    branch = [] if option is None else option.split('.')
+    branch = option.split('.') if option else []
     node = get_option_tree().get_node(branch)
     return node.get_leaf()
+
+
+def get_type(option):
+    return get_leaf(option).get('type', 'PARENT')
 
 
 def get_option_type(option):

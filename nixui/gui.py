@@ -11,7 +11,7 @@ class Window(QtWidgets.QMainWindow):
         slotmapper = slot_mapper.SlotMapper()
 
         self.setWindowTitle("Nix UI")
-        self.setCentralWidget(widgets.OptionChildViewer(slotmapper=slotmapper))
+        self.setCentralWidget(widgets.GenericOptionSetDisplay(slotmapper=slotmapper))
 
         self.actions = {}
 
