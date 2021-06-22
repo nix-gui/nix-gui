@@ -48,6 +48,18 @@ def get_field_type_widget_map():
             IntegerField,
         ],
         [
+            partial(eq, 'unsigned integer, meaning >=0'),
+            partial(IntegerField, minimum=0),
+        ],
+        [
+            partial(eq, 'positive integer, meaning >0'),
+            partial(IntegerField, minimum=1),
+        ],
+        [
+            partial(eq, '16 bit unsigned integer; between 0 and 65535 (both inclusive)'),
+            partial(IntegerField, minimum=0, maximum=65535),
+        ],
+        [
             lambda f: f.startswith('one of '),
             OneOfField,
         ],
@@ -162,18 +174,11 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.entry_stack.setCurrentIndex(
             self.field_type_selector.checked_index()
         )
-        self.slotmapper('value_changed')(self.option, self.value)
+        self.handle_focus_change()
 
 
     def handle_focus_change(self):
         self.slotmapper('value_changed')(self.option, self.value)
-        """
-        # TODO: change background color of active field
-        if to_widget in self.stacked_widgets + self.field_type_selector.btn_group.buttons():
-            self.setStyleSheet("QWidget#centralWidget {background-color:blue;}")
-        elif from_widget in self.stacked_widgets + self.field_type_selector.btn_group.buttons():
-            self.setStyleSheet("")
-        """
 
     @property
     def value(self):
@@ -201,7 +206,10 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         else:
             return
         #elif api.default_value(self.option) != api.value(self.option):
-        #    TODO
+        #    TODO: handle cases where changes are non-default AND saved
+        # TODO: handle case where field is invalid
+
+        # TODO: change parent navigation widget colors in heirarchy
         self.update()
 
 
