@@ -24,6 +24,10 @@ def get_field_type_widget_map():
             TextField,
         ],
         [
+            lambda f: f.startswith('strings concatenated with '),
+            TextField,  # TODO: might waght to use StringListField here?
+        ],
+        [
             partial(eq, 'string, not containing newlines or colons'),
             partial(SingleLineTextField, regexp=r"^[^(:|\n|(\r\n)]*$")
         ],
@@ -407,7 +411,7 @@ class OneOfComboBoxField(QtWidgets.QComboBox, Field):
 
     @property
     def current_value(self):
-        return self.currentText
+        return self.currentText()
 
     def focusOutEvent(self, event):
         super().focusOutEvent(event)
