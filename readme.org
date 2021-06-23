@@ -1,3 +1,5 @@
+[[https://github.com/lapp0/nix-gui/milestones?direction=asc&sort=due_date&state=open][(Work in Progress)]]
+
 * Nix-Gui
 Make nixos usable for non-technical users through a settings / package management GUI.
 
