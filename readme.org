@@ -28,4 +28,4 @@ Developers, if you're interested in contributing, you may
 - Contact me on matrix to discuss
 
 * Contact
-Contact me on Matrix (`andrew:mtx.rew.la`)
+Contact me on Matrix (=andrew:mtx.rew.la=)
