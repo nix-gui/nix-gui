@@ -32,3 +32,4 @@ class UpdateModel:
         self.current_values[last_update.option] = last_update.old_value
 
         self.slotmapper('undo_performed')(last_update.option, last_update.old_value, last_update.new_value)
+        self.slotmapper(('update_field', last_update.option))(last_update.old_value)
