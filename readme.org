@@ -1,24 +1,28 @@
+* Nix-Gui
 Make nixos usable for non-technical users through a settings / package management GUI.
 
-* Motives
+[[screenshots/historical_2021_06_23.gif]]
+
+
+** Motives
 The declarative nature of nixos provides it the capability of being *the most user friendly linux distro.*
 
-** Serve Non-Technical Users
+*** Serve Non-Technical Users
 =nix_gui= is a configuration management tool designed for those unfamiliar with the nix language. It is an attempt to replicate the ease of use of popular configuration systems including
 - Ubuntu's Unity System Settings
 - Mint's Cinnimon Settings
 - Synaptic Package Manager
 
-** Serve Mobile Users
+*** Serve Mobile Users
 An additional motive for this project is to enable system management for [[https://mobile.nixos.org/][mobile devices]] without having to type code on your phone.
 
-* Docs
+** Docs
 - [[docs/overview.org][Project Overview]]
 - [[docs/usage.org][Usage]]
 - [[docs/behavior.org][Behavior]]
 - [[docs/development.org][Development]]
 
-* Contributing
+** Contributing
 Non-developers, if you're interested in contributing, please contact me on matrix (details below) to help with UX testing once V0.1 is released.
 
 Developers, if you're interested in contributing, you may
@@ -27,5 +31,5 @@ Developers, if you're interested in contributing, you may
 - Contribute to important dependencies including [[https://github.com/nix-community/rnix-parser/][rnix-parser]] and [[https://github.com/nix-community/rnix-lsp][rnix-lsp]]
 - Contact me on matrix to discuss
 
-* Contact
+** Contact
 Contact me on Matrix (=andrew:mtx.rew.la=)
