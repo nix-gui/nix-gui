@@ -2,13 +2,14 @@ import sys
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-from nixui import widgets, slot_mapper
+from nixui import widgets, slot_mapper, update_model
 
 
-class Window(QtWidgets.QMainWindow):
-    def __init__(self, parent=None):
+class NixGuiMainWindow(QtWidgets.QMainWindow):
+    def __init__(self, slotmapper, parent=None):
         super().__init__(parent)
-        slotmapper = slot_mapper.SlotMapper()
+
+        self.slotmapper = slotmapper
 
         self.setWindowTitle("Nix UI")
         self.setCentralWidget(widgets.GenericOptionSetDisplay(slotmapper=slotmapper))
@@ -20,10 +21,13 @@ class Window(QtWidgets.QMainWindow):
 
         status_bar = NixuiStatusBar()
         self.setStatusBar(status_bar)
-        slotmapper.add_slot('value_changed', status_bar.display_value_change)
+        self.slotmapper.add_slot('update_recorded', status_bar.display_value_change)
+        self.slotmapper.add_slot('undo_performed', status_bar.display_undo_performed)
 
     def _create_actions(self):
         self.actions['undo'] = QtWidgets.QAction(QtGui.QIcon('nixui/icons/undo.png'), "&Undo", self)
+        self.actions['undo'].triggered.connect(self.slotmapper('undo'))
+
         self.actions['search'] = QtWidgets.QAction(QtGui.QIcon('nixui/icons/search.png'), "&Search", self)
         self.actions['view_diff'] = QtWidgets.QAction(QtGui.QIcon('nixui/icons/diff.png'), "&View Diff", self)
         self.actions['save'] = QtWidgets.QAction(QtGui.QIcon('nixui/icons/save.png'), "&Save", self)
@@ -51,13 +55,22 @@ class NixuiStatusBar(QtWidgets.QStatusBar):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-    def display_value_change(self, option, new_value):
-        self.showMessage(f'{option}: set to `{new_value}`')
+    def display_value_change(self, option, old_value, new_value):
+        self.showMessage(f'UPDATE {option}: changed from `{old_value}` to `{new_value}`')
+
+    def display_undo_performed(self, option, reverted_to, reverted_from):
+        self.showMessage(f'UNDO {option}: reverted from `{reverted_from}` to `{reverted_to}`')
 
 
 def main():
+    slotmapper = slot_mapper.SlotMapper()
+
+    updates = update_model.UpdateModel(slotmapper)
+    slotmapper.add_slot('value_changed', updates.record_update)
+    slotmapper.add_slot('undo', updates.undo)
+
     app = QtWidgets.QApplication(sys.argv)
-    nix_gui = Window()
+    nix_gui = NixGuiMainWindow(slotmapper)
     nix_gui.show()
     sys.exit(app.exec())
 
