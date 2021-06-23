@@ -75,8 +75,10 @@ def get_next_branching_option(option):
     # more than 1 child = branch -> exit
     branch = [] if option is None else option.split('.')
     node = get_option_tree().get_node(branch)
-
     while len(node.get_children()) == 1:
+        node_type = get_type('.'.join(branch))
+        if node_type.startswith('attribute set of '):
+            break
         key = node.get_children()[0]
         node = node.get_node([key])
         branch += [key]

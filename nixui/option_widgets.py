@@ -67,6 +67,8 @@ def get_field_type_widget_map():
             partial(eq, 'list of strings'),
             StringListField,
         ],
+
+        # fake types, allowing for specialized expressions
         [
             partial(eq, 'reference'),
             ReferenceField,
@@ -175,7 +177,6 @@ class GenericOptionDisplay(QtWidgets.QWidget):
             self.field_type_selector.checked_index()
         )
         self.handle_focus_change()
-
 
     def handle_focus_change(self):
         self.slotmapper('value_changed')(self.option, self.value)
@@ -435,6 +436,31 @@ class OneOfField:
             return OneOfRadioFrameField(option, choices)
         else:
             return OneOfComboBoxField(option, choices)
+
+    def focusOutEvent(self, event):
+        super().focusOutEvent(event)
+        self.focus_change.emit()
+
+
+class AttributeSetOf:
+    def __init__(self, option, choices):
+        super().__init__()
+        self.option = option
+        self.choices = choices
+
+        for choice in self.choices:
+            self.addItem(choice)
+
+    def validate_field(self, value):
+        return value in self.choices
+
+    def load_value(self, value):
+        self.setCurrentIndex(self.choices.index(value))
+        self.loaded_value = value
+
+    @property
+    def current_value(self):
+        return self.currentText()
 
     def focusOutEvent(self, event):
         super().focusOutEvent(event)

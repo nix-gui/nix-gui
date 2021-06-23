@@ -1,5 +1,4 @@
 import collections
-from dataclasses import dataclass, is_dataclass
 
 
 class InfiniteDict(collections.defaultdict):
@@ -31,22 +30,33 @@ class Tree:
 
         node[LEAF] = value
 
+    @staticmethod
+    def get_child_node(node, key):
+        if key in node:
+            return node[key]
+        elif '<name>' in node:
+            return node['<name>']
+        elif '*' in node:
+            return node['*']
+        else:
+            raise ValueError()
+
     def get_children(self, branch=[]):
         node = self.tree
         for key in branch:
-            node = node[key]
+            node = self.get_child_node(node, key)
         return sorted([k for k in node.keys() if k not in SPECIAL_LABELS], key=lambda x: x.lower())
 
     def get_node(self, branch=[]):
         node = self.tree
         for key in branch:
-            node = node[key]
+            node = self.get_child_node(node, key)
         return Tree(node)
 
     def get_count(self, branch=[]):
         node = self.tree
         for key in branch:
-            node = node[key]
+            node = self.get_child_node(node, key)
         return node[COUNT] if COUNT in node else 0
 
     def get_leaf(self):

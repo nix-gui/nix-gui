@@ -1,6 +1,9 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 
 
+from nixui import richtext
+
+
 class ExclusiveButtonGroup(QtWidgets.QFrame):
     selection_changed = QtCore.pyqtSignal(str)
 
@@ -45,7 +48,6 @@ class StringListEditorWidget(QtWidgets.QWidget):
         super().__init__()
         self.initUI()
 
-
     def initUI(self):
         layout = QtWidgets.QHBoxLayout(self)
         buttons_layout = QtWidgets.QVBoxLayout(self)
@@ -54,15 +56,15 @@ class StringListEditorWidget(QtWidgets.QWidget):
         self.list_widget.itemSelectionChanged.connect(self.item_selection_changed)
 
         self.add_btn = QtWidgets.QPushButton("", self)
-        self.add_btn.setIcon(QtGui.QIcon('icons/plus.png'))
+        self.add_btn.setIcon(QtGui.QIcon('nixui/icons/plus.png'))
         self.add_btn.clicked.connect(self.add_clicked)
 
         self.edit_btn = QtWidgets.QPushButton("", self)
-        self.edit_btn.setIcon(QtGui.QIcon('icons/edit.png'))
+        self.edit_btn.setIcon(QtGui.QIcon('nixui/icons/edit.png'))
         self.edit_btn.clicked.connect(self.edit_clicked)
 
         self.remove_btn = QtWidgets.QPushButton("", self)
-        self.remove_btn.setIcon(QtGui.QIcon('icons/trash.png'))
+        self.remove_btn.setIcon(QtGui.QIcon('nixui/icons/trash.png'))
         self.remove_btn.clicked.connect(self.remove_clicked)
 
         buttons_layout.addWidget(self.add_btn)
@@ -130,3 +132,46 @@ class StringListEditorWidget(QtWidgets.QWidget):
                                            QtWidgets.QMessageBox.Yes) == QtWidgets.QMessageBox.Yes:
             self.list_widget.takeItem(self.list_widget.currentRow())
             self.update_buttons()
+
+
+class ScrollListStackSelector(QtWidgets.QWidget):
+    # TODO: filter
+    # TODO: proper sizing
+    # TODO: set option selection color to light green
+    # TODO: don't automatically select first row
+
+    ItemCls = QtWidgets.QListWidgetItem
+    ListCls = QtWidgets.QListWidget
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.current_item = None
+
+        # setup stack
+        self.current_widget = QtWidgets.QLabel()
+        self.stack = QtWidgets.QStackedWidget()
+        self.stack.addWidget(self.current_widget)
+
+        self.item_list = self.ListCls()
+        self.insert_items()
+        self.item_list.currentItemChanged.connect(self.change_item)
+        self.item_list.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+        self.item_list.setItemDelegate(richtext.HTMLDelegate())
+
+        self.item_list.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.item_list.setMinimumWidth(self.item_list.sizeHintForColumn(0))
+
+        self.nav_layout = QtWidgets.QVBoxLayout()
+        self.nav_layout.addWidget(self.item_list)
+
+        self.hbox = QtWidgets.QHBoxLayout()
+        self.hbox.setSpacing(0)
+        self.hbox.setContentsMargins(0, 0, 0, 0)
+        self.hbox.addLayout(self.nav_layout)
+        self.hbox.addWidget(self.stack)
+
+        self.set_layout()
+
+    def set_layout(self):
+        self.setLayout(self.hbox)

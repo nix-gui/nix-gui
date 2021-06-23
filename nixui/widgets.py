@@ -1,3 +1,5 @@
+import re
+
 from PyQt5 import QtWidgets, QtGui, QtCore
 
 from nixui import api, richtext, option_widgets, generic_widgets
@@ -20,10 +22,10 @@ class GenericOptionSetDisplay(QtWidgets.QWidget):
                 # if the option set contains fewer than 20 child options, render a form for option setting
                 view = QtWidgets.QLabel(option + str(api.get_option_count(option)))
             elif api.get_option_count(option) < 20:
-                if is_base_viewer != False:
-                    view = OptionGroupBox(slotmapper, option, is_base_viewer=True)
-                else:
+                if is_base_viewer:
                     view = OptionGroupBox(slotmapper, option)
+                else:
+                    view = OptionGroupBox(slotmapper, option, is_base_viewer=True)
             else:
                 child_options = api.get_child_options(option)
                 if len(child_options) < 10 and all([api.get_option_count(opt) < 20 for opt in child_options]):
@@ -31,6 +33,8 @@ class GenericOptionSetDisplay(QtWidgets.QWidget):
                     view = OptionTabs(slotmapper, option)
                 else:
                     view = OptionChildViewer(slotmapper, option)
+        elif option_type.startswith('attribute set of '):
+            view = AttributeSetOf(slotmapper, option)
         else:
             view = option_widgets.GenericOptionDisplay(slotmapper, option)
 
@@ -43,72 +47,59 @@ class GenericOptionSetDisplay(QtWidgets.QWidget):
 
 
 class OptionListItem(QtWidgets.QListWidgetItem):
-    def __init__(self, option_name, icon_path, *args, **kwargs):
+    def __init__(self, option_name, icon_path=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.option_name = option_name
 
-        child_count = api.get_option_count(option_name)
-        self.setText(richtext.get_option_html(option_name, child_count))
+        self.set_text()
         if icon_path:
             self.setIcon(QtGui.QIcon(icon_path))
 
+    def set_text(self):
+        child_count = api.get_option_count(self.option_name)
+        self.setText(richtext.get_option_html(self.option_name, child_count))
 
-class OptionChildViewer(QtWidgets.QWidget):
+
+
+class OptionChildViewer(generic_widgets.ScrollListStackSelector):
     # TODO: filter
     # TODO: proper sizing
     # TODO: set option selection color to light green
     # TODO: don't automatically select first row
+
+    ItemCls = OptionListItem
+    ListCls = QtWidgets.QListWidget
+
     def __init__(self, slotmapper, option=None, *args, **kwargs):
+        self.option = option
+        self.slotmapper = slotmapper
+
         super().__init__(*args, **kwargs)
 
         self.slotmapper = slotmapper
         self.option_str = option
 
-        self.child_options = QtWidgets.QLabel()
-        self.child_options_container = QtWidgets.QStackedWidget()
-        self.child_options_container.addWidget(self.child_options)
+    def change_item(self):
+        new_option = self.item_list.currentItem().option_name
+        if self.current_item != new_option:
+            self.current_item = new_option
+            self.change_option_view(new_option)
 
-        self.option_list = QtWidgets.QListWidget()
-        self.insert_child_options(option)
-        self.option_list.currentItemChanged.connect(self.change_base_option_set)
-        self.option_list.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
-        self.option_list.setItemDelegate(richtext.HTMLDelegate())
-        self.option_list.currentItemChanged.connect(self.change_base_option_set)
-
-        self.option_list.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.option_list.setMinimumWidth(self.option_list.sizeHintForColumn(0))
-
-        self.current_option = None
-
-        self.hbox = QtWidgets.QHBoxLayout()
-        self.hbox.setSpacing(0)
-        self.hbox.setContentsMargins(0, 0, 0, 0)
-        self.hbox.addWidget(self.option_list)
-        self.hbox.addWidget(self.child_options_container)
-
-        self.setLayout(self.hbox)
-
-    def change_base_option_set(self):
-        new_option = self.option_list.currentItem().option_name
-        if self.current_option != new_option:
-            self.current_option = new_option
-            self.change_option_view(self.option_list.currentItem().option_name)
-
-    def insert_child_options(self, option):
-        for text in api.get_child_options(option):
+    def insert_items(self):
+        for text in api.get_child_options(self.option):
             icon_path = None
-            it = OptionListItem(text, icon_path)
-            self.option_list.addItem(it)
+            it = self.ItemCls(text, icon_path)
+            self.item_list.addItem(it)
 
     def change_option_view(self, full_option_name):
         view = GenericOptionSetDisplay(slotmapper=self.slotmapper, option=full_option_name)
 
-        old_options = self.child_options
-        self.child_options_container.addWidget(view)
-        self.child_options_container.setCurrentWidget(view)
-        self.child_options_container.removeWidget(old_options)
-        self.child_options = view
+        old_widget = self.current_widget
+        self.stack.addWidget(view)
+        self.stack.setCurrentWidget(view)
+        self.stack.removeWidget(old_widget)
+        self.current_widget = view
 
 
 class OptionTabs(QtWidgets.QTabWidget):
@@ -151,3 +142,81 @@ class OptionGroupBox(QtWidgets.QWidget):
         self.setLayout(lay)
 
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+
+
+#############################
+# editable navigation widgets
+#############################
+class EditableListItem(QtWidgets.QListWidgetItem):
+    def __init__(self, option_name, icon_path=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.option_name = option_name
+        self.setFlags(self.flags() | QtCore.Qt.ItemIsEditable)
+        self.set_text()
+
+    def set_text(self):
+        self.setText(self.option_name.split('.')[-1])
+
+    def setData(self, index, value):
+        # is valid option name?
+        if re.match(r'^[a-zA-Z\_][a-zA-Z0-9\_\'\-]*$', value):
+            super().setData(index, value)
+
+
+class AttributeSetOf(generic_widgets.ScrollListStackSelector):
+    ItemCls = EditableListItem
+
+    def __init__(self, slotmapper, option, *args, **kwargs):
+        self.option = option
+        self.slotmapper = slotmapper
+        self.layout = QtWidgets.QVBoxLayout()
+
+        super().__init__(*args, **kwargs)
+
+        self.item_list.itemDoubleClicked.connect(self.item_list.editItem)
+
+        self.add_btn = QtWidgets.QPushButton("", self)
+        self.add_btn.setIcon(QtGui.QIcon('nixui/icons/plus.png'))
+        self.add_btn.clicked.connect(self.add_clicked)
+
+        self.remove_btn = QtWidgets.QPushButton("", self)
+        self.remove_btn.setIcon(QtGui.QIcon('nixui/icons/trash.png'))
+        self.remove_btn.clicked.connect(self.remove_clicked)
+
+        btn_hbox = QtWidgets.QHBoxLayout()
+        btn_hbox.addWidget(self.add_btn)
+        btn_hbox.addWidget(self.remove_btn)
+
+        self.nav_layout.insertLayout(0, btn_hbox)
+
+    def add_clicked(self):
+        it = self.ItemCls(self.option)
+        self.item_list.addItem(it)
+        self.item_list.editItem(it)
+
+    def remove_clicked(self):
+        self.item_list.takeItem(self.item_list.currentItem())
+
+    def change_item(self):
+        item = self.item_list.currentItem()
+        new_option = f'{item.option_name}.{item.text()}'
+        if self.current_item != new_option:
+            self.current_item = new_option
+            self.change_option_view(new_option)
+
+    def insert_items(self):
+        pass
+        # TODO: get from parser
+        #for text in api.get_child_options(self.option):
+        #    icon_path = None
+        #    it = self.ItemCls(text, icon_path)
+        #    self.item_list.addItem(it)
+
+    def change_option_view(self, full_option_name):
+        view = GenericOptionSetDisplay(slotmapper=self.slotmapper, option=full_option_name)
+
+        old_widget = self.current_widget
+        self.stack.addWidget(view)
+        self.stack.setCurrentWidget(view)
+        self.stack.removeWidget(old_widget)
+        self.current_widget = view
