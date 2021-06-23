@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 
 
 setup(
@@ -10,6 +10,6 @@ setup(
     url='',
     packages=['nixui'],
     entry_points={
-        'console_scripts': ['nix-gui=nixui.api:main'],
+        'console_scripts': ['nix-gui=nixui.gui:main'],
     }
 )

@@ -61,7 +61,6 @@ class OptionListItem(QtWidgets.QListWidgetItem):
         self.setText(richtext.get_option_html(self.option_name, child_count))
 
 
-
 class OptionChildViewer(generic_widgets.ScrollListStackSelector):
     # TODO: filter
     # TODO: proper sizing

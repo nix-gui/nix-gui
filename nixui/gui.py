@@ -1,6 +1,6 @@
 import sys
 
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui, QtCore
 
 from nixui import widgets, slot_mapper
 
@@ -34,14 +34,17 @@ class Window(QtWidgets.QMainWindow):
         apply_bar = self.addToolBar("Apply")
         apply_bar.addAction(self.actions['save'])
         apply_bar.addAction(self.actions['build'])
+        apply_bar.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
 
         edit_bar = self.addToolBar("Edit")
         edit_bar.addAction(self.actions['undo'])
         edit_bar.addAction(self.actions['search'])
         edit_bar.addAction(self.actions['view_diff'])
+        edit_bar.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
 
         preferences_bar = self.addToolBar("Preferences")
         preferences_bar.addAction(self.actions['preferences'])
+        preferences_bar.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
 
 
 class NixuiStatusBar(QtWidgets.QStatusBar):
