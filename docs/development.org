@@ -1,0 +1,48 @@
+* Structure
+(TODO: update)
+- =load.sh=: Build =release.nix= and store as parsable json.
+- =api.py=: Retrieve release option tree and query.
+- =tree.py=: Data structure for storing and querying option tree.
+- =gui.py=: Start =nix-gui= and load all components including the main functionality - the option tree explorer.
+- =heirarchale_widgets.py=: Widgets to recursively navigate the option tree structure via list-views and tab-views.
+- =option_widgets.py=: Render widgets for editing configuration based on the type of the option.
+- =richtext.py=: Helper to render rich text in QT.
+- =icons/=: Icons used in the GUI.
+
+* Edit Handling
+Case: A field is edited
+- The field contents change, but nothing happens internally
+
+Case: A field loses focus
+- A signal is sent to the status bar to display the change
+- A signal is sent to the parent to mark the change with an asterisk
+- A signal is sent to the backend to record the history of changes
+
+Case: The type of a field changes
+- A signal
+
+* Related
+** Projects
+- https://github.com/pmiddend/nixos-manager
+- https://blog.matejc.com/blogs/myblog/graphical-ui-for-nix
+- https://github.com/chriskiehl/Gooey
+** Discussions
+- https://github.com/NixOS/nixpkgs/issues/21662
+- https://github.com/NixOS/nixpkgs/issues/15573
+- https://discourse.nixos.org/t/is-anyone-working-on-a-gui-tool-to-manage-packages/5540/2
+- https://discourse.nixos.org/t/user-friendly-nixos-distro/1348/3
+- https://old.reddit.com/r/NixOS/comments/jag2k1/do_you_think_nixos_could_be_positioned_as_one_of/
+- https://old.reddit.com/r/NixOS/comments/cu4dle/should_nix_have_a_gui/
+
+* Inspiration
+- [[https://1.bp.blogspot.com/-swnGgdPeWOY/Wbf17eWgVeI/AAAAAAAAMDM/buRYvp78ZBggPFFZL4J_LKjMsF0qmQk1ACLcBGAs/s1600/Peek%2B2017-09-12%2B21-39.gif][Intuitive controls, good search functionality]]
+- [[https://149366088.v2.pressablecdn.com/wp-content/uploads/2017/03/linux-mint-lightdm-settings.png][Good Widgets and layout]]
+- [[https://i.stack.imgur.com/WQOmV.png][Good information display]]
+- [[https://www.ics.com/sites/default/files/pictures/snapshot1.png][Pretty layout]]
+- [[https://4.bp.blogspot.com/-GTgr9qvp5Pg/Wbf30hX74PI/AAAAAAAAMDY/3aT6O7E3C1IaSteDuTO4fSGSobjFrk6hQCLcBGAs/s1600/Peek%2B2017-09-12%2B22-03.gif][Pretty layout]]
+- [[https://wiki.manjaro.org/images/5/58/Time_date_screen.png][Good time(/zone) settings screen]]
+* Credit
+Thanks to the many #qt and #nixos users on [[https://libera.chat/][libera.chat]], and users of the NixOS Matrix server (#community:nixos.org) for answering a a myriad of questions about qt, nix, and nix-eval-lsp's behavior.
+
+* Attribution
+Icons are from https://publicdomainvectors.org/, wikimedia commons, https://svgrepo.com, and https://icon-icons.com/icon/Diff/132439

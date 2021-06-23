@@ -1,0 +1,14 @@
+This document describes a spec for version 1.0. This spec is still being implemented
+* Project Overview
+** Goals
+*** 0) Intuition
+=nix-gui= is UX focused. All counterintuitive elements should be considered a bug. Bug reports can be filed at https://github.com/lapp0/nix-gui/issues There are no stupid questions. This program is intended to make nixos usable by someone with basic competence in Ubuntu, Mint, Windows, or OS X.
+
+*** 1) Comprehension
+=nix-gui= strives to provide the ability to make any system changes that are possible with editing =configuration.nix=.
+
+*** 2) Simple Code
+=nix-gui= is a relatively simple graphical program written in python with recursively defined elements to explore and define options.
+
+*** 3) Speed
+Once built, =nix-gui= targets a 10ms load time for all form changes.

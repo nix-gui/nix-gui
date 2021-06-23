@@ -1,0 +1,54 @@
+* Running
+- Ensure nixos is installed
+- =nix run github:lapp0/nix-gui=
+
+* Interface
+TODO: screenshot of interface with boxes around different sections
+
+The options editor is used to make changes to system configuration.
+
+The button bar provides tools to assist system configuration changes, apply changes, and change the preferences of the program.
+
+** Options Editor
+
+** Buttons
+
+* Options Editor
+TODO: screenshot of options editor section of interface with option set navigation, widget type selection, and value setting in boxes
+
+** Option Set Navigation
+- tab view or list view
+- blue: active, yellow: modified in this session, green: modified from default and changes saved
+
+** Option Setting
+- select widget ( / type ) which will be used to set option value (string? null? int? nix expression?)
+- set value
+
+** Widget Types
+TODO: screenshots for all of these and their corresponding nix expression
+*** List of Packages
+Nixui package manager attempts to have a UI similar to synaptic package manager.
+- It controls the inclusion of packages using checkboxes in a list view.
+- It shows details surrounding each package in that same list view.
+- It allows filtering by category.
+- It has a description of each package in a bottom pane.
+- It provides search functionality.
+
+The nature of nix packages requires a few changes. E.g.
+- A single package may be contained in multiple attribute sets such as =pkgs.python37Packages.requests=, =pkgs.python3Packages.requests=, =pkgs.pythonPackages.requests=, =(import <nixpkgs-unstable>).pythonPackages.requests=.
+- A packages attributes can be overridden.
+
+
+*** List of Strings
+*** Validated Integer
+*** Validated Text
+*** Boolean
+*** "One of"
+
+* Button Bar
+** Undo
+** Search
+** View Diff
+** Save
+** Build
+** Preferences
