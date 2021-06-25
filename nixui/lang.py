@@ -42,14 +42,10 @@ def get_language_server_client():
     uri = "file://" + file_path
     text = open(file_path, "r").read()
     languageId = "nix"#pylspclient.lsp_structs.LANGUAGE_IDENTIFIER.C
-    version = 1
+    version = 0
     lsp_client.didOpen(pylspclient.lsp_structs.TextDocumentItem(uri, languageId, version, text))
-
 
     lsp_client.definition(pylspclient.lsp_structs.TextDocumentIdentifier(uri), pylspclient.lsp_structs.Position(6, 4))
 
     lsp_client.shutdown()
     lsp_client.exit()
-
-
-get_language_server_client()

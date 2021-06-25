@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import collections
 import functools
 import itertools
+import json
 import os
 import shutil
 import subprocess
@@ -17,37 +18,20 @@ def get_imported_modules():
     return ['/etc/nixos/configuration.nix'] + glob.glob("/etc/nixos/*.nix")
 
 
-@functools.lru_cache(1)
-def get_rnix_parser_lib_path():
-    #TODO: hack - fix this so we don't have to copy the dir
-    tmp_dir = 'rnix-compiled-hack'
-    shutil.copytree(os.environ['RNIX_PARSER_PATH'], tmp_dir, dirs_exist_ok=True)
-    os.chmod(
-        os.path.join(tmp_dir, 'target'),
-        0o777
-    )
-    return tmp_dir
-
-
 def parse_file(path):
     ast_str = get_ast(path).decode().replace('\\\"', 'ESCAPEQUOTE')  # TODO: fix hack - can't parse \" properly
     tree = parse_ast_str(ast_str)
-    res =  process_node(tree)
+    res = process_node(tree)
     import pdb;pdb.set_trace()
 
 
 def get_ast(file_name):
-    # hack - this isn't how you should call this module
     res = subprocess.run(
         [
-            "cargo",
-            "run",
-            "--example",
             "dump-ast",
             file_name
         ],
         stdout=subprocess.PIPE,
-        cwd=get_rnix_parser_lib_path()
     )
     return res.stdout
 
@@ -146,7 +130,7 @@ services.dbus.packages -> [(node where `pkgs` is defined), (node where `foo` is 
 Resources:
 - https://github.com/NixOS/nix/blob/master/src/libexpr/parser.y
 
-TODO: handle with statements - they only ever overwrite the scope of other with statementns
+TODO: copy dict so scope isn't mutated unexpectedly
 """
 
 
@@ -178,6 +162,22 @@ def get_child_tokens(node, legal_names=None, only_one=False):
         assert len(child_tokens) == 1
         return child_tokens[0]
     return child_tokens
+
+
+def get_child_attr_names(name):
+    # TODO: properly resolve name, right now it just assumes it's `import <nixpkgs>`
+    res = subprocess.run(
+        [
+            "nix-instantiate",
+            "--eval",
+            "--json",
+            "-E",
+            "builtins.attrNames (import <nixpkgs> {})",
+            "--json",
+        ],
+        stdout=subprocess.PIPE,
+    ).stdout
+    return json.loads(res)
 
 
 def process_node(node, scope=None):
@@ -361,11 +361,22 @@ def process_with_node(node, scope):
     node_ident, node_inner = get_child_nodes(node)
     with_scope_key = process_node(node_ident, scope)
 
-    # TODO: in the final stage of processing do (e.g.)
-    # `nix-instantiate --eval -E 'builtins.attrNames (import <nixpkgs> {}).python3Packages'` for the
-    # with pkgs.python3Packages;
-
+    # TODO: fix this hack, this improperly handles cases where there are two `with` statements importing the same thing
     if with_scope_key not in scope:
         scope[('with', with_scope_key)] = scope[with_scope_key]
 
+    names = get_child_attr_names(with_scope_key)
+    with_scope = {}
+    for name in names:
+        with_scope[name] = Define(
+            name,
+            node_ident,
+            scope
+        )
+    scope.update(with_scope)
+
     return process_node(node_inner, scope)
+
+
+def process_paren_node(node, scope):
+    open_paren, child_node, close_paren = get_child_nodes(node)
