@@ -109,10 +109,10 @@ def get_field_color(field_type):
 
 
 class GenericOptionDisplay(QtWidgets.QWidget):
-    def __init__(self, slotmapper, option, *args, **kwargs):
+    def __init__(self, statemodel, option, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.slotmapper = slotmapper
+        self.statemodel = statemodel
         self.option = option
         self.starting_value = None
 
@@ -148,7 +148,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
             entry_widget = get_field_widget(t, self.option)
             entry_widget.focus_change.connect(self.handle_focus_change)
             self.entry_stack.addWidget(entry_widget)
-            self.slotmapper.add_slot(('update_field', self.option), entry_widget.load_value)
+            self.statemodel.slotmapper.add_slot(('update_field', self.option), entry_widget.load_value)
         self.stacked_widgets = list(map(self.entry_stack.widget, range(self.entry_stack.count())))
 
         # add all to layout
@@ -180,7 +180,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.handle_focus_change()
 
     def handle_focus_change(self):
-        self.slotmapper('value_changed')(self.option, self.value)
+        self.statemodel.slotmapper('value_changed')(self.option, self.value)
 
     @property
     def value(self):

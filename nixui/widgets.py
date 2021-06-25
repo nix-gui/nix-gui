@@ -6,7 +6,7 @@ from nixui import api, richtext, option_widgets, generic_widgets
 
 
 class GenericOptionSetDisplay(QtWidgets.QWidget):
-    def __init__(self, slotmapper, option=None, is_base_viewer=None, *args, **kwargs):
+    def __init__(self, statemodel, option=None, is_base_viewer=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         option = api.get_next_branching_option(option)
@@ -23,20 +23,22 @@ class GenericOptionSetDisplay(QtWidgets.QWidget):
                 view = QtWidgets.QLabel(option + str(api.get_option_count(option)))
             elif api.get_option_count(option) < 20:
                 if is_base_viewer:
-                    view = OptionGroupBox(slotmapper, option)
+                    view = OptionGroupBox(statemodel, option)
                 else:
-                    view = OptionGroupBox(slotmapper, option, is_base_viewer=True)
+                    view = OptionGroupBox(statemodel, option, is_base_viewer=True)
             else:
                 child_options = api.get_child_options(option)
                 if len(child_options) < 10 and all([api.get_option_count(opt) < 20 for opt in child_options]):
                     # if there are fewer than 10 child options and each child  contains fewer than 20 options show a tab view
-                    view = OptionTabs(slotmapper, option)
+                    view = OptionTabs(statemodel, option)
                 else:
-                    view = OptionChildViewer(slotmapper, option)
+                    view = OptionChildViewer(statemodel, option)
         elif option_type.startswith('attribute set of '):
-            view = AttributeSetOf(slotmapper, option)
+            view = AttributeSetOf(statemodel, option)
+        elif option_type.startswith('list of '):
+            view = ListOf(statemodel, option)
         else:
-            view = option_widgets.GenericOptionDisplay(slotmapper, option)
+            view = option_widgets.GenericOptionDisplay(statemodel, option)
 
         lay.setAlignment(QtCore.Qt.AlignTop)
         lay.setSpacing(0)
@@ -70,13 +72,12 @@ class OptionChildViewer(generic_widgets.ScrollListStackSelector):
     ItemCls = OptionListItem
     ListCls = QtWidgets.QListWidget
 
-    def __init__(self, slotmapper, option=None, *args, **kwargs):
+    def __init__(self, statemodel, option=None, *args, **kwargs):
         self.option = option
-        self.slotmapper = slotmapper
+        self.statemodel = statemodel
 
         super().__init__(*args, **kwargs)
 
-        self.slotmapper = slotmapper
         self.option_str = option
 
     def change_item(self):
@@ -92,7 +93,7 @@ class OptionChildViewer(generic_widgets.ScrollListStackSelector):
             self.item_list.addItem(it)
 
     def change_option_view(self, full_option_name):
-        view = GenericOptionSetDisplay(slotmapper=self.slotmapper, option=full_option_name)
+        view = GenericOptionSetDisplay(statemodel=self.statemodel, option=full_option_name)
 
         old_widget = self.current_widget
         self.stack.addWidget(view)
@@ -102,17 +103,17 @@ class OptionChildViewer(generic_widgets.ScrollListStackSelector):
 
 
 class OptionTabs(QtWidgets.QTabWidget):
-    def __init__(self, slotmapper, option, *args, **kwargs):
+    def __init__(self, statemodel, option, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.option_str = option
 
         for child_option in api.get_child_options(option):
-            self.addTab(GenericOptionSetDisplay(slotmapper, child_option), child_option)
+            self.addTab(GenericOptionSetDisplay(statemodel, child_option), child_option)
 
 
 class OptionGroupBox(QtWidgets.QWidget):
-    def __init__(self, slotmapper, option=None, is_base_viewer=False, *args, **kwargs):
+    def __init__(self, statemodel, option=None, is_base_viewer=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         group_box = QtWidgets.QGroupBox()
@@ -121,7 +122,7 @@ class OptionGroupBox(QtWidgets.QWidget):
         vbox = QtWidgets.QVBoxLayout()
 
         for child_option in api.get_child_options(option):
-            vbox.addWidget(GenericOptionSetDisplay(slotmapper, child_option, is_base_viewer=False))
+            vbox.addWidget(GenericOptionSetDisplay(statemodel, child_option, is_base_viewer=False))
             vbox.addWidget(generic_widgets.SeparatorLine())
 
         group_box.setLayout(vbox)
@@ -165,9 +166,9 @@ class EditableListItem(QtWidgets.QListWidgetItem):
 class AttributeSetOf(generic_widgets.ScrollListStackSelector):
     ItemCls = EditableListItem
 
-    def __init__(self, slotmapper, option, *args, **kwargs):
+    def __init__(self, statemodel, option, *args, **kwargs):
         self.option = option
-        self.slotmapper = slotmapper
+        self.statemodel = statemodel
         self.layout = QtWidgets.QVBoxLayout()
 
         super().__init__(*args, **kwargs)
@@ -212,7 +213,66 @@ class AttributeSetOf(generic_widgets.ScrollListStackSelector):
         #    self.item_list.addItem(it)
 
     def change_option_view(self, full_option_name):
-        view = GenericOptionSetDisplay(slotmapper=self.slotmapper, option=full_option_name)
+        view = GenericOptionSetDisplay(statemodel=self.statemodel, option=full_option_name)
+
+        old_widget = self.current_widget
+        self.stack.addWidget(view)
+        self.stack.setCurrentWidget(view)
+        self.stack.removeWidget(old_widget)
+        self.current_widget = view
+
+
+class ListOf(generic_widgets.ScrollListStackSelector):
+    ItemCls = EditableListItem
+
+    def __init__(self, statemodel, option, *args, **kwargs):
+        self.option = option
+        self.statemodel = statemodel
+        self.layout = QtWidgets.QVBoxLayout()
+
+        super().__init__(*args, **kwargs)
+
+        self.item_list.itemDoubleClicked.connect(self.item_list.editItem)
+
+        self.add_btn = QtWidgets.QPushButton("", self)
+        self.add_btn.setIcon(QtGui.QIcon('nixui/icons/plus.png'))
+        self.add_btn.clicked.connect(self.add_clicked)
+
+        self.remove_btn = QtWidgets.QPushButton("", self)
+        self.remove_btn.setIcon(QtGui.QIcon('nixui/icons/trash.png'))
+        self.remove_btn.clicked.connect(self.remove_clicked)
+
+        btn_hbox = QtWidgets.QHBoxLayout()
+        btn_hbox.addWidget(self.add_btn)
+        btn_hbox.addWidget(self.remove_btn)
+
+        self.nav_layout.insertLayout(0, btn_hbox)
+
+    def add_clicked(self):
+        it = self.ItemCls(self.option)
+        self.item_list.addItem(it)
+        self.item_list.editItem(it)
+
+    def remove_clicked(self):
+        self.item_list.takeItem(self.item_list.currentItem())
+
+    def change_item(self):
+        item = self.item_list.currentItem()
+        new_option = f'{item.option_name}.{item.text()}'
+        if self.current_item != new_option:
+            self.current_item = new_option
+            self.change_option_view(new_option)
+
+    def insert_items(self):
+        pass
+        # TODO: get from parser
+        #for text in api.get_child_options(self.option):
+        #    icon_path = None
+        #    it = self.ItemCls(text, icon_path)
+        #    self.item_list.addItem(it)
+
+    def change_option_view(self, full_option_name):
+        view = GenericOptionSetDisplay(statemodel=self.statemodel, option=full_option_name)
 
         old_widget = self.current_widget
         self.stack.addWidget(view)

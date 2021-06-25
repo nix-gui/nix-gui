@@ -2,17 +2,17 @@ import sys
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-from nixui import widgets, slot_mapper, update_model
+from nixui import widgets, state_model
 
 
 class NixGuiMainWindow(QtWidgets.QMainWindow):
-    def __init__(self, slotmapper, parent=None):
+    def __init__(self, statemodel, parent=None):
         super().__init__(parent)
 
-        self.slotmapper = slotmapper
+        self.statemodel = statemodel
 
         self.setWindowTitle("Nix UI")
-        self.setCentralWidget(widgets.GenericOptionSetDisplay(slotmapper=slotmapper))
+        self.setCentralWidget(widgets.GenericOptionSetDisplay(statemodel=statemodel))
 
         self.actions = {}
 
@@ -21,12 +21,12 @@ class NixGuiMainWindow(QtWidgets.QMainWindow):
 
         status_bar = NixuiStatusBar()
         self.setStatusBar(status_bar)
-        self.slotmapper.add_slot('update_recorded', status_bar.display_value_change)
-        self.slotmapper.add_slot('undo_performed', status_bar.display_undo_performed)
+        self.statemodel.slotmapper.add_slot('update_recorded', status_bar.display_value_change)
+        self.statemodel.slotmapper.add_slot('undo_performed', status_bar.display_undo_performed)
 
     def _create_actions(self):
         self.actions['undo'] = QtWidgets.QAction(QtGui.QIcon('nixui/icons/undo.png'), "&Undo", self)
-        self.actions['undo'].triggered.connect(self.slotmapper('undo'))
+        self.actions['undo'].triggered.connect(self.statemodel.slotmapper('undo'))
 
         self.actions['search'] = QtWidgets.QAction(QtGui.QIcon('nixui/icons/search.png'), "&Search", self)
         self.actions['view_diff'] = QtWidgets.QAction(QtGui.QIcon('nixui/icons/diff.png'), "&View Diff", self)
@@ -63,14 +63,10 @@ class NixuiStatusBar(QtWidgets.QStatusBar):
 
 
 def main():
-    slotmapper = slot_mapper.SlotMapper()
-
-    updates = update_model.UpdateModel(slotmapper)
-    slotmapper.add_slot('value_changed', updates.record_update)
-    slotmapper.add_slot('undo', updates.undo)
+    statemodel = state_model.StateModel()
 
     app = QtWidgets.QApplication(sys.argv)
-    nix_gui = NixGuiMainWindow(slotmapper)
+    nix_gui = NixGuiMainWindow(statemodel)
     nix_gui.show()
     sys.exit(app.exec())
 

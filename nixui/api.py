@@ -121,12 +121,11 @@ def get_option_description(option):
 
 
 def get_option_value(option):
-    # TODO: fix - it isn't always the default
+    # TODO: fix - actual value it isn't always the default
     if 'default' in get_leaf(option):
         return get_leaf(option)['default']
     else:
         print()
+        print('no default found for')
         print(option)
         print(get_leaf(option))
-
-
