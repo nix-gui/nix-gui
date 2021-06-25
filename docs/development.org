@@ -27,6 +27,7 @@ Case: The type of a field changes
 - https://blog.matejc.com/blogs/myblog/graphical-ui-for-nix
 - https://github.com/chriskiehl/Gooey
 ** Discussions
+- https://old.reddit.com/r/NixOS/comments/o6807i/nixgui_work_in_progress_configure_your_system/
 - https://github.com/NixOS/nixpkgs/issues/21662
 - https://github.com/NixOS/nixpkgs/issues/15573
 - https://discourse.nixos.org/t/is-anyone-working-on-a-gui-tool-to-manage-packages/5540/2
