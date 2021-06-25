@@ -8,7 +8,6 @@ Update = collections.namedtuple('Update', ['option', 'old_value', 'new_value'])
 
 class StateModel:
     def __init__(self):
-
         self.update_history = []
         self.current_values = {
             opt: api.get_option_value(opt)
@@ -19,6 +18,9 @@ class StateModel:
         self.slotmapper = slot_mapper.SlotMapper()
         self.slotmapper.add_slot('value_changed', self.record_update)
         self.slotmapper.add_slot('undo', self.undo)
+
+    def get_value(self, option):
+        return self.current_values[option]
 
     def record_update(self, option, new_value):
         old_value = self.current_values[option]

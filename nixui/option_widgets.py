@@ -163,7 +163,10 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self._load_value()
 
     def _load_value(self):
-        option_value = api.get_option_value(self.option)
+        try:
+            option_value = self.statemodel.get_value(self.option)
+        except KeyError:
+            option_value = api.get_option_value(self.option)
 
         for i, field in enumerate(self.stacked_widgets):
             if field.validate_field(option_value):
