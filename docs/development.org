@@ -1,4 +1,27 @@
 * Structure
+** Architecture
+TODO: expand on this general outline
+
+Components:
+- Form Generator
+- State Manager
+- API
+- Parser
+
+*** Form generator
+- convert options "tree" and type spec into option selection heirarchy
+- create the appropriate forms for editing value based on type
+*** State Manager
+- Connect user actions to form / data model changes
+- Record state changes to memory
+*** API
+- read data from parser, convert into sensible data structures
+- write data
+*** Parser
+- Language Server Protocol Client
+- =rnix-parser= handler and =unsafeGetAttrPos= evaluator
+
+** Files
 (TODO: update)
 - =load.sh=: Build =release.nix= and store as parsable json.
 - =api.py=: Retrieve release option tree and query.
