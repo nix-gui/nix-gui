@@ -9,10 +9,7 @@ Update = collections.namedtuple('Update', ['option', 'old_value', 'new_value'])
 class StateModel:
     def __init__(self):
         self.update_history = []
-        self.current_values = {
-            opt: api.get_option_value(opt)
-            for opt in api.get_options_dict().keys()
-        }
+        self.current_values = api.get_option_values_map()
 
         # TODO: is including the slotmapper overloading the StateModel? What are the alternatives?
         self.slotmapper = slot_mapper.SlotMapper()

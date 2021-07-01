@@ -1,5 +1,5 @@
 * Running
-- Ensure nixos is installed
+- Ensure nixos is installed and nix >= 2.3
 - =nix run github:lapp0/nix-gui=
 
 * Interface
