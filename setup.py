@@ -8,7 +8,7 @@ setup(
     author='Andrew Lapp',
     author_email='andrew@nixgui.rew.la',
     url='',
-    packages=['nixui'],
+    packages=['nixui', 'nixui.parser'],
     entry_points={
         'console_scripts': ['nix-gui=nixui.gui:main'],
     }

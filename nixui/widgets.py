@@ -15,7 +15,7 @@ class GenericOptionSetDisplay(QtWidgets.QWidget):
         lay = QtWidgets.QHBoxLayout()
 
         # add appropriate widget to be displayed
-        option_type = api.get_type(option)
+        option_type = api.get_option_type(option)
         if option_type == 'PARENT':
             # if the option set contains fewer than 20 options, render a form for option setting
             if api.get_option_count(option) == 0:
