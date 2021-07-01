@@ -1,24 +1,55 @@
 import collections
-import json
 import functools
+import json
+import os
 
-from nixui import containers
+from nixui import containers, nix_eval
+from nixui.parser import parser
+
+
+class NoDefaultSet:
+    pass
 
 
 #############################
 # utility functions / caching
-#############################
+############################
 @functools.lru_cache(1)
-def get_options_dict():
-    res = json.load(open('./release_out/share/doc/nixos/options.json'))
-    # option_values = parser.get_option_values()
-    # TODO: apply option_values to res
-    return res
+def get_option_data():
+    defaults_and_schema = json.load(open('./release_out/share/doc/nixos/options.json'))
+    configured_values = {'.'.join(k): v for k, v in parser.get_all_option_values(os.environ['CONFIGURATION_PATH']).items()}
+    result = {}
+    for option, option_data in defaults_and_schema.items():
+        result[option] = dict(option_data)
+        if 'default' not in option_data:
+            result[option]['default'] = NoDefaultSet()
+        if option in configured_values:
+            result[option]['value_expr'] = configured_values[option]
+            try:
+                result[option]['value'] = nix_eval.nix_instantiate_eval(configured_values[option])
+            except:
+                pass
+    return result
+
+
+# TODO: split the above into functions for
+# - get option schema
+# - get option default
+# - get option types
+
+
+@functools.lru_cache(1)
+def get_option_values_map():
+    # extract actual value
+    return {
+        option: option_data.get('value', option_data['default'])
+        for option, option_data in get_option_data().items()
+    }
 
 
 @functools.lru_cache(1)
 def get_option_tree():
-    options = get_options_dict()
+    options = get_option_data()
     options_tree = containers.Tree()
 
     for option_name, opt in options.items():
@@ -40,7 +71,7 @@ def get_all_packages_map():
 def get_types():
     argumented_types = ['one of', 'integer between', 'string matching the pattern']
     types = collections.Counter()
-    for v in get_options_dict().values():
+    for v in get_option_data().values():
         types.update([v['type']])
         continue
         new_types = []
@@ -76,7 +107,7 @@ def get_next_branching_option(option):
     branch = [] if option is None else option.split('.')
     node = get_option_tree().get_node(branch)
     while len(node.get_children()) == 1:
-        node_type = get_type('.'.join(branch))
+        node_type = get_option_type('.'.join(branch))
         if node_type.startswith('attribute set of '):
             break
         key = node.get_children()[0]
@@ -108,12 +139,8 @@ def get_leaf(option):
     return node.get_leaf()
 
 
-def get_type(option):
-    return get_leaf(option).get('type', 'PARENT')
-
-
 def get_option_type(option):
-    return get_leaf(option)['type']
+    return get_leaf(option).get('type', 'PARENT')
 
 
 def get_option_description(option):
@@ -122,10 +149,12 @@ def get_option_description(option):
 
 def get_option_value(option):
     # TODO: fix - actual value it isn't always the default
-    if 'default' in get_leaf(option):
+    if 'value' in get_leaf(option):
+        return get_leaf(option)['value']
+    elif 'default' in get_leaf(option):
         return get_leaf(option)['default']
     else:
         print()
-        print('no default found for')
+        print('no default or value found for')
         print(option)
         print(get_leaf(option))
