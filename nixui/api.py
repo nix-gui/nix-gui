@@ -2,8 +2,9 @@ import collections
 import functools
 import json
 import os
+import subprocess
 
-from nixui import containers, nix_eval
+from nixui import containers, nix_eval, store
 from nixui.parser import parser
 
 
@@ -15,8 +16,26 @@ class NoDefaultSet:
 # utility functions / caching
 ############################
 @functools.lru_cache(1)
+def get_release_json():
+    release_path = os.path.join(store.get_store_path(), 'release_out')
+
+    # TODO - fix hack: release will change and this needs to be reflected, the parser should parse nixpkgs either each run or each time it changes
+    if not os.path.exists(release_path):
+        subprocess.run([
+            'nix-build',
+            '/etc/nixos/nixpkgs/nixos/release.nix',
+            '-A',
+            'options',
+            '-o',
+            release_path
+        ])
+    release_options_json_path = os.path.join(release_path, 'share', 'doc', 'nixos', 'options.json')
+    return json.load(open(release_options_json_path))
+
+
+@functools.lru_cache(1)
 def get_option_data():
-    defaults_and_schema = json.load(open('./release_out/share/doc/nixos/options.json'))
+    defaults_and_schema = get_release_json()
     configured_values = {'.'.join(k): v for k, v in parser.get_all_option_values(os.environ['CONFIGURATION_PATH']).items()}
     result = {}
     for option, option_data in defaults_and_schema.items():
