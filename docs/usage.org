@@ -1,6 +1,6 @@
 * Running
 - Ensure nixos is installed
-- =nix run github:lapp0/nix-gui=
+- =CONFIGURATION_PATH=/etc/nixos/configuration.nix nix run github:lapp0/nix-gui=
 
 * Interface
 TODO: screenshot of interface with boxes around different sections
