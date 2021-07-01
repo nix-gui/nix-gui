@@ -1,0 +1,5 @@
+# Python
+__pycache__/
+dist/
+.venv
+*.egg-info/
