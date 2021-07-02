@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtGui, QtCore
 
 
-from nixui import richtext
+from nixui import richtext, icon
 
 
 class ExclusiveButtonGroup(QtWidgets.QFrame):
@@ -42,6 +42,7 @@ def SeparatorLine():
     line.setFrameShadow(QtWidgets.QFrame.Sunken)
     return line
 
+
 # modified version of https://github.com/abrytanczyk/JPWP---zadania
 class StringListEditorWidget(QtWidgets.QWidget):
     def __init__(self):
@@ -56,15 +57,15 @@ class StringListEditorWidget(QtWidgets.QWidget):
         self.list_widget.itemSelectionChanged.connect(self.item_selection_changed)
 
         self.add_btn = QtWidgets.QPushButton("", self)
-        self.add_btn.setIcon(QtGui.QIcon('nixui/icons/plus.png'))
+        self.add_btn.setIcon(icon.get_icon('plus.png'))
         self.add_btn.clicked.connect(self.add_clicked)
 
         self.edit_btn = QtWidgets.QPushButton("", self)
-        self.edit_btn.setIcon(QtGui.QIcon('nixui/icons/edit.png'))
+        self.edit_btn.setIcon(icon.get_icon('edit.png'))
         self.edit_btn.clicked.connect(self.edit_clicked)
 
         self.remove_btn = QtWidgets.QPushButton("", self)
-        self.remove_btn.setIcon(QtGui.QIcon('nixui/icons/trash.png'))
+        self.remove_btn.setIcon(icon.get_icon('trash.png'))
         self.remove_btn.clicked.connect(self.remove_clicked)
 
         buttons_layout.addWidget(self.add_btn)

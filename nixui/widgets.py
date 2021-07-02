@@ -2,7 +2,7 @@ import re
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-from nixui import api, richtext, option_widgets, generic_widgets
+from nixui import api, richtext, option_widgets, generic_widgets, icon
 
 
 class GenericOptionSetDisplay(QtWidgets.QWidget):
@@ -176,11 +176,11 @@ class AttributeSetOf(generic_widgets.ScrollListStackSelector):
         self.item_list.itemDoubleClicked.connect(self.item_list.editItem)
 
         self.add_btn = QtWidgets.QPushButton("", self)
-        self.add_btn.setIcon(QtGui.QIcon('nixui/icons/plus.png'))
+        self.add_btn.setIcon(icon.get_icon('plus.png'))
         self.add_btn.clicked.connect(self.add_clicked)
 
         self.remove_btn = QtWidgets.QPushButton("", self)
-        self.remove_btn.setIcon(QtGui.QIcon('nixui/icons/trash.png'))
+        self.remove_btn.setIcon(icon.get_icon('trash.png'))
         self.remove_btn.clicked.connect(self.remove_clicked)
 
         btn_hbox = QtWidgets.QHBoxLayout()
@@ -235,11 +235,11 @@ class ListOf(generic_widgets.ScrollListStackSelector):
         self.item_list.itemDoubleClicked.connect(self.item_list.editItem)
 
         self.add_btn = QtWidgets.QPushButton("", self)
-        self.add_btn.setIcon(QtGui.QIcon('nixui/icons/plus.png'))
+        self.add_btn.setIcon(icon.get_icon('plus.png'))
         self.add_btn.clicked.connect(self.add_clicked)
 
         self.remove_btn = QtWidgets.QPushButton("", self)
-        self.remove_btn.setIcon(QtGui.QIcon('nixui/icons/trash.png'))
+        self.remove_btn.setIcon(icon.get_icon('trash.png'))
         self.remove_btn.clicked.connect(self.remove_clicked)
 
         btn_hbox = QtWidgets.QHBoxLayout()
