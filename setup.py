@@ -10,7 +10,7 @@ setup(
     url='',
     packages=['nixui', 'nixui.parser'],
     package_data={'nixui': ['icons/*']},
-    include_package_data=False,
+    include_package_data=True,
     entry_points={
         'console_scripts': ['nix-gui=nixui.gui:main'],
     }
