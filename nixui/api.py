@@ -23,7 +23,7 @@ def get_release_json():
     if not os.path.exists(release_path):
         subprocess.run([
             'nix-build',
-            '/etc/nixos/nixpkgs/nixos/release.nix',
+            '<nixpkgs/nixos/release.nix>',
             '-A',
             'options',
             '-o',
