@@ -2,24 +2,41 @@
 ** Architecture
 TODO: expand on this general outline
 
-Components:
+Broadly, =nix-gui= can be considered to have 4 components
 - Form Generator
 - State Manager
 - API
 - Parser
 
-*** Form generator
-- convert options "tree" and type spec into option selection heirarchy
-- create the appropriate forms for editing value based on type
+*** Form Generator
+The form generator dynamically generates widgets to both navigate the options "tree" and modify option values.
+
+The options "tree" is descended one node at a time, querying the State Manager for the type spec and descendants of each node until fully resolving an option.
+
+The State Manager is queried and a form to modify the option value is generated. When modified, the State Manager is notified.
+
 *** State Manager
-- Connect user actions to form / data model changes
-- Record state changes to memory
+Upon initialization, the state manager queries the API and retrieves the type-spec and initial state of options in =CONFIGURATION_PATH=.
+
+When a user performs an action, such as applying changes to a form or undoing an action it tracks state manages and reconds them to an in-memory model.
+
 *** API
-- read data from parser, convert into sensible data structures
-- write data
+The API handles all system interactions related to retrieval and writing of option data. It abstracts away the complexities involved in discovering an options user-defined values, system defaults, types, etc.
+
+Furthermore, API writes changes to =CONFIGURATION_PATH=.
+
+It uses a variety of tools to get the job done:
+- =nix_eval.py= utilizes =nix-instantiate --eval= and =unsafeGetAttrPos= (among other functions) to determine the location of an option within =CONFIGURATION_PATH=.
+- =ast.py= uses =rnix-parser= convert a module to an AST.
+- =parser.py= uses =nix_eval.py= to find the location of an option, and =ast.py= to retrieve expression given the location of an option.
+- The schema is generated via =nix-build <nixpkgs/nixos/release.nix>=
+- A variety of helper functions provide access to schema data for arbitrary options
+
+Note: API's interface won't substantially change, but the way it retrieves data will become more correct and faster after https://github.com/lapp0/nix-gui/issues/9 is implement
 *** Parser
-- Language Server Protocol Client
-- =rnix-parser= handler and =unsafeGetAttrPos= evaluator
+- Generate ASTs
+- Determine which variables are in scope, where they come from, and whether they can be used in an expression
+
 
 ** Files
 (TODO: update)
