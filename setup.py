@@ -9,6 +9,8 @@ setup(
     author_email='andrew@nixgui.rew.la',
     url='',
     packages=['nixui', 'nixui.parser'],
+    package_data={'': ['nixui/icons/*']},
+    include_package_data=True,
     entry_points={
         'console_scripts': ['nix-gui=nixui.gui:main'],
     }
