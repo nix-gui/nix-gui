@@ -27,10 +27,12 @@ An additional motive for this project is to enable system configuration for [[ht
 - [[docs/development.org][Development]]
 
 ** Contributing
-Non-developers (and interested developers), if you want to help, please contact me on matrix (details below) to help with UX testing.
+Non-developers (and interested developers), if you want to help, please
+- Run the application and submit bug report issues on GitHub.
+- Contact me on matrix (details below) to help more directly with UX testing.
 
 Developers, if you're interested in contributing, you may
-- Review the code and point out potential improvements and flaws.
+- Review the code, run the application, and point out potential improvements, flaws, and bugs by submitting issues.
 - Review milestones and issues and create pull requests to address bugs and missing features.
 - Contribute to important dependencies including [[https://github.com/nix-community/rnix-parser/][rnix-parser]] and [[https://github.com/nix-community/rnix-lsp][rnix-lsp]].
 - Contact me on matrix to discuss.
