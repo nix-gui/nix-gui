@@ -34,7 +34,7 @@ def get_full_node_string(node):
 #############
 def get_ast(file_path):
     ast_str = get_ast_str(file_path)
-    ast_str = ast_str.decode().replace('\\\"', 'EQ')  # TODO 3929: fix hack - can't parse \" properly
+    ast_str = ast_str.decode()
     return parse_ast_str(ast_str)
 
 
@@ -62,7 +62,7 @@ Token = collections.namedtuple('Token', ['name', 'position', 'quoted'])
 NumRange = collections.namedtuple('NumRange', ['start', 'end'])
 
 
-AST_DUMP_GRAMMAR = parsimonious.grammar.Grammar("""
+AST_DUMP_GRAMMAR = parsimonious.grammar.Grammar(r"""
     elems =      elem+
     elem =       token / node
 
@@ -72,13 +72,13 @@ AST_DUMP_GRAMMAR = parsimonious.grammar.Grammar("""
     name =       ~r"[A-Z]+(?:_[A-Z]+)*"
     numrange =   ~r"[0-9]+\.\.[0-9]+"
 
-    lpar =       "("
-    rpar =       ")"
+    lpar =       '("'
+    rpar =       '")'
     lbracket =   "{"
     rbracket =   "}"
     ws =         ~r"\s*"
 
-    quoted =     ~r'"[^\"]+"'
+    quoted =     ~r'(\\"|[^"])*'
 """)
 
 
@@ -100,8 +100,6 @@ class NixVisitor(parsimonious.nodes.NodeVisitor):
     def visit_token(self, node, visited_children):
         """ Returns the overall output. """
         name, _, quoted, _, _, position, _ = visited_children
-        quoted = quoted[1:-1]  # strip quote symbols (TODO: move this to the grammar)
-        quoted = quoted.replace('EQ', '\"')  # TODO: fix hack (see note 3929 above)
         quoted = quoted\
             .replace(r'\t', "\t")\
             .replace(r'\r', "\r")\
