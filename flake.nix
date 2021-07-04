@@ -5,9 +5,10 @@
     nixpkgs.url = "github:nixos/nixpkgs";
     flake-utils.url = "github:numtide/flake-utils";
     rnix-lsp.url = "github:nix-community/rnix-lsp";
+    rnix-parser.url = "github:nix-community/rnix-parser";
   };
 
-  outputs = { self, nixpkgs, rnix-lsp, flake-utils }:
+  outputs = { self, nixpkgs, rnix-lsp, rnix-parser, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
@@ -20,6 +21,8 @@
              inherit pname version;
              sha256 = "sha256-xtfTAREOY8kc/DMSm+rtMDoyxrPiYNPXBEtYdrGgWgc=";
            };
+
+           patches = [ ./0001-Interrim-solution-for-Unicode-support.patch ];
 
            cargoSha256 = "sha256-n65YyV0KGA55Z9vYhyQ4XNOWKRfpbgZ18rgJLYygT+Q=";
            cargoBuildFlags = [ "--example" "dump-ast" ];

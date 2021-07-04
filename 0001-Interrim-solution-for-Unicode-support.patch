@@ -1,0 +1,39 @@
+From 4e2578b1302a098363e6fca7217a9f368b57d727 Mon Sep 17 00:00:00 2001
+From: Adrian Parvin Ouano <adrianparvino@gmail.com>
+Date: Mon, 5 Jul 2021 01:12:12 +0800
+Subject: [PATCH] Interrim solution for Unicode support
+
+---
+ src/types.rs                   | 2 +-
+ test_data/general/error.expect | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/src/types.rs b/src/types.rs
+index b5aa033..5699ed5 100644
+--- a/src/types.rs
++++ b/src/types.rs
+@@ -125,7 +125,7 @@ impl fmt::Display for TextDump {
+                 WalkEvent::Enter(enter) => {
+                     write!(f, "{:i$}{:?}", "", enter.kind(), i = indent)?;
+                     if let NodeOrToken::Token(token) = enter {
+-                        write!(f, "(\"{}\")", token.text().escape_default())?
++                        write!(f, "(\"{}\")", token.text().escape_debug())?
+                     }
+                     write!(f, " {}..{}", usize::from(enter.text_range().start()), usize::from(enter.text_range().end()))?;
+                     if let NodeOrToken::Node(_) = enter {
+diff --git a/test_data/general/error.expect b/test_data/general/error.expect
+index 45813cc..2befeb1 100644
+--- a/test_data/general/error.expect
++++ b/test_data/general/error.expect
+@@ -20,7 +20,7 @@ NODE_ROOT 0..166 {
+       TOKEN_WHITESPACE(" ") 9..10
+       NODE_ERROR 10..28 {
+         TOKEN_STRING_START("\"") 10..11
+-        TOKEN_STRING_CONTENT("Hello \u{d9}nic\u{f6}d\u{259}") 11..27
++        TOKEN_STRING_CONTENT("Hello Ùnicödə") 11..27
+         TOKEN_STRING_END("\"") 27..28
+       }
+       TOKEN_WHITESPACE(" ") 28..29
+-- 
+2.31.1
+
