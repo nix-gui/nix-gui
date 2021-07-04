@@ -20,7 +20,7 @@ def get_node_at_position(node, pos, legal_type=None):
 
 
 def get_full_node_string(node):
-    s = b''
+    s = ''
     for elem in node.elems:
         if isinstance(elem, Node):
             s += get_full_node_string(elem)
@@ -102,7 +102,13 @@ class NixVisitor(parsimonious.nodes.NodeVisitor):
         name, _, quoted, _, _, position, _ = visited_children
         quoted = quoted[1:-1]  # strip quote symbols (TODO: move this to the grammar)
         quoted = quoted.replace('EQ', '\"')  # TODO: fix hack (see note 3929 above)
-        quoted = quoted.encode('utf-8')  # unescape
+        quoted = quoted\
+            .replace(r'\t', "\t")\
+            .replace(r'\r', "\r")\
+            .replace(r'\n', "\n")\
+            .replace(r"\'", "'")\
+            .replace(r'\"', '"')\
+            .replace("\\\\", "\\") # See https://doc.rust-lang.org/std/primitive.char.html#method.escape_default except for Unicode escapes
         return Token(name, position, quoted)
 
     def visit_numrange(self, node, visited_children):
