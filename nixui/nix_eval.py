@@ -2,6 +2,8 @@ import json
 import subprocess
 
 from nixui.logging import LogPipe, logger
+from string import Template
+
 
 
 def nix_instantiate_eval(expr, strict=False):
@@ -25,9 +27,9 @@ def nix_instantiate_eval(expr, strict=False):
 def get_modules_defined_attrs(module_path, attr_loc=[]):
     attributes = {}
 
-    leaves = nix_instantiate_eval("""
+    leaves_expr_template = Template("""
 let
-  config = import <nixos-config> {config = {}; pkgs = import <nixpkgs> {}; lib = import <nixpkgs/lib>;};
+  config = import ${module_path} {config = {}; pkgs = import <nixpkgs> {}; lib = import <nixpkgs/lib>;};
   closure = builtins.tail (builtins.genericClosure {
     startSet = [{ key = builtins.toJSON []; value = {value = config;}; }];
     operator = {key, value}: builtins.filter (x: x != null) (
@@ -39,7 +41,7 @@ let
             pos = (builtins.unsafeGetAttrPos new_key value.value);
           in
             if
-              builtins.isNull pos || (pos.file != builtins.toString <nixos-config>)
+              builtins.isNull pos || (pos.file != builtins.toString "${module_path}")
             then null
             else {
               key = builtins.toJSON ((builtins.fromJSON key) ++ [new_key]);
@@ -55,9 +57,9 @@ let
   leaves = builtins.filter (x: !(builtins.isAttrs x.value.value)) closure;
 in
 builtins.map (x: {name = builtins.fromJSON x.key; position = x.value.pos;}) leaves
-    """,
-    strict=True
-    )
+    """)
+
+    leaves = nix_instantiate_eval(leaves_expr_template.substitute(module_path=module_path), strict=True)
 
     return {
         tuple(v['name']): {"position": v['position']}
