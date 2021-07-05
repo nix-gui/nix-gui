@@ -25,9 +25,7 @@ def nix_instantiate_eval(expr, strict=False):
 def get_modules_defined_attrs(module_path, attr_loc=[]):
     attributes = {}
 
-    return {
-        tuple(v['name']): {"position": v['position']}
-        for v in nix_instantiate_eval("""
+    leaves = nix_instantiate_eval("""
 let
   config = import <nixos-config> {config = {}; pkgs = import <nixpkgs> {}; lib = import <nixpkgs/lib>;};
   closure = builtins.tail (builtins.genericClosure {
@@ -57,7 +55,13 @@ let
   leaves = builtins.filter (x: !(builtins.isAttrs x.value.value)) closure;
 in
 builtins.map (x: {name = builtins.fromJSON x.key; position = x.value.pos;}) leaves
-          """, strict=True)
+    """,
+    strict=True
+    )
+
+    return {
+        tuple(v['name']): {"position": v['position']}
+        for v in leaves
     }
 
 def eval_attribute(module_path, attribute):
