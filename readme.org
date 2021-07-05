@@ -1,13 +1,13 @@
 [[https://github.com/lapp0/nix-gui/milestones?direction=asc&sort=due_date&state=open][(Work in Progress)]]
 
 * Nix-Gui
-Make nixos usable for non-technical users through a settings / package management GUI.
+Make NixOS usable for non-technical users through a settings / package management GUI.
 
 [[screenshots/historical_2021_06_23.gif]]
 
 
 ** Motives
-The declarative nature of nixos provides it the capability of being *the most user friendly linux distro.* No more [[https://github.com/nix-community/home-manager][editing dotfiles]], =/etc= files, manually writing timers, services, running commands to manage and create users and groups, etc. Nixos integrates all of that into a declarative system, and this project integrates nixos' declarative system into a GUI.
+The declarative nature of NixOS provides it the capability of being *the most user friendly linux distro.* No more [[https://github.com/nix-community/home-manager][editing dotfiles]], =/etc= files, manually writing timers, services, running commands to manage and create users and groups, etc. NixOS integrates all of that into a declarative system, and this project integrates NixOS' declarative system into a GUI.
 
 *** Serve Users Unfamiliar with or Learning Nix
 Nix-Gui is a configuration management tool designed for those who haven't mastered the (arguably difficult) nix language. It is also an attempt to replicate the ease of use of popular configuration systems including
@@ -18,7 +18,7 @@ Nix-Gui is a configuration management tool designed for those who haven't master
 Nix-Gui is designed to gradually and comfortably teach users about the mechanics of the nix language and nixpkgs.
 
 *** Serve as an Effective System Management Tool for Experienced Users
-At the most advanced level, and once feature parity has been achieved. Power users should be capable of changing system configurations, creating system ISOs, [[https://github.com/NixOS/nixops][deploying systems to the cloud]], etc in Nix-Gui more intelligibly and faster than through their traditional means of creating a nix module.
+At the most advanced level, and once feature parity has been achieved. Power users should be capable of changing system configuration, creating system ISOs, [[https://github.com/NixOS/nixops][deploying systems to the cloud]], etc in Nix-Gui more intelligibly and faster than through their traditional means of writing a nix module.
 
 *** Serve Mobile Users
 An additional motive for this project is to enable system configuration for [[https://mobile.nixos.org/][mobile devices]] without having to type code on your phone.
