@@ -15,7 +15,7 @@ Nix-Gui is a configuration management tool designed for those who haven't master
 - Mint's Cinnimon Settings
 - Synaptic Package Manager
 
-  Nix-Gui is designed to gradually and comfortably teach users about the mechanics of the nix language and nixpkgs.
+Nix-Gui is designed to gradually and comfortably teach users about the mechanics of the nix language and nixpkgs.
 
 *** Serve as an Effective System Management Tool for Experienced Users
 At the most advanced level, and once feature parity has been achieved. Power users should be capable of changing system configurations, creating system ISOs, [[https://github.com/NixOS/nixops][deploying systems to the cloud]], etc in Nix-Gui more intelligibly and faster than through their traditional means of creating a nix module.
