@@ -24,22 +24,41 @@ def nix_instantiate_eval(expr, strict=False):
 
 def get_modules_defined_attrs(module_path, attr_loc=[]):
     attributes = {}
-    for sub_attr_datapoint in get_subattribute_data(module_path, attr_loc):
-        full_attr_loc = attr_loc + [sub_attr_datapoint['name']]
-        if sub_attr_datapoint['position'] is not None and sub_attr_datapoint['position']['file'] == module_path:
-            if sub_attr_datapoint['type'] != 'set':
-                attributes[tuple(full_attr_loc)] = sub_attr_datapoint
-            else:
-                res = get_modules_defined_attrs(
-                    module_path,
-                    full_attr_loc
-                )
-                if not res:
-                    attributes[tuple(full_attr_loc)] = sub_attr_datapoint
-                else:
-                    attributes.update(res)
-    return attributes
 
+    return {
+        tuple(v['name']): {"position": v['position']}
+        for v in nix_instantiate_eval("""
+let
+  config = import <nixos-config> {config = {}; pkgs = import <nixpkgs> {}; lib = import <nixpkgs/lib>;};
+  closure = builtins.tail (builtins.genericClosure {
+    startSet = [{ key = builtins.toJSON []; value = {value = config;}; }];
+    operator = {key, value}: builtins.filter (x: x != null) (
+      if
+        builtins.isAttrs value.value
+      then
+        builtins.map (new_key:
+          let
+            pos = (builtins.unsafeGetAttrPos new_key value.value);
+          in
+            if
+              builtins.isNull pos || (pos.file != builtins.toString <nixos-config>)
+            then null
+            else {
+              key = builtins.toJSON ((builtins.fromJSON key) ++ [new_key]);
+              value = {
+                value = builtins.getAttr new_key value.value;
+                inherit pos;
+              };
+            }
+        ) (builtins.attrNames value.value)
+      else []
+    );
+  });
+  leaves = builtins.filter (x: !(builtins.isAttrs x.value.value)) closure;
+in
+builtins.map (x: {name = builtins.fromJSON x.key; position = x.value.pos;}) leaves
+          """, strict=True)
+    }
 
 def eval_attribute(module_path, attribute):
     expr = (
@@ -49,28 +68,6 @@ def eval_attribute(module_path, attribute):
         attribute
     )
     return nix_instantiate_eval(expr)
-
-
-def get_subattribute_data(module_path, attr_loc):
-    """
-    get name, type, and position (line, column, filename)
-    of all child-attributes in `attr_loc`'s set
-    """
-    attr_lookup = ('.' + '.'.join([f'"{a}"' for a in attr_loc])) if attr_loc else ''
-    expr = f"""
-    let
-      loadedmodule = import {module_path} {{config = {{}}; pkgs = import <nixpkgs> {{}}; lib = import <nixpkgs/lib>;}};
-    in (
-      map
-      (x: rec {{
-        name = x;
-        type = builtins.typeOf (builtins.getAttr x loadedmodule{attr_lookup});
-        position = builtins.unsafeGetAttrPos x loadedmodule{attr_lookup};
-      }})
-      (builtins.attrNames loadedmodule{attr_lookup})
-    )
-    """
-    return nix_instantiate_eval(expr, strict=True)
 
 
 def eval_attribute_position(module_path, attr_loc):
