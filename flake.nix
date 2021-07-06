@@ -55,13 +55,16 @@
                 pylspclient
                 rnix-lsp.defaultPackage."${system}"
               ];
-              checkInputs = [pkgs.python3Packages.pytest];
-              checkPhase = "pytest";
               makeWrapperArgs = [
                 "--set RUST_LOG trace"
                 "--set QT_PLUGIN_PATH ${pkgs.qt5.qtbase}/${pkgs.qt5.qtbase.qtPluginPrefix}"
               ];
 
+              checkInputs = [
+                pkgs.python3Packages.pytest
+                pkgs.python3Packages.pytest-datafiles
+              ];
+              checkPhase = "cd nixui && pytest";
             }) { };
         defaultPackage = self.packages.${system}.nix-gui;
         apps.nix-gui = flake-utils.lib.mkApp {
