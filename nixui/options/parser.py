@@ -28,7 +28,7 @@ def get_column_line_index_map(path):
     with open(path) as f:
         for i, line in enumerate(f.readlines()):
             line_index_map[i] = index
-            index += len(line)
+            index += len(line.encode("utf8"))
 
     mapper = lambda line, col: line_index_map[line] + col
     return mapper
