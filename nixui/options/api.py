@@ -5,7 +5,7 @@ import os
 import subprocess
 
 from nixui.options import parser, nix_eval
-from nixui.utils import containers, store, copy_decorator
+from nixui.utils import tree, store, copy_decorator
 
 
 class NoDefaultSet:
@@ -73,7 +73,7 @@ def get_option_values_map():
 @functools.lru_cache(1)
 def get_option_tree():
     options = get_option_data()
-    options_tree = containers.Tree()
+    options_tree = tree.Tree()
 
     for option_name, opt in options.items():
         options_tree.add_leaf(option_name.split('.'), opt)

@@ -15,6 +15,6 @@ setup(
     ]},
     include_package_data=True,
     entry_points={
-        'console_scripts': ['nix-gui=nixui.gui:main'],
+        'console_scripts': ['nix-gui=nixui.main:main'],
     }
 )
