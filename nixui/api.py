@@ -4,7 +4,7 @@ import json
 import os
 import subprocess
 
-from nixui import containers, nix_eval, store
+from nixui import containers, nix_eval, store, util
 from nixui.parser import parser
 
 
@@ -15,6 +15,7 @@ class NoDefaultSet:
 #############################
 # utility functions / caching
 ############################
+@util.return_copy
 @functools.lru_cache(1)
 def get_release_json():
     release_path = os.path.join(store.get_store_path(), 'release_out')
@@ -33,6 +34,7 @@ def get_release_json():
     return json.load(open(release_options_json_path))
 
 
+@util.return_copy
 @functools.lru_cache(1)
 def get_option_data():
     defaults_and_schema = get_release_json()
@@ -57,6 +59,7 @@ def get_option_data():
 # - get option types
 
 
+@util.return_copy
 @functools.lru_cache(1)
 def get_option_values_map():
     # extract actual value
@@ -66,6 +69,7 @@ def get_option_values_map():
     }
 
 
+@util.return_copy
 @functools.lru_cache(1)
 def get_option_tree():
     options = get_option_data()
@@ -77,6 +81,7 @@ def get_option_tree():
     return options_tree
 
 
+@util.return_copy
 @functools.lru_cache(1)
 def get_all_packages_map():
     path_name_map = {}
