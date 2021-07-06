@@ -3,7 +3,7 @@ import re
 from PyQt5 import QtWidgets, QtGui, QtCore
 
 from nixui.options import api
-from nixui.graphics import richtext, option_widgets, generic_widgets, icon
+from nixui.graphics import richtext, field_widgets, generic_widgets, icon
 
 
 class GenericOptionSetDisplay(QtWidgets.QWidget):
@@ -39,7 +39,7 @@ class GenericOptionSetDisplay(QtWidgets.QWidget):
         elif option_type.startswith('list of '):
             view = ListOf(statemodel, option)
         else:
-            view = option_widgets.GenericOptionDisplay(statemodel, option)
+            view = field_widgets.GenericOptionDisplay(statemodel, option)
 
         lay.setAlignment(QtCore.Qt.AlignTop)
         lay.setSpacing(0)
