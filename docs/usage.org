@@ -1,3 +1,5 @@
+This document describes the behavior of Nix-Gui [[https://github.com/lapp0/nix-gui/milestones][v1.0]].
+
 * Running
 - Ensure nixos is installed
 - =CONFIGURATION_PATH=/etc/nixos/configuration.nix nix run github:lapp0/nix-gui=

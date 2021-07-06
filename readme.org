@@ -24,7 +24,6 @@ At the most advanced level, and once feature parity has been achieved. Power use
 An additional motive for this project is to enable system configuration for [[https://mobile.nixos.org/][mobile devices]] without having to type code on your phone.
 
 ** Docs
-- [[docs/overview.org][Project Overview]]
 - [[docs/usage.org][Usage]]
 - [[docs/behavior.org][Behavior]]
 - [[docs/development.org][Development]]
