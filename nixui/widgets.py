@@ -64,11 +64,6 @@ class OptionListItem(QtWidgets.QListWidgetItem):
 
 
 class OptionChildViewer(generic_widgets.ScrollListStackSelector):
-    # TODO: filter
-    # TODO: proper sizing
-    # TODO: set option selection color to light green
-    # TODO: don't automatically select first row
-
     ItemCls = OptionListItem
     ListCls = QtWidgets.QListWidget
 
@@ -206,7 +201,6 @@ class AttributeSetOf(generic_widgets.ScrollListStackSelector):
 
     def insert_items(self):
         pass
-        # TODO: get from parser
         #for text in api.get_child_options(self.option):
         #    icon_path = None
         #    it = self.ItemCls(text, icon_path)
@@ -265,7 +259,6 @@ class ListOf(generic_widgets.ScrollListStackSelector):
 
     def insert_items(self):
         pass
-        # TODO: get from parser
         #for text in api.get_child_options(self.option):
         #    icon_path = None
         #    it = self.ItemCls(text, icon_path)

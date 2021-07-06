@@ -12,7 +12,7 @@ class HTMLDelegate(QtWidgets.QStyledItemDelegate):
         option.text = ""
         style.drawControl(QtWidgets.QStyle.CE_ItemViewItem, option, painter)
         ctx = QtGui.QAbstractTextDocumentLayout.PaintContext()
-        textRect = style.subElementRect(QtWidgets.QStyle.SE_ItemViewItemText, option)
+        textRect = style.subElementRect(QtWidgets.QStyle.SE_ItemViewItemText, option, None)
         painter.save()
         painter.translate(textRect.topLeft())
         painter.setClipRect(textRect.translated(-textRect.topLeft()))

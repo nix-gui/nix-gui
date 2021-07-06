@@ -136,11 +136,6 @@ class StringListEditorWidget(QtWidgets.QWidget):
 
 
 class ScrollListStackSelector(QtWidgets.QWidget):
-    # TODO: filter
-    # TODO: proper sizing
-    # TODO: set option selection color to light green
-    # TODO: don't automatically select first row
-
     ItemCls = QtWidgets.QListWidgetItem
     ListCls = QtWidgets.QListWidget
 
