@@ -51,11 +51,11 @@
               propagatedBuildInputs = [
                 pkgs.python3Packages.pyqt5
                 pkgs.python3Packages.parsimonious
-                rnix
                 pylspclient
                 rnix-lsp.defaultPackage."${system}"
               ];
               makeWrapperArgs = [
+                "--prefix PATH : ${rnix}/bin"
                 "--set RUST_LOG trace"
                 "--set QT_PLUGIN_PATH ${pkgs.qt5.qtbase}/${pkgs.qt5.qtbase.qtPluginPrefix}"
               ];
