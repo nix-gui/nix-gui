@@ -8,7 +8,7 @@ setup(
     author='Andrew Lapp',
     author_email='andrew@nixgui.rew.la',
     url='',
-    packages=['nixui', 'nixui.parser'],
+    packages=['nixui', 'nixui.options', 'nixui.graphics', 'nixui.utils'],
     package_data={'nixui': ['icons/*']},
     include_package_data=True,
     entry_points={

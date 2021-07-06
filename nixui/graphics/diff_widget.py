@@ -1,8 +1,8 @@
-from PyQt5 import QtWidgets, QtCore
-
 import difflib
 
-from nixui import generic_widgets
+from PyQt5 import QtWidgets
+
+from nixui.graphics import generic_widgets
 
 
 class DiffedOptionListSelector(generic_widgets.ScrollListStackSelector):

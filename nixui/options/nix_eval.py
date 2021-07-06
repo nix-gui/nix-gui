@@ -1,9 +1,8 @@
 import json
 import subprocess
 
-from nixui.logging import LogPipe, logger
+from nixui.utils.logger import LogPipe, logger
 from string import Template
-
 
 
 def nix_instantiate_eval(expr, strict=False):
@@ -25,8 +24,6 @@ def nix_instantiate_eval(expr, strict=False):
 
 
 def get_modules_defined_attrs(module_path, attr_loc=[]):
-    attributes = {}
-
     leaves_expr_template = Template("""
 let
   config = import ${module_path} {config = {}; pkgs = import <nixpkgs> {}; lib = import <nixpkgs/lib>;};
@@ -65,6 +62,7 @@ builtins.map (x: {name = builtins.fromJSON x.key; position = x.value.pos;}) leav
         tuple(v['name']): {"position": v['position']}
         for v in leaves
     }
+
 
 def eval_attribute(module_path, attribute):
     expr = (

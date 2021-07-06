@@ -2,7 +2,8 @@ import re
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-from nixui import api, richtext, option_widgets, generic_widgets, icon
+from nixui.options import api
+from nixui.graphics import richtext, option_widgets, generic_widgets, icon
 
 
 class GenericOptionSetDisplay(QtWidgets.QWidget):

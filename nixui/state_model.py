@@ -1,6 +1,20 @@
 import collections
 
-from nixui import api, slot_mapper
+from nixui.options import api
+
+
+class SlotMapper:
+    def __init__(self):
+        self.slot_fns = collections.defaultdict(list)
+
+    def add_slot(self, key, slot):
+        self.slot_fns[key].append(slot)
+
+    def __call__(self, key):
+        def fn(*args, **kwargs):
+            for slot in self.slot_fns[key]:
+                slot(*args, **kwargs)
+        return fn
 
 
 Update = collections.namedtuple('Update', ['option', 'old_value', 'new_value'])
@@ -12,7 +26,7 @@ class StateModel:
         self.current_values = api.get_option_values_map()
 
         # TODO: is including the slotmapper overloading the StateModel? What are the alternatives?
-        self.slotmapper = slot_mapper.SlotMapper()
+        self.slotmapper = SlotMapper()
         self.slotmapper.add_slot('value_changed', self.record_update)
         self.slotmapper.add_slot('undo', self.undo)
 
@@ -26,7 +40,6 @@ class StateModel:
             for option, current_value in self.current_values.items()
             if original_values_map[option] != current_value
         ]
-
 
     def record_update(self, option, new_value):
         old_value = self.current_values[option]

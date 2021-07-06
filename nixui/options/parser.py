@@ -1,7 +1,4 @@
-import collections
-
-from nixui.parser import ast
-from nixui import nix_eval
+from nixui.options import ast, nix_eval
 
 
 def get_all_option_values(root_module_path):

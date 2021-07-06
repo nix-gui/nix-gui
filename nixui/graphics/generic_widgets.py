@@ -1,7 +1,6 @@
-from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5 import QtWidgets, QtCore
 
-
-from nixui import richtext, icon
+from nixui.graphics import richtext, icon
 
 
 class ExclusiveButtonGroup(QtWidgets.QFrame):

@@ -2,7 +2,7 @@ import re
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-from nixui import api
+from nixui.options import api
 
 
 class HTMLDelegate(QtWidgets.QStyledItemDelegate):

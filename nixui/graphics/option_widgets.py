@@ -1,10 +1,11 @@
-from operator import eq
 from functools import partial, lru_cache
+from operator import eq
 import re
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-from nixui import api, richtext, generic_widgets
+from nixui.options import api
+from nixui.graphics import richtext, generic_widgets
 
 
 # tuples of (match fn, widget)
