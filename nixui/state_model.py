@@ -19,6 +19,15 @@ class StateModel:
     def get_value(self, option):
         return self.current_values[option]
 
+    def get_update_set(self):
+        original_values_map = api.get_option_values_map()
+        return [
+            Update(option, original_values_map[option], current_value)
+            for option, current_value in self.current_values.items()
+            if original_values_map[option] != current_value
+        ]
+
+
     def record_update(self, option, new_value):
         old_value = self.current_values[option]
         if old_value != new_value:

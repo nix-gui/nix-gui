@@ -2,7 +2,7 @@ import sys
 
 from PyQt5 import QtWidgets, QtCore
 
-from nixui import widgets, state_model, icon
+from nixui import widgets, state_model, icon, diff_widget
 
 
 class NixGuiMainWindow(QtWidgets.QMainWindow):
@@ -29,10 +29,19 @@ class NixGuiMainWindow(QtWidgets.QMainWindow):
         self.actions['undo'].triggered.connect(self.statemodel.slotmapper('undo'))
 
         self.actions['search'] = QtWidgets.QAction(icon.get_icon('search.png'), "&Search", self)
+
         self.actions['view_diff'] = QtWidgets.QAction(icon.get_icon('diff.png'), "&View Diff", self)
+        self.actions['view_diff'].triggered.connect(lambda: diff_widget.DiffDialog(self.statemodel).exec())
+
         self.actions['save'] = QtWidgets.QAction(icon.get_icon('save.png'), "&Save", self)
+
         self.actions['build'] = QtWidgets.QAction(icon.get_icon('build.png'), "&Build", self)
         self.actions['preferences'] = QtWidgets.QAction(icon.get_icon('preferences.png'), "&Preferences", self)
+
+        # TODO: enable the below
+        self.actions['search'].setEnabled(False)
+        self.actions['build'].setEnabled(False)
+        self.actions['preferences'].setEnabled(False)
 
     def _create_tool_bars(self):
         apply_bar = self.addToolBar("Apply")
