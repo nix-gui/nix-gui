@@ -1,13 +1,20 @@
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets
 
 import difflib
 
-from nixui import generic_widgets
+from nixui.graphics import generic_widgets
+from nixui.options import object_to_expression
 
 
 class DiffedOptionListSelector(generic_widgets.ScrollListStackSelector):
     def __init__(self, updates, *args, **kwargs):
-        self.updates_map = {u.option: (str(u.old_value), str(u.new_value)) for u in updates}
+        self.updates_map = {
+            u.option: (
+                object_to_expression.get_formatted_expression(u.old_value),
+                object_to_expression.get_formatted_expression(u.new_value)
+            )
+            for u in updates
+        }
         super().__init__(*args, **kwargs)
 
         # hack: make text box 3x the width of the list view
