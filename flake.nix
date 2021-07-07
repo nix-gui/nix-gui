@@ -5,7 +5,6 @@
     nixpkgs.url = "github:nixos/nixpkgs";
     flake-utils.url = "github:numtide/flake-utils";
     rnix-lsp.url = "github:nix-community/rnix-lsp";
-    nixpkgs-fmt.url = "github:nix-community/nixpkgs-fmt";
   };
 
   outputs = { self, nixpkgs, rnix-lsp, flake-utils }:
@@ -55,9 +54,9 @@
                 rnix
                 pylspclient
                 rnix-lsp.defaultPackage."${system}"
-                nixpkgs-fmt.defaultPackage."${system}"
               ];
               makeWrapperArgs = [
+                "--prefix PATH : ${pkgs.nixpkgs-fmt}/bin"
                 "--set RUST_LOG trace"
                 "--set QT_PLUGIN_PATH ${pkgs.qt5.qtbase}/${pkgs.qt5.qtbase.qtPluginPrefix}"
               ];
