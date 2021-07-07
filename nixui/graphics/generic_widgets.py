@@ -1,7 +1,6 @@
-from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5 import QtWidgets, QtCore
 
-
-from nixui import richtext, icon
+from nixui.graphics import richtext, icon
 
 
 class ExclusiveButtonGroup(QtWidgets.QFrame):
@@ -136,11 +135,6 @@ class StringListEditorWidget(QtWidgets.QWidget):
 
 
 class ScrollListStackSelector(QtWidgets.QWidget):
-    # TODO: filter
-    # TODO: proper sizing
-    # TODO: set option selection color to light green
-    # TODO: don't automatically select first row
-
     ItemCls = QtWidgets.QListWidgetItem
     ListCls = QtWidgets.QListWidget
 

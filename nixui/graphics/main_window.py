@@ -1,8 +1,7 @@
-import sys
-
 from PyQt5 import QtWidgets, QtCore
 
-from nixui import widgets, state_model, icon, diff_widget
+
+from nixui.graphics import nav_widgets, icon, diff_widget
 
 
 class NixGuiMainWindow(QtWidgets.QMainWindow):
@@ -12,7 +11,7 @@ class NixGuiMainWindow(QtWidgets.QMainWindow):
         self.statemodel = statemodel
 
         self.setWindowTitle("Nix UI")
-        self.setCentralWidget(widgets.GenericOptionSetDisplay(statemodel=statemodel))
+        self.setCentralWidget(nav_widgets.GenericOptionSetDisplay(statemodel=statemodel))
 
         self.actions = {}
 
@@ -69,16 +68,3 @@ class NixuiStatusBar(QtWidgets.QStatusBar):
 
     def display_undo_performed(self, option, reverted_to, reverted_from):
         self.showMessage(f'UNDO {option}: reverted from `{reverted_from}` to `{reverted_to}`')
-
-
-def main():
-    statemodel = state_model.StateModel()
-
-    app = QtWidgets.QApplication(sys.argv)
-    nix_gui = NixGuiMainWindow(statemodel)
-    nix_gui.show()
-    sys.exit(app.exec())
-
-
-if __name__ == '__main__':
-    main()

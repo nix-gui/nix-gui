@@ -4,8 +4,8 @@ import json
 import os
 import subprocess
 
-from nixui import containers, nix_eval, store, util
-from nixui.parser import parser
+from nixui.options import parser, nix_eval
+from nixui.utils import tree, store, copy_decorator
 
 
 class NoDefaultSet:
@@ -15,7 +15,7 @@ class NoDefaultSet:
 #############################
 # utility functions / caching
 ############################
-@util.return_copy
+@copy_decorator.return_copy
 @functools.lru_cache(1)
 def get_release_json():
     release_path = os.path.join(store.get_store_path(), 'release_out')
@@ -34,7 +34,7 @@ def get_release_json():
     return json.load(open(release_options_json_path))
 
 
-@util.return_copy
+@copy_decorator.return_copy
 @functools.lru_cache(1)
 def get_option_data():
     defaults_and_schema = get_release_json()
@@ -59,7 +59,7 @@ def get_option_data():
 # - get option types
 
 
-@util.return_copy
+@copy_decorator.return_copy
 @functools.lru_cache(1)
 def get_option_values_map():
     # extract actual value
@@ -69,11 +69,11 @@ def get_option_values_map():
     }
 
 
-@util.return_copy
+@copy_decorator.return_copy
 @functools.lru_cache(1)
 def get_option_tree():
     options = get_option_data()
-    options_tree = containers.Tree()
+    options_tree = tree.Tree()
 
     for option_name, opt in options.items():
         options_tree.add_leaf(option_name.split('.'), opt)
@@ -81,7 +81,7 @@ def get_option_tree():
     return options_tree
 
 
-@util.return_copy
+@copy_decorator.return_copy
 @functools.lru_cache(1)
 def get_all_packages_map():
     path_name_map = {}

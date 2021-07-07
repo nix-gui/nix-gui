@@ -1,10 +1,11 @@
-from operator import eq
 from functools import partial, lru_cache
+from operator import eq
 import re
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-from nixui import api, richtext, generic_widgets
+from nixui.options import api
+from nixui.graphics import richtext, generic_widgets
 
 
 # tuples of (match fn, widget)
@@ -25,7 +26,7 @@ def get_field_type_widget_map():
         ],
         [
             lambda f: f.startswith('strings concatenated with '),
-            TextField,  # TODO: might waght to use StringListField here?
+            TextField,
         ],
         [
             partial(eq, 'string, not containing newlines or colons'),
@@ -210,11 +211,6 @@ class GenericOptionDisplay(QtWidgets.QWidget):
             self.paint_background_color(194, 249, 197, 255)
         else:
             return
-        #elif api.default_value(self.option) != api.value(self.option):
-        #    TODO: handle cases where changes are non-default AND saved
-        # TODO: handle case where field is invalid
-
-        # TODO: change parent navigation widget colors in heirarchy
         self.update()
 
 
@@ -344,7 +340,7 @@ class IntegerField(QtWidgets.QSpinBox, Field):
         super().focusOutEvent(event)
         self.focus_change.emit()
 
-# TODO: load option strings with self.add_item
+
 class StringListField(generic_widgets.StringListEditorWidget, Field):
     def __init__(self, option, **constraints):
         super().__init__()
@@ -471,7 +467,6 @@ class AttributeSetOf:
         self.focus_change.emit()
 
 
-# TODO
 class NotImplementedField(QtWidgets.QLabel, Field):
     def __init__(self, option, **constraints):
         super().__init__()
@@ -484,7 +479,7 @@ class NotImplementedField(QtWidgets.QLabel, Field):
         return False
 
     def load_value(self, value):
-        self.setText('TODO')
+        self.setText('Not Implemented')
         self.loaded_value = value
 
     @property
@@ -496,6 +491,5 @@ class NotImplementedField(QtWidgets.QLabel, Field):
         self.focus_change.emit()
 
 
-# TODO
 ReferenceField = NotImplementedField
 ExpressionField = NotImplementedField
