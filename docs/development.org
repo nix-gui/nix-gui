@@ -12,6 +12,9 @@
 Once built, =nix-gui= targets a 10ms load time for all form changes.
 * Structure
 ** Architecture
+(editable on draw.io)
+[[./architecture_diagram.png]]
+
 TODO: expand on this general outline
 
 Broadly, =nix-gui= can be considered to have 4 components
