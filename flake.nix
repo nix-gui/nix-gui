@@ -40,7 +40,6 @@
               src = ./.;
               propagatedBuildInputs = [
                 pkgs.python3Packages.pyqt5
-                pkgs.python3Packages.parsimonious
                 pylspclient
                 rnix-lsp.defaultPackage."${system}"
               ];

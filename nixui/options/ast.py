@@ -1,5 +1,4 @@
 import collections
-import parsimonious
 import subprocess
 import json
 
