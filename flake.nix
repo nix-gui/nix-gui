@@ -12,12 +12,12 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
 
-        nix-dump-cst-json = with pkgs; rustPlatform.buildRustPackage rec {
-           pname = "nix_dump_cst_json";
+        nix-dump-syntax-tree-json = with pkgs; rustPlatform.buildRustPackage rec {
+           pname = "nix_dump_syntax_tree_json";
            version = "0.1.0";
 
-           src = ./nix_dump_cst_json;
-           cargoHash = "sha256-+mnp3HDYnG/aXNqwxZXmqT2ESnQz7yxDJ5d1M8Yqg0I=";
+           src = ./nix_dump_syntax_tree_json;
+           cargoHash = "sha256-8yRlG8Paza3sE5GqhB8f0yzF8Pl0CI7F0W8VRhEN6BE=";
         };
 
         pylspclient = pkgs.python3Packages.buildPythonPackage rec {
@@ -44,7 +44,7 @@
                 rnix-lsp.defaultPackage."${system}"
               ];
               makeWrapperArgs = [
-                "--prefix PATH : ${nix-dump-cst-json}/bin"
+                "--prefix PATH : ${nix-dump-syntax-tree-json}/bin"
                 "--set RUST_LOG trace"
                 "--set QT_PLUGIN_PATH ${pkgs.qt5.qtbase}/${pkgs.qt5.qtbase.qtPluginPrefix}"
               ];

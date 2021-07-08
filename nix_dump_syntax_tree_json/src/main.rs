@@ -3,7 +3,7 @@ use std::{env, fs};
 fn main() {
     let mut iter = env::args().skip(1).peekable();
     if iter.peek().is_none() {
-        eprintln!("Usage: dump-ast <file>");
+        eprintln!("Usage: nix_dump_syntax_tree_json <file>");
         return;
     }
     for file in iter {

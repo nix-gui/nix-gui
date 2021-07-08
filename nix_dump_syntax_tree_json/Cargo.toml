@@ -1,5 +1,5 @@
 [package]
-name = "nix_dump_cst_json"
+name = "nix_dump_syntax_tree_json"
 version = "0.1.0"
 edition = "2018"
 

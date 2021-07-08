@@ -32,21 +32,21 @@ def get_full_node_string(node):
 ##############
 # generate ast
 #############
-def get_ast(file_path):
-    p = subprocess.Popen(["nix_dump_cst_json", file_path], stdout=subprocess.PIPE)
-    x = json.load(p.stdout)
-    p.wait()
-    return parse_ast_dict_node_or_token(x)
-
-def parse_ast_dict_node_or_token(d):
-    start, end = d['text_range']
-
-    if d['kind'].startswith('NODE_'):
-        children = [ parse_ast_dict_node_or_token(child) for child in d['children'] ]
-        return Node(d['kind'], NumRange(start, end), children)
-    else:
-        return Token(d['kind'], NumRange(start, end), d['text'])
-
 Node = collections.namedtuple('Node', ['name', 'position', 'elems'])
 Token = collections.namedtuple('Token', ['name', 'position', 'quoted'])
 NumRange = collections.namedtuple('NumRange', ['start', 'end'])
+
+def get_syntax_tree(file_path):
+    p = subprocess.Popen(["nix_dump_syntax_tree_json", file_path], stdout=subprocess.PIPE)
+    x = json.load(p.stdout)
+    p.wait()
+    return parse_syntax_tree_dict_node_or_token(x)
+
+def parse_syntax_tree_dict_node_or_token(d):
+    start, end = d['text_range']
+
+    if d['kind'].startswith('NODE_'):
+        children = [ parse_syntax_tree_dict_node_or_token(child) for child in d['children'] ]
+        return Node(d['kind'], NumRange(start, end), children)
+    else:
+        return Token(d['kind'], NumRange(start, end), d['text'])
