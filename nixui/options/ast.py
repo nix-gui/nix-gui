@@ -33,21 +33,10 @@ def get_full_node_string(node):
 # generate ast
 #############
 def get_ast(file_path):
-    ast_str = get_ast_str(file_path)
-    return parse_ast_str(ast_str)
-
-def get_ast_str(file_path):
-    res = subprocess.run(
-        [
-            "nix_dump_cst_json",
-            file_path
-        ],
-        stdout=subprocess.PIPE,
-    )
-    return res.stdout
-
-def parse_ast_str(ast_str):
-    return parse_ast_dict_node_or_token(json.loads(ast_str))
+    p = subprocess.Popen(["nix_dump_cst_json", file_path], stdout=subprocess.PIPE)
+    x = json.load(p.stdout)
+    p.wait()
+    return parse_ast_dict_node_or_token(x)
 
 def parse_ast_dict_node_or_token(d):
     start, end = d['text_range']
