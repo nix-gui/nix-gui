@@ -205,6 +205,8 @@ def apply_updates(option_value_obj_map):
         'configurations',
         os.environ['CONFIGURATION_PATH'].strip(r'/'),
     )
+    if not os.path.exists(os.path.dirname(save_path)):
+        os.makedirs(os.path.dirname(save_path))
     with open(save_path, 'w') as f:
         f.write(module_string)
     return save_path

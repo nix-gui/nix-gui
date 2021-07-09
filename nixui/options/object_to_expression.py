@@ -27,7 +27,7 @@ def get_expression(obj, within_set_or_list=False):
         expr = f"[{space_separated}]"
     elif isinstance(obj, str):
         if len(obj.split('\n')) > 1:
-            expr = f'''\n{obj.strip()}\n'''
+            expr = f"''\n{obj.strip()}\n''"
         else:
             expr = f'"{obj}"'  # TODO: properly escape
     elif isinstance(obj, int):
