@@ -21,23 +21,19 @@ def format_expression(expression_str):
         return p.stdout
 
 
-def get_expression(obj, within_set_or_list=False):
+def get_expression(obj):
     if isinstance(obj, list):
         space_separated = ' '.join([get_expression(elem) for elem in obj])
-        expr = f"[{space_separated}]"
+        return f"[{space_separated}]"
     elif isinstance(obj, str):
+        # TODO: properly escape
         if len(obj.split('\n')) > 1:
-            expr = f"''\n{obj.strip()}\n''"
+            return f"''\n{obj.strip()}\n''"
         else:
-            expr = f'"{obj}"'  # TODO: properly escape
+            return f'"{obj}"'
     elif isinstance(obj, int):
-        expr = str(obj)
+        return str(obj)
     elif obj is None:
-        expr = "null"
+        return "null"
     else:
         raise TypeError(str((type(obj), obj)))
-
-    if not within_set_or_list:
-        expr += ";"
-
-    return expr
