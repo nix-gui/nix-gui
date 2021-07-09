@@ -69,8 +69,6 @@ class SyntaxTree:
         mapper = lambda line, col: line_index_map[line] + col
         return mapper
 
-    def position_to_line_column(
-
     def to_string(self, node=None):
         """
         Get code string from AST

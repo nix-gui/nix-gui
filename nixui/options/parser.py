@@ -13,7 +13,7 @@ def inject_expressions(module_path, option_expr_map):
     # node which contains options
     returned_attr_set_node = get_returned_attr_set_node(module_path, tree)
 
-    comment_str = '# modified by nix-gui'
+    comment_str = '\n\n# Attribute defined by Nix-Gui\n'
 
     for attr_loc, expression in option_expr_map.items():
         # update option expressions where they exist
@@ -25,22 +25,24 @@ def inject_expressions(module_path, option_expr_map):
                 tree.get_parent(token, node=True),
                 node=True
             )
+            # insert comment
+            tree.insert(
+                node_to_prefix_comment,
+                syntax_tree.Token(id=uuid.uuid4(), name='INJECTION', position=None, quoted=comment_str),
+                index=node_to_prefix_comment.elems.index(tree.get_parent(token, node=True))
+            )
         # add new option definitions where they don't exist
         else:
             attr_str = '.'.join(attr_loc)
             quoted = f'{attr_str} = {option_expr_map[attr_loc]}'
             token = syntax_tree.Token(id=uuid.uuid4(), name='INJECTION', position=None, quoted=quoted)
             tree.insert(returned_attr_set_node, token, index=1)
-            node_to_prefix_comment = tree.get_parent(token, node=True)
-
-        # comment that this was insterted by nix-gui
-        comment_str = '\n\n# Attribute defined by Nix-Gui\n'
-        tree.insert(
-            node_to_prefix_comment,
-            syntax_tree.Token(id=uuid.uuid4(), name='INJECTION', position=None, quoted=comment_str),
-            index=1
-        )
-
+            # insert comment
+            tree.insert(
+                tree.get_parent(token, node=True),
+                syntax_tree.Token(id=uuid.uuid4(), name='INJECTION', position=None, quoted=comment_str),
+                index=1
+            )
     return tree.to_string()
 
 
