@@ -50,10 +50,16 @@
               ];
 
               checkInputs = [
+                pkgs.nix
+                nix-dump-syntax-tree-json
                 pkgs.python3Packages.pytest
                 pkgs.python3Packages.pytest-datafiles
               ];
-              checkPhase = "cd nixui && pytest";
+              checkPhase = "
+                export NIX_STATE_DIR=/build
+                export NIX_PATH=nixpkgs=${pkgs.path}
+                cd nixui && pytest
+              ";
             }) { };
         defaultPackage = self.packages.${system}.nix-gui;
         apps.nix-gui = flake-utils.lib.mkApp {
