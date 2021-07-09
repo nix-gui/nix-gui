@@ -31,6 +31,7 @@ def get_column_line_index_map(path):
             line_index_map[i] = index
             index += len(line.encode("utf8"))
 
+    # No need to use a special column mapping, as Nix columns are already byte offsets
     mapper = lambda line, col: line_index_map[line] + col
     return mapper
 
