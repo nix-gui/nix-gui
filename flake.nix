@@ -12,22 +12,12 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
 
-        rnix = with pkgs; rustPlatform.buildRustPackage rec {
-           pname = "rnix";
-           version = "0.9.0";
+        nix-dump-syntax-tree-json = with pkgs; rustPlatform.buildRustPackage rec {
+           pname = "nix_dump_syntax_tree_json";
+           version = "0.1.0";
 
-           src = fetchCrate {
-             inherit pname version;
-             sha256 = "sha256-xtfTAREOY8kc/DMSm+rtMDoyxrPiYNPXBEtYdrGgWgc=";
-           };
-
-           cargoSha256 = "sha256-n65YyV0KGA55Z9vYhyQ4XNOWKRfpbgZ18rgJLYygT+Q=";
-           cargoBuildFlags = [ "--example" "dump-ast" ];
-
-           postInstall = ''
-            mkdir -p $out/bin
-            cp target/${rust.toRustTargetSpec stdenv.hostPlatform}/$cargoBuildType/examples/dump-ast $out/bin
-          '';
+           src = ./nix_dump_syntax_tree_json;
+           cargoHash = "sha256-8yRlG8Paza3sE5GqhB8f0yzF8Pl0CI7F0W8VRhEN6BE=";
         };
 
         pylspclient = pkgs.python3Packages.buildPythonPackage rec {
@@ -50,13 +40,12 @@
               src = ./.;
               propagatedBuildInputs = [
                 pkgs.python3Packages.pyqt5
-                pkgs.python3Packages.parsimonious
-                rnix
                 pylspclient
                 rnix-lsp.defaultPackage."${system}"
               ];
               makeWrapperArgs = [
                 "--prefix PATH : ${pkgs.nixpkgs-fmt}/bin"
+                "--prefix PATH : ${nix-dump-syntax-tree-json}/bin"
                 "--set RUST_LOG trace"
                 "--set QT_PLUGIN_PATH ${pkgs.qt5.qtbase}/${pkgs.qt5.qtbase.qtPluginPrefix}"
               ];
