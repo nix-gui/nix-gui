@@ -3,3 +3,8 @@ __pycache__/
 dist/
 .venv
 *.egg-info/
+
+# Rust
+nix_dump_syntax_tree_json/debug
+nix_dump_syntax_tree_json/target
+**/*.rs.bk
