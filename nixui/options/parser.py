@@ -34,7 +34,7 @@ def inject_expressions(module_path, option_expr_map):
         # add new option definitions where they don't exist
         else:
             attr_str = '.'.join(attr_loc)
-            quoted = f'{attr_str} = {option_expr_map[attr_loc]}'
+            quoted = f'{attr_str} = {option_expr_map[attr_loc]};'
             token = syntax_tree.Token(id=uuid.uuid4(), name='INJECTION', position=None, quoted=quoted)
             tree.insert(returned_attr_set_node, token, index=1)
             # insert comment

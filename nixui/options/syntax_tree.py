@@ -112,7 +112,8 @@ class SyntaxTree:
 
     def replace(self, to_replace, replace_with):
         parent = self.get_parent(to_replace)
-        parent.elems[parent.index(to_replace)] = replace_with
+        index = [i for i, elem in enumerate(parent.elems) if elem.id == to_replace.id][0]
+        parent.elems[index] = replace_with
         self._load_structures()
 
     def insert(self, parent, new_value, index, after=None):
