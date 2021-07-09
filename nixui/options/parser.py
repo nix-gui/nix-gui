@@ -34,11 +34,11 @@ def inject_expressions(module_path, option_expr_map):
             node_to_prefix_comment = tree.get_parent(token, node=True)
 
         # comment that this was insterted by nix-gui
-        comment_str = '\n# Attribute defined by Nix-Gui\n'
+        comment_str = '\n\n# Attribute defined by Nix-Gui\n'
         tree.insert(
             node_to_prefix_comment,
             syntax_tree.Token(id=uuid.uuid4(), name='INJECTION', position=None, quoted=comment_str),
-            index=0
+            index=1
         )
 
     return tree.to_string()
