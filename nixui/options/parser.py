@@ -25,19 +25,13 @@ def get_all_option_values(root_module_path):
 
 def get_column_line_index_map(path):
     line_index_map = {}
-    line_index = 0
+    index = 0
     with open(path) as f:
         for i, line in enumerate(f.readlines()):
-            line_index_map[i] = {}
+            line_index_map[i] = index
+            index += len(line.encode("utf8"))
 
-            character_index = line_index
-            for j, c in enumerate(line):
-                line_index_map[i][j] = character_index
-                character_index += len(c.encode("utf8"))
-
-            line_index += len(line.encode("utf8"))
-
-    mapper = lambda line, col: line_index_map[line][col]
+    mapper = lambda line, col: line_index_map[line] + col
     return mapper
 
 
