@@ -22,7 +22,9 @@ def format_expression(expression_str):
 
 
 def get_expression(obj):
-    if isinstance(obj, list):
+    if isinstance(obj, bool):
+        return str(obj).lower()
+    elif isinstance(obj, list):
         space_separated = ' '.join([get_expression(elem) for elem in obj])
         return f"[{space_separated}]"
     elif isinstance(obj, str):
