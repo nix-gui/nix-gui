@@ -4,7 +4,7 @@ import json
 import os
 import subprocess
 
-from nixui.options import parser, nix_eval
+from nixui.options import parser, nix_eval, object_to_expression
 from nixui.utils import tree, store, copy_decorator
 
 
@@ -182,3 +182,29 @@ def get_option_value(option):
         print('no default or value found for')
         print(option)
         print(get_leaf(option))
+
+
+###############
+# Apply Updates
+###############
+def apply_updates(option_value_obj_map):
+    """
+    option_value_obj_map: map between option string and python object form of value
+    """
+    option_expr_map = {
+        tuple(option.split('.')): object_to_expression.get_formatted_expression(value_obj)
+        for option, value_obj in option_value_obj_map.items()
+    }
+    module_string = parser.inject_expressions(
+        os.environ['CONFIGURATION_PATH'],  # TODO: fix this hack - we should get the module the option is defined in
+        option_expr_map
+    )
+    # TODO: once stable set save_path to os.environ['CONFIGURATION_PATH']
+    save_path = os.path.join(
+        store.get_store_path(),
+        'configurations',
+        os.environ['CONFIGURATION_PATH'].strip(r'/'),
+    )
+    with open(save_path, 'w') as f:
+        f.write(module_string)
+    return save_path

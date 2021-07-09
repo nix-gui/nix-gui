@@ -51,6 +51,14 @@ class StateModel:
 
         self.slotmapper('update_recorded')(option, old_value, new_value)
 
+    def persist_updates(self):
+        option_new_value_map = {
+            u.option: u.new_value
+            for u in self.get_update_set()
+        }
+        save_path = api.apply_updates(option_new_value_map)
+        self.slotmapper('changes_saved')(save_path)
+
     def undo(self, *args, **kwargs):
         last_update = self.update_history.pop()
         self.current_values[last_update.option] = last_update.old_value
