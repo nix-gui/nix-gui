@@ -107,8 +107,7 @@ in {
 
   programs = {
     zsh.enable = true;
-    vim.enable = true;  # don't actually use vim, this is just an example file
-
+    vim.defaultEditor = true;  # don't actually use vim, this is just an example file
   };
 
   fonts = {
