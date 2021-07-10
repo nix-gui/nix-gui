@@ -18,6 +18,19 @@ class NoDefaultSet:
 @copy_decorator.return_copy
 @functools.lru_cache(1)
 def get_release_json():
+    """
+    Get a JSON representation of `<nixpkgs/nixos>` options.
+    The schema is as follows:
+    {
+      "option.name": {
+        "description": String              # description declared on the option
+        "loc": [ String ]                  # the path of the option e.g.: [ "services" "foo" "enable" ]
+        "readOnly": Bool                   # is the option user-customizable?
+        "type": String                     # either "boolean", "set", "list", "int", "float", or "string"
+        "relatedPackages": Optional, XML   # documentation for packages related to the option
+      }
+    }
+    """
     return nix_eval.nix_instantiate_eval("""
         with import <nixpkgs/nixos> {};
         builtins.mapAttrs
