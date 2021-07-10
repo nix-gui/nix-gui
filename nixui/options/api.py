@@ -18,20 +18,14 @@ class NoDefaultSet:
 @copy_decorator.return_copy
 @functools.lru_cache(1)
 def get_release_json():
-    release_path = os.path.join(store.get_store_path(), 'release_out')
-
-    # TODO - fix hack: release will change and this needs to be reflected, the parser should parse nixpkgs either each run or each time it changes
-    if not os.path.exists(release_path):
-        subprocess.run([
-            'nix-build',
-            '<nixpkgs/nixos/release.nix>',
-            '-A',
-            'options',
-            '-o',
-            release_path
-        ])
-    release_options_json_path = os.path.join(release_path, 'share', 'doc', 'nixos', 'options.json')
-    return json.load(open(release_options_json_path))
+    return nix_eval.nix_instantiate_eval("""
+        with import <nixpkgs/nixos> {};
+        builtins.mapAttrs
+           (n: v: builtins.removeAttrs v ["default" "declarations"])
+           (pkgs.nixosOptionsDoc { inherit options; }).optionsNix
+    """,
+        strict=True
+    )
 
 
 @copy_decorator.return_copy
