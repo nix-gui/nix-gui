@@ -18,20 +18,27 @@ class NoDefaultSet:
 @copy_decorator.return_copy
 @functools.lru_cache(1)
 def get_release_json():
-    release_path = os.path.join(store.get_store_path(), 'release_out')
-
-    # TODO - fix hack: release will change and this needs to be reflected, the parser should parse nixpkgs either each run or each time it changes
-    if not os.path.exists(release_path):
-        subprocess.run([
-            'nix-build',
-            '<nixpkgs/nixos/release.nix>',
-            '-A',
-            'options',
-            '-o',
-            release_path
-        ])
-    release_options_json_path = os.path.join(release_path, 'share', 'doc', 'nixos', 'options.json')
-    return json.load(open(release_options_json_path))
+    """
+    Get a JSON representation of `<nixpkgs/nixos>` options.
+    The schema is as follows:
+    {
+      "option.name": {
+        "description": String              # description declared on the option
+        "loc": [ String ]                  # the path of the option e.g.: [ "services" "foo" "enable" ]
+        "readOnly": Bool                   # is the option user-customizable?
+        "type": String                     # either "boolean", "set", "list", "int", "float", or "string"
+        "relatedPackages": Optional, XML   # documentation for packages related to the option
+      }
+    }
+    """
+    return nix_eval.nix_instantiate_eval("""
+        with import <nixpkgs/nixos> {};
+        builtins.mapAttrs
+           (n: v: builtins.removeAttrs v ["default" "declarations"])
+           (pkgs.nixosOptionsDoc { inherit options; }).optionsNix
+    """,
+        strict=True
+    )
 
 
 @copy_decorator.return_copy

@@ -55,11 +55,13 @@
                 pkgs.python3Packages.pytest
                 pkgs.python3Packages.pytest-datafiles
               ];
-              checkPhase = "
+              checkPhase = let
+                sample = "${./nixui/tests/sample}";
+              in ''
                 export NIX_STATE_DIR=/build
-                export NIX_PATH=nixpkgs=${pkgs.path}
+                export NIX_PATH=nixpkgs=${pkgs.path}:nixos-config=${sample}/configuration.nix
                 cd nixui && pytest
-              ";
+              '';
             }) { };
         defaultPackage = self.packages.${system}.nix-gui;
         apps.nix-gui = flake-utils.lib.mkApp {
