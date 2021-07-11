@@ -33,7 +33,7 @@ def get_expression(obj):
             return f"''\n{obj.strip()}\n''"
         else:
             return f'"{obj}"'
-    elif isinstance(obj, int):
+    elif isinstance(obj, int) or isinstance(obj, float):
         return str(obj)
     elif obj is None:
         return "null"
