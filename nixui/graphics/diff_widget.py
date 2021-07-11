@@ -64,20 +64,20 @@ class DiffDialog(QtWidgets.QDialog):
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(diff_table)
-        layout.addWidget(self.get_btn_box())
+        layout.addWidget(self.init_btn_box())
 
         self.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
 
         self.setLayout(layout)
 
-    def get_btn_box(self):
+    def init_btn_box(self):
         btn_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
         btn_box.accepted.connect(self.accept)
         return btn_box
 
 
 class SaveDialog(DiffDialog):
-    def get_btn_box(self):
+    def init_btn_box(self):
         btn_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Save)
         btn_box.accepted.connect(self.save)
         btn_box.rejected.connect(self.reject)
