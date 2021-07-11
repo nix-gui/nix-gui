@@ -54,7 +54,7 @@ class DiffedOptionListSelector(generic_widgets.ScrollListStackSelector):
         self.current_widget = view
 
 
-class DiffDialog(QtWidgets.QDialog):
+class DiffDialogBase(QtWidgets.QDialog):
     def __init__(self, statemodel, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -70,13 +70,15 @@ class DiffDialog(QtWidgets.QDialog):
 
         self.setLayout(layout)
 
+
+class DiffDialog(DiffDialogBase):
     def init_btn_box(self):
         btn_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
         btn_box.accepted.connect(self.accept)
         return btn_box
 
 
-class SaveDialog(DiffDialog):
+class SaveDialog(DiffDialogBase):
     def init_btn_box(self):
         btn_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Save)
         btn_box.accepted.connect(self.save)
