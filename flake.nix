@@ -31,6 +31,22 @@
           doCheck = false;
         };
 
+        pytest-profiling = pkgs.python3Packages.buildPythonPackage rec {
+          pname = "pytest-profiling";
+          version = "1.7.0";
+          name = "${pname}-${version}";
+          src = builtins.fetchurl {
+            url = "https://files.pythonhosted.org/packages/39/70/22a4b33739f07f1732a63e33bbfbf68e0fa58cfba9d200e76d01921eddbf/pytest-profiling-1.7.0.tar.gz";
+            sha256 = "0abz9gi26jpcfdzgsvwad91555lpgdc8kbymicmms8k2fqa8z4wk";
+          };
+          buildInputs = [
+            pkgs.python3Packages.setuptools-git
+            pkgs.python3Packages.pytest
+            pkgs.python3Packages.gprof2dot
+          ];
+          doCheck = false;
+        };
+
       in {
         packages.nix-gui = pkgs.callPackage
           ({ stdenv, lib, rustPlatform, fetchFromGitHub }:
@@ -56,6 +72,7 @@
                 nix-dump-syntax-tree-json
                 pkgs.python3Packages.pytest
                 pkgs.python3Packages.pytest-datafiles
+                pytest-profiling
               ];
               checkPhase = let
                 sample = "${./nixui/tests/sample}";
@@ -63,7 +80,9 @@
                 export HOME=$TMPDIR
                 export NIX_STATE_DIR=/build
                 export NIX_PATH=nixpkgs=${pkgs.path}:nixos-config=${sample}/configuration.nix
-                cd nixui && pytest
+                cd nixui
+                python3 -m cProfile -o profile -m pytest
+                python3 -c "import pstats; p = pstats.Stats('profile'); p.strip_dirs(); p.sort_stats('cumtime'); p.print_stats(50)"
               '';
             }) { };
         defaultPackage = self.packages.${system}.nix-gui;

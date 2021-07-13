@@ -18,33 +18,8 @@ NoDefaultSet = Singleton()
 # utility functions / caching
 ############################
 @copy_decorator.return_copy
-def get_release_json():
-    """
-    Get a JSON representation of `<nixpkgs/nixos>` options.
-    The schema is as follows:
-    {
-      "option.name": {
-        "description": String              # description declared on the option
-        "loc": [ String ]                  # the path of the option e.g.: [ "services" "foo" "enable" ]
-        "readOnly": Bool                   # is the option user-customizable?
-        "type": String                     # either "boolean", "set", "list", "int", "float", or "string"
-        "relatedPackages": Optional, XML   # documentation for packages related to the option
-      }
-    }
-    """
-    return nix_eval.nix_instantiate_eval("""
-        with import <nixpkgs/nixos> {};
-        builtins.mapAttrs
-           (n: v: builtins.removeAttrs v ["default" "declarations"])
-           (pkgs.nixosOptionsDoc { inherit options; }).optionsNix
-    """,
-        strict=True
-    )
-
-
-@copy_decorator.return_copy
 def get_option_data():
-    defaults_and_schema = get_release_json()
+    defaults_and_schema = nix_eval.get_all_nixos_options()
     configured_values = {'.'.join(k): v for k, v in parser.get_all_option_values(os.environ['CONFIGURATION_PATH']).items()}
     result = {}
     for option, option_data in defaults_and_schema.items():
