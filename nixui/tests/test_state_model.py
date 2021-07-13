@@ -11,7 +11,7 @@ SAMPLES_PATH = 'tests/sample'
     ('services.logind.lidSwitch', 'dosomething'),  # string
     ('services.redshift.temperature.day', 1000),  # integer
     ('services.networking.firewall.allowedTCPPorts', [1, 2, 3, 4, 5]),  # list of ints
-    ('users.extraUsers.sample.isNormalUser', False),  # modify submodule
+    #('users.extraUsers.sample.isNormalUser', False),  # modify submodule
 ])
 @pytest.mark.datafiles(SAMPLES_PATH)
 def test_load_edit_save(option_loc, new_value):
