@@ -29,6 +29,3 @@ def cache(retain_hash_fn=(lambda: 0), return_copy=False):
 
 
 configuration_path_hash_fn = lambda: hashlib.sha256(open(os.environ['CONFIGURATION_PATH'], 'rb').read()).hexdigest()
-
-
-lru_cache_file_unchanged = cache(lambda path: os.stat(path)[8])
