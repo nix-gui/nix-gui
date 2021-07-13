@@ -52,6 +52,7 @@
 
               checkInputs = [
                 pkgs.nix
+                pkgs.nixpkgs-fmt
                 nix-dump-syntax-tree-json
                 pkgs.python3Packages.pytest
                 pkgs.python3Packages.pytest-datafiles
@@ -59,6 +60,7 @@
               checkPhase = let
                 sample = "${./nixui/tests/sample}";
               in ''
+                export HOME=$TMPDIR
                 export NIX_STATE_DIR=/build
                 export NIX_PATH=nixpkgs=${pkgs.path}:nixos-config=${sample}/configuration.nix
                 cd nixui && pytest

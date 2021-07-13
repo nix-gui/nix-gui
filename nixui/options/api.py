@@ -8,15 +8,16 @@ from nixui.options import parser, nix_eval, object_to_expression
 from nixui.utils import tree, store, copy_decorator
 
 
-class NoDefaultSet:
+class Singleton:
     pass
+NoDefaultSet = Singleton()
+
 
 
 #############################
 # utility functions / caching
 ############################
 @copy_decorator.return_copy
-@functools.lru_cache(1)
 def get_release_json():
     """
     Get a JSON representation of `<nixpkgs/nixos>` options.
@@ -42,7 +43,6 @@ def get_release_json():
 
 
 @copy_decorator.return_copy
-@functools.lru_cache(1)
 def get_option_data():
     defaults_and_schema = get_release_json()
     configured_values = {'.'.join(k): v for k, v in parser.get_all_option_values(os.environ['CONFIGURATION_PATH']).items()}
@@ -50,7 +50,7 @@ def get_option_data():
     for option, option_data in defaults_and_schema.items():
         result[option] = dict(option_data)
         if 'default' not in option_data:
-            result[option]['default'] = NoDefaultSet()
+            result[option]['default'] = NoDefaultSet
         if option in configured_values:
             result[option]['value_expr'] = configured_values[option]
             try:
@@ -67,7 +67,6 @@ def get_option_data():
 
 
 @copy_decorator.return_copy
-@functools.lru_cache(1)
 def get_option_values_map():
     # extract actual value
     return {
@@ -77,7 +76,6 @@ def get_option_values_map():
 
 
 @copy_decorator.return_copy
-@functools.lru_cache(1)
 def get_option_tree():
     options = get_option_data()
     options_tree = tree.Tree()
@@ -207,11 +205,14 @@ def apply_updates(option_value_obj_map):
         option_expr_map
     )
     # TODO: once stable set save_path to os.environ['CONFIGURATION_PATH']
-    save_path = os.path.join(
-        store.get_store_path(),
-        'configurations',
-        os.environ['CONFIGURATION_PATH'].strip(r'/'),
-    )
+    if os.environ.get('NIXGUI_CONFIGURATION_PATH_CAN_BE_CORRUPTED'):
+        save_path = os.environ['CONFIGURATION_PATH']
+    else:
+        save_path = os.path.join(
+            store.get_store_path(),
+            'configurations',
+            os.environ['CONFIGURATION_PATH'].strip(r'/'),
+        )
     if not os.path.exists(os.path.dirname(save_path)):
         os.makedirs(os.path.dirname(save_path))
     with open(save_path, 'w') as f:
