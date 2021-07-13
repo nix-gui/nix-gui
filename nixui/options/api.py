@@ -38,6 +38,7 @@ def get_option_data():
 # - get option types
 
 
+@cache.cache(return_copy=True, retain_hash_fn=cache.configuration_path_hash_fn)
 def get_option_values_map():
     # extract actual value
     return {
@@ -46,6 +47,7 @@ def get_option_values_map():
     }
 
 
+@cache.cache(return_copy=True, retain_hash_fn=cache.configuration_path_hash_fn)
 def get_option_tree():
     options = get_option_data()
     options_tree = tree.Tree()
