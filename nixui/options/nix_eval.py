@@ -1,5 +1,6 @@
 import json
 import subprocess
+import functools
 
 from nixui.utils.logger import LogPipe, logger
 from nixui.utils.cache import cache
@@ -28,7 +29,7 @@ def get_nixpkgs_version():
     return nix_instantiate_eval("with import <nixpkgs> {}; lib.version")
 
 
-@cache(return_copy=True, retain_hash_fn=get_nixpkgs_version)
+@functools.lru_cache()  # TODO: more efficient retain_hash_fn:  @cache(return_copy=True, retain_hash_fn=get_nixpkgs_version)
 def get_all_nixos_options():
     """
     Get a JSON representation of `<nixpkgs/nixos>` options.

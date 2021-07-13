@@ -18,7 +18,7 @@ def cache(retain_hash_fn=(lambda: 0), return_copy=False):
             if passed in memo and hashed_result == hash_memo[passed]:
                 res = memo[passed]
                 if return_copy:
-                    res = copy.deepcopy(res)
+                    res = copy.copy(res)
             else:
                 res = function(*args, **kwargs)
                 hash_memo[passed] = hashed_result
