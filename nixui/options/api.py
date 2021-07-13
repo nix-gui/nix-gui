@@ -5,19 +5,16 @@ import os
 import subprocess
 
 from nixui.options import parser, nix_eval, object_to_expression
-from nixui.utils import tree, store, copy_decorator
+from nixui.utils import tree, store, copy_decorator, cache
 
 
-class Singleton:
-    pass
-NoDefaultSet = Singleton()
-
+NoDefaultSet = ('NO DEFAULT SET',)
 
 
 #############################
 # utility functions / caching
 ############################
-@copy_decorator.return_copy
+@cache.cache(return_copy=True, retain_hash_fn=cache.configuration_path_hash_fn)
 def get_option_data():
     defaults_and_schema = nix_eval.get_all_nixos_options()
     configured_values = {'.'.join(k): v for k, v in parser.get_all_option_values(os.environ['CONFIGURATION_PATH']).items()}
@@ -41,7 +38,6 @@ def get_option_data():
 # - get option types
 
 
-@copy_decorator.return_copy
 def get_option_values_map():
     # extract actual value
     return {
@@ -50,7 +46,6 @@ def get_option_values_map():
     }
 
 
-@copy_decorator.return_copy
 def get_option_tree():
     options = get_option_data()
     options_tree = tree.Tree()
@@ -61,7 +56,7 @@ def get_option_tree():
     return options_tree
 
 
-@copy_decorator.return_copy
+
 @functools.lru_cache(1)
 def get_all_packages_map():
     path_name_map = {}
