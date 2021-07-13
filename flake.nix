@@ -56,7 +56,6 @@
                 nix-dump-syntax-tree-json
                 pkgs.python3Packages.pytest
                 pkgs.python3Packages.pytest-datafiles
-                pytest-profiling
               ];
               checkPhase = let
                 sample = "${./nixui/tests/sample}";
