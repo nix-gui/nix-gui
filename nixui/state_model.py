@@ -72,4 +72,4 @@ class StateModel:
             self.slotmapper('no_updates_exist')()
 
         self.slotmapper('undo_performed')(last_update.option, last_update.old_value, last_update.new_value)
-        self.slotmapper(('update_field', last_update.option))(last_update.old_value)
+        self.slotmapper(('update_field', last_update.option))()

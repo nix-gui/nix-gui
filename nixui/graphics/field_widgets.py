@@ -13,6 +13,10 @@ from nixui.graphics import richtext, generic_widgets
 def get_field_type_widget_map():
     return [
         [
+            partial(eq, 'undefined'),
+            UndefinedField,
+        ],
+        [
             partial(eq, 'null'),
             NullField,
         ],
@@ -97,11 +101,12 @@ def get_field_types(option_type):
 
     universal_fields = ['expression', 'reference']
 
-    return possible_types + universal_fields
+    return ['undefined'] + possible_types + universal_fields
 
 
 def get_field_color(field_type):
     field_colors = {
+        'undefined': QtGui.QColor(255, 200, 200),
         'expression': QtGui.QColor(193, 236, 245),
         'reference': QtGui.QColor(174, 250, 174),
         None: QtGui.QColor(255, 255, 240),  # default
@@ -149,7 +154,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
             entry_widget = get_field_widget(t, self.option)
             entry_widget.focus_change.connect(self.handle_focus_change)
             self.entry_stack.addWidget(entry_widget)
-            self.statemodel.slotmapper.add_slot(('update_field', self.option), entry_widget.load_value)
+            self.statemodel.slotmapper.add_slot(('update_field', self.option), self._load_value)
         self.stacked_widgets = list(map(self.entry_stack.widget, range(self.entry_stack.count())))
 
         # add all to layout
@@ -226,7 +231,6 @@ class NullField(QtWidgets.QLabel, Field):
     def __init__(self, option, **constraints):
         super().__init__()
         self.option = option
-        self.constraints = constraints
         self.loaded_value = None
 
     @staticmethod
@@ -244,6 +248,20 @@ class NullField(QtWidgets.QLabel, Field):
     def focusOutEvent(self, event):
         super().focusOutEvent(event)
         self.focus_change.emit()
+
+
+class UndefinedField(NullField):
+    @staticmethod
+    def validate_field(value):
+        return value == api.NoDefaultSet
+
+    def load_value(self, value):
+        self.setText('UNDEFINED')
+        self.loaded_value = value
+
+    @property
+    def current_value(self):
+        return api.NoDefaultSet
 
 
 class BooleanField(QtWidgets.QCheckBox, Field):
