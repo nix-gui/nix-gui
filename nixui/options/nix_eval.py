@@ -3,7 +3,7 @@ import subprocess
 import functools
 
 from nixui.utils.logger import LogPipe, logger
-from nixui.utils.cache import cache
+from nixui.utils import cache
 from string import Template
 
 
@@ -54,7 +54,8 @@ def get_all_nixos_options():
     )
 
 
-def get_modules_defined_attrs(module_path, attr_loc=[]):
+@cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
+def get_modules_defined_attrs(module_path):
     leaves_expr_template = Template("""
 let
   config = import ${module_path} {config = {}; pkgs = import <nixpkgs> {}; lib = import <nixpkgs/lib>;};
