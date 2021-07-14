@@ -45,12 +45,20 @@ class StateModel:
     def record_update(self, option, new_value):
         old_value = self.current_values[option]
         if old_value != new_value:
-            update = Update(option, old_value, new_value)
-            logger.info(f'update: {update}')
-            self.update_history.append(update)
+            # replace old update if we're still working on the same option
+            if self.update_history and option == self.update_history[-1].option:
+                update = Update(option, self.update_history[-1].old_value, new_value)
+                self.update_history[-1] = update
+                self.slotmapper('update_recorded')(option, self.update_history[-1].old_value, new_value)
+                logger.debug(f'update: {update}')
+            else:
+                update = Update(option, old_value, new_value)
+                self.update_history.append(update)
+                self.slotmapper('update_recorded')(option, old_value, new_value)
+                logger.info(f'update: {update}')
+
             self.current_values[option] = new_value
 
-        self.slotmapper('update_recorded')(option, old_value, new_value)
 
     def persist_updates(self):
         option_new_value_map = {
