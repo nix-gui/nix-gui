@@ -1,4 +1,5 @@
 import copy
+import functools
 import json
 import os
 import hashlib
@@ -7,6 +8,7 @@ import pickle
 from nixui.utils import store
 
 
+@functools.lru_cache()
 def _get_cache_path(call_signature, key):
     hashval = hashlib.md5(json.dumps(call_signature, sort_keys=True).encode('utf-8')).hexdigest()
     filename = f'{hashval}.{key}'
@@ -51,12 +53,11 @@ def cache(retain_hash_fn=(lambda: 0), return_copy=True, diskcache=True):
             call_signature = (function.__module__, function.__name__, args, tuple(kwargs.items()))
 
             if diskcache:
-                is_disk_cached = _is_in_disk_cache(call_signature, 'result')
-
                 # if fn-arg results cached in disk but not in memory, load disk to memory
-                if call_signature not in args_return_value_map and is_disk_cached:
-                    args_hash_result_map[call_signature] = _get_from_disk_cache(call_signature, 'hash_result')
-                    args_return_value_map[call_signature] = _get_from_disk_cache(call_signature, 'result')
+                if call_signature not in args_return_value_map:
+                    if _is_in_disk_cache(call_signature, 'result'):
+                        args_hash_result_map[call_signature] = _get_from_disk_cache(call_signature, 'hash_result')
+                        args_return_value_map[call_signature] = _get_from_disk_cache(call_signature, 'result')
 
             # if cached in memory and the hash-check is consistent, return the memcached result, otherwise calculate the result
             if call_signature in args_return_value_map and hash_result == args_hash_result_map[call_signature]:
@@ -68,7 +69,7 @@ def cache(retain_hash_fn=(lambda: 0), return_copy=True, diskcache=True):
                 args_hash_result_map[call_signature] = hash_result
                 args_return_value_map[call_signature] = res
 
-            if diskcache and not is_disk_cached:
+            if diskcache and not _is_in_disk_cache(call_signature, 'result'):
                 _save_to_disk_cache(call_signature, 'result', res)
                 _save_to_disk_cache(call_signature, 'hash_result', hash_result)
 
