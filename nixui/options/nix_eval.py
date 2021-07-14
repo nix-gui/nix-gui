@@ -58,7 +58,8 @@ def get_all_nixos_options():
 def get_modules_defined_attrs(module_path):
     leaves_expr_template = Template("""
 let
-  config = import ${module_path} {config = {}; pkgs = import <nixpkgs> {}; lib = import <nixpkgs/lib>;};
+  nixpkgs = import <nixpkgs> {};
+  config = nixpkgs.nixos ${module_path};
   closure = builtins.tail (builtins.genericClosure {
     startSet = [{ key = builtins.toJSON []; value = {value = config;}; }];
     operator = {key, value}: builtins.filter (x: x != null) (
