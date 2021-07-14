@@ -69,8 +69,8 @@ def cache(retain_hash_fn=(lambda: 0), return_copy=True, diskcache=True):
                 args_return_value_map[call_signature] = res
 
             if diskcache and not is_disk_cached:
-                _save_to_disk_cache(fn_id, call_signature, 'result', res)
-                _save_to_disk_cache(fn_id, call_signature, 'hash_result', hash_result)
+                _save_to_disk_cache(call_signature, 'result', res)
+                _save_to_disk_cache(call_signature, 'hash_result', hash_result)
 
             return res
         return wrapper
