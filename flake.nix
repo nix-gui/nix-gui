@@ -33,7 +33,7 @@
 
       in {
         packages.nix-gui = pkgs.callPackage
-          ({ stdenv, lib, rustPlatform, fetchFromGitHub }:
+          ({ stdenv, lib, rustPlatform, fetchFromGitHub, enable-profiling ? false }:
             pkgs.python3Packages.buildPythonPackage rec {
               pname = "nix-gui";
               version = "0.1.0";
@@ -64,10 +64,14 @@
                 export NIX_STATE_DIR=/build
                 export NIX_PATH=nixpkgs=${pkgs.path}:nixos-config=${sample}/configuration.nix
                 cd nixui
+              '' + (if !enable-profiling then ''
+                python3 -m pytest
+              '' else ''
                 python3 -m cProfile -o profile -m pytest
                 python3 -c "import pstats; p = pstats.Stats('profile'); p.strip_dirs(); p.sort_stats('cumtime'); p.print_stats(50)"
-              '';
+              '');
             }) { };
+        checks.profile = self.packages.${system}.nix-gui.override { enable-profiling = true; };
         defaultPackage = self.packages.${system}.nix-gui;
         apps.nix-gui = flake-utils.lib.mkApp {
           drv = self.packages."${system}".nix-gui;
