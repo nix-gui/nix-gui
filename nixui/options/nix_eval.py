@@ -1,7 +1,9 @@
 import json
 import subprocess
+import functools
 
 from nixui.utils.logger import LogPipe, logger
+from nixui.utils import cache
 from string import Template
 
 
@@ -23,7 +25,37 @@ def nix_instantiate_eval(expr, strict=False):
     return json.loads(res)
 
 
-def get_modules_defined_attrs(module_path, attr_loc=[]):
+def get_nixpkgs_version():
+    return nix_instantiate_eval("with import <nixpkgs> {}; lib.version")
+
+
+@functools.lru_cache()  # TODO: more efficient retain_hash_fn:  @cache(return_copy=True, retain_hash_fn=get_nixpkgs_version)
+def get_all_nixos_options():
+    """
+    Get a JSON representation of `<nixpkgs/nixos>` options.
+    The schema is as follows:
+    {
+      "option.name": {
+        "description": String              # description declared on the option
+        "loc": [ String ]                  # the path of the option e.g.: [ "services" "foo" "enable" ]
+        "readOnly": Bool                   # is the option user-customizable?
+        "type": String                     # either "boolean", "set", "list", "int", "float", or "string"
+        "relatedPackages": Optional, XML   # documentation for packages related to the option
+      }
+    }
+    """
+    return nix_instantiate_eval("""
+        with import <nixpkgs/nixos> {};
+        builtins.mapAttrs
+           (n: v: builtins.removeAttrs v ["default" "declarations"])
+           (pkgs.nixosOptionsDoc { inherit options; }).optionsNix
+    """,
+        strict=True
+    )
+
+
+@cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
+def get_modules_defined_attrs(module_path):
     leaves_expr_template = Template("""
 let
   config = import ${module_path} {config = {}; pkgs = import <nixpkgs> {}; lib = import <nixpkgs/lib>;};

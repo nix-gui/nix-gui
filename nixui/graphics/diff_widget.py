@@ -1,13 +1,20 @@
-import difflib
-
 from PyQt5 import QtWidgets
 
+import difflib
+
 from nixui.graphics import generic_widgets
+from nixui.options import object_to_expression
 
 
 class DiffedOptionListSelector(generic_widgets.ScrollListStackSelector):
     def __init__(self, updates, *args, **kwargs):
-        self.updates_map = {u.option: (str(u.old_value), str(u.new_value)) for u in updates}
+        self.updates_map = {
+            u.option: (
+                object_to_expression.get_formatted_expression(u.old_value),
+                object_to_expression.get_formatted_expression(u.new_value)
+            )
+            for u in updates
+        }
         super().__init__(*args, **kwargs)
 
         # hack: make text box 3x the width of the list view
@@ -47,19 +54,37 @@ class DiffedOptionListSelector(generic_widgets.ScrollListStackSelector):
         self.current_widget = view
 
 
-class DiffDialog(QtWidgets.QDialog):
+class DiffDialogBase(QtWidgets.QDialog):
     def __init__(self, statemodel, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        diff_table = DiffedOptionListSelector(statemodel.get_update_set())
+        self.statemodel = statemodel
 
-        btn_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
-        btn_box.accepted.connect(self.accept)
+        diff_table = DiffedOptionListSelector(statemodel.get_update_set())
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(diff_table)
-        layout.addWidget(btn_box)
+        layout.addWidget(self.init_btn_box())
 
         self.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)
 
         self.setLayout(layout)
+
+
+class DiffDialog(DiffDialogBase):
+    def init_btn_box(self):
+        btn_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok)
+        btn_box.accepted.connect(self.accept)
+        return btn_box
+
+
+class SaveDialog(DiffDialogBase):
+    def init_btn_box(self):
+        btn_box = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Save)
+        btn_box.accepted.connect(self.save)
+        btn_box.rejected.connect(self.reject)
+        return btn_box
+
+    def save(self):
+        self.statemodel.persist_updates()
+        self.accept()

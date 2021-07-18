@@ -4,53 +4,25 @@ import json
 import os
 import subprocess
 
-from nixui.options import parser, nix_eval
-from nixui.utils import tree, store, copy_decorator
+from nixui.options import parser, nix_eval, object_to_expression
+from nixui.utils import tree, store, copy_decorator, cache
 
 
-class NoDefaultSet:
-    pass
+NoDefaultSet = ('NO DEFAULT SET',)
 
 
 #############################
 # utility functions / caching
 ############################
-@copy_decorator.return_copy
-@functools.lru_cache(1)
-def get_release_json():
-    """
-    Get a JSON representation of `<nixpkgs/nixos>` options.
-    The schema is as follows:
-    {
-      "option.name": {
-        "description": String              # description declared on the option
-        "loc": [ String ]                  # the path of the option e.g.: [ "services" "foo" "enable" ]
-        "readOnly": Bool                   # is the option user-customizable?
-        "type": String                     # either "boolean", "set", "list", "int", "float", or "string"
-        "relatedPackages": Optional, XML   # documentation for packages related to the option
-      }
-    }
-    """
-    return nix_eval.nix_instantiate_eval("""
-        with import <nixpkgs/nixos> {};
-        builtins.mapAttrs
-           (n: v: builtins.removeAttrs v ["default" "declarations"])
-           (pkgs.nixosOptionsDoc { inherit options; }).optionsNix
-    """,
-        strict=True
-    )
-
-
-@copy_decorator.return_copy
-@functools.lru_cache(1)
+@cache.cache(return_copy=True, retain_hash_fn=cache.configuration_path_hash_fn)
 def get_option_data():
-    defaults_and_schema = get_release_json()
+    defaults_and_schema = nix_eval.get_all_nixos_options()
     configured_values = {'.'.join(k): v for k, v in parser.get_all_option_values(os.environ['CONFIGURATION_PATH']).items()}
     result = {}
     for option, option_data in defaults_and_schema.items():
         result[option] = dict(option_data)
         if 'default' not in option_data:
-            result[option]['default'] = NoDefaultSet()
+            result[option]['default'] = NoDefaultSet
         if option in configured_values:
             result[option]['value_expr'] = configured_values[option]
             try:
@@ -66,8 +38,7 @@ def get_option_data():
 # - get option types
 
 
-@copy_decorator.return_copy
-@functools.lru_cache(1)
+@cache.cache(return_copy=True, retain_hash_fn=cache.configuration_path_hash_fn)
 def get_option_values_map():
     # extract actual value
     return {
@@ -76,8 +47,7 @@ def get_option_values_map():
     }
 
 
-@copy_decorator.return_copy
-@functools.lru_cache(1)
+@cache.cache(return_copy=True, retain_hash_fn=cache.configuration_path_hash_fn)
 def get_option_tree():
     options = get_option_data()
     options_tree = tree.Tree()
@@ -88,7 +58,7 @@ def get_option_tree():
     return options_tree
 
 
-@copy_decorator.return_copy
+
 @functools.lru_cache(1)
 def get_all_packages_map():
     path_name_map = {}
@@ -189,3 +159,34 @@ def get_option_value(option):
         print('no default or value found for')
         print(option)
         print(get_leaf(option))
+
+
+###############
+# Apply Updates
+###############
+def apply_updates(option_value_obj_map):
+    """
+    option_value_obj_map: map between option string and python object form of value
+    """
+    option_expr_map = {
+        tuple(option.split('.')): object_to_expression.get_formatted_expression(value_obj)
+        for option, value_obj in option_value_obj_map.items()
+    }
+    module_string = parser.inject_expressions(
+        os.environ['CONFIGURATION_PATH'],  # TODO: fix this hack - we should get the module the option is defined in
+        option_expr_map
+    )
+    # TODO: once stable set save_path to os.environ['CONFIGURATION_PATH']
+    if os.environ.get('NIXGUI_CONFIGURATION_PATH_CAN_BE_CORRUPTED'):
+        save_path = os.environ['CONFIGURATION_PATH']
+    else:
+        save_path = os.path.join(
+            store.get_store_path(),
+            'configurations',
+            os.environ['CONFIGURATION_PATH'].strip(r'/'),
+        )
+    if not os.path.exists(os.path.dirname(save_path)):
+        os.makedirs(os.path.dirname(save_path))
+    with open(save_path, 'w') as f:
+        f.write(module_string)
+    return save_path
