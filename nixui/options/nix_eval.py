@@ -1,10 +1,11 @@
 import json
 import subprocess
 import functools
+from string import Template
 
 from nixui.utils.logger import LogPipe, logger
 from nixui.utils import cache
-from string import Template
+from nixui.options.attribute import Attribute
 
 
 def nix_instantiate_eval(expr, strict=False):
@@ -44,14 +45,17 @@ def get_all_nixos_options():
       }
     }
     """
-    return nix_instantiate_eval("""
+    res = nix_instantiate_eval(
+        """
         with import <nixpkgs/nixos> {};
         builtins.mapAttrs
            (n: v: builtins.removeAttrs v ["default" "declarations"])
            (pkgs.nixosOptionsDoc { inherit options; }).optionsNix
-    """,
+        """,
         strict=True
     )
+    # TODO: remove key from this expression, it isn't used
+    return {Attribute(v['loc']): v for v in res.values()}
 
 
 @cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
@@ -91,7 +95,7 @@ builtins.map (x: {name = builtins.fromJSON x.key; position = x.value.pos;}) leav
     leaves = nix_instantiate_eval(leaves_expr_template.substitute(module_path=module_path), strict=True)
 
     return {
-        tuple(v['name']): {"position": v['position']}
+        Attribute(v['name']): {"position": v['position']}
         for v in leaves
     }
 
@@ -106,15 +110,13 @@ def eval_attribute(module_path, attribute):
     return nix_instantiate_eval(expr)
 
 
-def eval_attribute_position(module_path, attr_loc):
-    attribute_prefix = '.'.join(attr_loc[:-1])
-    attribute_end = attr_loc[-1]
+def eval_attribute_position(module_path, attribute):
     expr = (
         "builtins.unsafeGetAttrPos \"" +
-        attribute_end +
+        attribute.get_end() +
         "\" (import " +
         module_path +
         "{config = {}; pkgs = import <nixpkgs> {}; lib = import <nixpkgs/lib>;})" +
-        (f'.{attribute_prefix}' if attribute_prefix else '')
+        (f'.{attribute.get_set()}' if attribute.get_set() else '')
     )
     return nix_instantiate_eval(expr)

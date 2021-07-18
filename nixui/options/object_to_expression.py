@@ -22,7 +22,9 @@ def format_expression(expression_str):
 
 
 def get_expression(obj):
-    if isinstance(obj, bool):
+    if obj == ('NO DEFAULT SET',):  # TODO: clean up this hack, api.py and here should have a unified NO DEFAULT SET
+        return '<undefined>'
+    elif isinstance(obj, bool):
         return str(obj).lower()
     elif isinstance(obj, list):
         space_separated = ' '.join([get_expression(elem) for elem in obj])

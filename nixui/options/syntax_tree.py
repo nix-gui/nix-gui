@@ -1,5 +1,4 @@
 import collections
-from dataclasses import dataclass
 import subprocess
 import json
 import uuid

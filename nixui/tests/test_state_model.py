@@ -1,16 +1,17 @@
 import os
 import pytest
 from nixui import state_model
+from nixui.options.attribute import Attribute
 
 
 SAMPLES_PATH = 'tests/sample'
 
 
 @pytest.mark.parametrize('option_loc,new_value', [
-    ('sound.enable', False),  # boolean
-    ('services.logind.lidSwitch', 'dosomething'),  # string
-    ('services.redshift.temperature.day', 1000),  # integer
-    ('services.networking.firewall.allowedTCPPorts', [1, 2, 3, 4, 5]),  # list of ints
+    (Attribute.from_string('sound.enable'), False),  # boolean
+    (Attribute.from_string('services.logind.lidSwitch'), 'dosomething'),  # string
+    (Attribute.from_string('services.redshift.temperature.day'), 1000),  # integer
+    (Attribute.from_string('services.networking.firewall.allowedTCPPorts'), [1, 2, 3, 4, 5]),  # list of ints
     #('users.extraUsers.sample.isNormalUser', False),  # modify submodule
 ])
 @pytest.mark.datafiles(SAMPLES_PATH)
