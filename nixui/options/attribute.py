@@ -32,7 +32,7 @@ class Attribute:
         ])
 
     def __bool__(self):
-        return self.loc
+        return bool(self.loc)
 
     def __repr__(self):
         return f'{self.__class__}("{str(self)}")'
