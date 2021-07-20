@@ -48,7 +48,7 @@ class OptionTree:
         for option_path, option_data_dict in sorted(system_option_data.items(), key=str):
             self._upsert_node_data(option_path, option_data_dict)
         for option_path, value in config_options.items():
-            self._upsert_node_data(option_path, {'in_memory_value': value})
+            self._upsert_node_data(option_path, {'configured_value': value})
 
     def _upsert_node_data(self, option_path, option_data_dict):
         """
