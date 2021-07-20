@@ -11,6 +11,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        pythonPackages = pkgs.python39Packages;
 
         nix-dump-syntax-tree-json = with pkgs; rustPlatform.buildRustPackage rec {
            pname = "nix_dump_syntax_tree_json";
@@ -20,7 +21,7 @@
            cargoHash = "sha256-8yRlG8Paza3sE5GqhB8f0yzF8Pl0CI7F0W8VRhEN6BE=";
         };
 
-        pylspclient = pkgs.python3Packages.buildPythonPackage rec {
+        pylspclient = pythonPackages.buildPythonPackage rec {
           pname = "pylspclient";
           version = "0.0.2";
           name = "${pname}-${version}";
@@ -34,12 +35,12 @@
       in {
         packages.nix-gui = pkgs.callPackage
           ({ stdenv, lib, rustPlatform, fetchFromGitHub, enable-profiling ? false }:
-            pkgs.python3Packages.buildPythonPackage rec {
+            pythonPackages.buildPythonPackage rec {
               pname = "nix-gui";
               version = "0.1.0";
               src = ./.;
               propagatedBuildInputs = [
-                pkgs.python3Packages.pyqt5
+                pythonPackages.pyqt5
                 pylspclient
                 rnix-lsp.defaultPackage."${system}"
               ];
@@ -54,8 +55,8 @@
                 pkgs.nix
                 pkgs.nixpkgs-fmt
                 nix-dump-syntax-tree-json
-                pkgs.python3Packages.pytest
-                pkgs.python3Packages.pytest-datafiles
+                pythonPackages.pytest
+                pythonPackages.pytest-datafiles
               ];
               checkPhase = let
                 sample = "${./nixui/tests/sample}";
