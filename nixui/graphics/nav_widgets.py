@@ -215,14 +215,14 @@ class AttributeSetOf(generic_widgets.ScrollListStackSelector):
 
     def change_item(self):
         item = self.item_list.currentItem()
-        new_option = f'{item.option_name}.{item.text()}'
+        new_option = f'{item.option}.{item.text()}'
         if self.current_item != new_option:
             self.current_item = new_option
             self.change_option_view(new_option)
 
     def insert_items(self):
-        for text in api.get_option_tree().children(self.option):
-            it = self.ItemCls(text)
+        for option in api.get_option_tree().children(self.option):
+            it = self.ItemCls(str(option.get_end()))
             self.item_list.addItem(it)
 
     def change_option_view(self, full_option_name):
