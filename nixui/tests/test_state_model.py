@@ -29,7 +29,6 @@ def test_load_edit_save(option_loc, new_value):
     m0 = state_model.StateModel()
     v0 = m0.get_value(option_loc)
     m0.record_update(option_loc, new_value)
-    print(m0.get_update_set())
     m0.persist_updates()
 
     # reopen, verify
