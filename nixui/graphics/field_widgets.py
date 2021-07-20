@@ -122,13 +122,13 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.option = option
         self.starting_value = None
 
-        field_types = get_field_types(api.get_option_type(option))
+        field_types = get_field_types(api.get_option_tree().get_type(option))
 
         # set title and description
         text = QtWidgets.QLabel(richtext.get_option_html(
             option,
-            type_label=api.get_option_type(option),
-            description=api.get_option_description(option),
+            type_label=api.get_option_tree().get_type(option),
+            description=api.get_option_tree().get_description(option),
         ))
         text.setWordWrap(True)
         text.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
@@ -405,7 +405,7 @@ class OneOfComboBoxField(QtWidgets.QComboBox):
 
 class OneOfField:
     def __new__(cls, option):
-        field_type = api.get_option_type(option)
+        field_type = api.get_option_tree.get_type(option)
         choices = [choice.strip('" ') for choice in field_type.split('one of ', 1)[1].split(',')]
 
         if len(choices) < 5:

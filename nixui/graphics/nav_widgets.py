@@ -10,26 +10,27 @@ class GenericOptionSetDisplay(QtWidgets.QWidget):
     def __init__(self, statemodel, option=attribute.Attribute(), is_base_viewer=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        option = api.get_next_branching_option(option)
+        option = api.get_option_tree().get_next_branching_option(option)
         self.option = option
 
         lay = QtWidgets.QHBoxLayout()
 
         # add appropriate widget to be displayed
-        option_type = api.get_option_type(option)
+        option_type = api.get_option_tree().get_type(option)
         if option_type == 'PARENT':
+            option_count = len(api.get_option_tree().children(option))
             # if the option set contains fewer than 20 options, render a form for option setting
-            if api.get_option_count(option) == 0:
+            if option_count == 0:
                 # if the option set contains fewer than 20 child options, render a form for option setting
-                view = QtWidgets.QLabel(option + str(api.get_option_count(option)))
-            elif api.get_option_count(option) < 20:
+                view = QtWidgets.QLabel(option + str(option_count))
+            elif option_count < 20:
                 if is_base_viewer:
                     view = OptionGroupBox(statemodel, option)
                 else:
                     view = OptionGroupBox(statemodel, option, is_base_viewer=True)
             else:
-                child_options = api.get_child_options(option)
-                if len(child_options) < 10 and all([api.get_option_count(opt) < 20 for opt in child_options]):
+                child_options = api.get_option_tree().children(option)
+                if len(child_options) < 10 and all([option_count < 20 for opt in child_options]):
                     # if there are fewer than 10 child options and each child  contains fewer than 20 options show a tab view
                     view = OptionTabs(statemodel, option)
                 else:
@@ -51,7 +52,7 @@ class GenericOptionSetDisplay(QtWidgets.QWidget):
 
 class ChildCountOptionListItem(generic_widgets.OptionListItem):
     def set_text(self):
-        child_count = api.get_option_count(self.option)
+        child_count = len(api.get_option_tree().children(self.option))
         self.setText(richtext.get_option_html(self.option, child_count))
 
 
@@ -74,7 +75,9 @@ class OptionChildViewer(generic_widgets.ScrollListStackSelector):
             self.change_option_view(new_option)
 
     def insert_items(self):
-        for text in api.get_child_options(self.option):
+        # TODO: filter out <name> and * for submodules
+        # TODO: add priority ordering
+        for text in api.get_option_tree().children(self.option):
             icon_path = None
             it = self.ItemCls(text, icon_path)
             self.item_list.addItem(it)
@@ -95,7 +98,7 @@ class OptionTabs(QtWidgets.QTabWidget):
 
         self.option_str = option
 
-        for child_option in api.get_child_options(option):
+        for child_option in api.get_option_tree().children(option):
             self.addTab(GenericOptionSetDisplay(statemodel, child_option), str(child_option))
 
 
@@ -108,7 +111,7 @@ class OptionGroupBox(QtWidgets.QWidget):
 
         vbox = QtWidgets.QVBoxLayout()
 
-        for child_option in api.get_child_options(option):
+        for child_option in api.get_option_tree().children(option):
             vbox.addWidget(GenericOptionSetDisplay(statemodel, child_option, is_base_viewer=False))
             vbox.addWidget(generic_widgets.SeparatorLine())
 
@@ -193,7 +196,7 @@ class AttributeSetOf(generic_widgets.ScrollListStackSelector):
 
     def insert_items(self):
         pass
-        #for text in api.get_child_options(self.option):
+        #for text in api.get_option_tree.children(option):
         #    icon_path = None
         #    it = self.ItemCls(text, icon_path)
         #    self.item_list.addItem(it)
@@ -251,7 +254,7 @@ class ListOf(generic_widgets.ScrollListStackSelector):
 
     def insert_items(self):
         pass
-        #for text in api.get_child_options(self.option):
+        #for text in api.get_option_tree.children(option):
         #    icon_path = None
         #    it = self.ItemCls(text, icon_path)
         #    self.item_list.addItem(it)

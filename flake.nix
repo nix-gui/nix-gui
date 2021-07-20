@@ -31,6 +31,19 @@
           };
           doCheck = false;
         };
+        treelib = pythonPackages.buildPythonPackage rec {
+          pname = "treelib";
+          version = "1.6.1";
+          name = "${pname}-${version}";
+          src = builtins.fetchurl {
+            url = "https://files.pythonhosted.org/packages/04/b0/2269c328abffbb63979f7143351a24a066776b87526d79956aea5018b80a/treelib-1.6.1.tar.gz";
+            sha256 = "1247rv9fbb8pw3xbkbz04q3vnvvva3hcw002gp1clp5psargzgqw";
+          };
+          propagatedBuildInputs = [
+            pythonPackages.future
+          ];
+          doCheck = false;
+        };
 
       in {
         packages.nix-gui = pkgs.callPackage
@@ -42,6 +55,7 @@
               propagatedBuildInputs = [
                 pythonPackages.pyqt5
                 pylspclient
+                treelib
                 rnix-lsp.defaultPackage."${system}"
               ];
               makeWrapperArgs = [
