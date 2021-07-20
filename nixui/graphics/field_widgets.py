@@ -405,7 +405,7 @@ class OneOfComboBoxField(QtWidgets.QComboBox):
 
 class OneOfField:
     def __new__(cls, option):
-        field_type = api.get_option_tree.get_type(option)
+        field_type = api.get_option_tree().get_type(option)
         choices = [choice.strip('" ') for choice in field_type.split('one of ', 1)[1].split(',')]
 
         if len(choices) < 5:
