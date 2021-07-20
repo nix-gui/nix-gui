@@ -4,7 +4,7 @@ import re
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-from nixui.options import api
+from nixui.options import api, option_tree
 from nixui.graphics import richtext, generic_widgets
 
 
@@ -13,7 +13,7 @@ from nixui.graphics import richtext, generic_widgets
 def get_field_type_widget_map():
     return [
         [
-            partial(eq, 'undefined'),
+            partial(eq, option_tree.Undefined),
             UndefinedField,
         ],
         [
@@ -461,7 +461,7 @@ class NullField(DoNothingField):
 
 
 class UndefinedField(NullField):
-    legal_value = api.NoDefaultSet
+    legal_value = option_tree.Undefined
     label_text = 'Undefined'
 
 
