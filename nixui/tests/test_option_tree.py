@@ -18,7 +18,7 @@ def test_option_tree_simple_attr_set():
         {attr: {'_type': 'attribute set of strings'}},
         {},
     )
-    child_attr = Attribute(['foo', 'bar', 'baz']),
+    child_attr = Attribute(['foo', 'bar', 'baz'])
     t.set_value(child_attr, 'val')
     assert t.get_type(child_attr) == 'string'
     assert t.get_value(child_attr) == 'val'
