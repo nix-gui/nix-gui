@@ -6,9 +6,6 @@ from nixui.options import parser, nix_eval, object_to_expression, option_tree
 from nixui.utils import store, cache
 
 
-NoDefaultSet = ('NO DEFAULT SET',)
-
-
 #############################
 # utility functions / caching
 ############################
