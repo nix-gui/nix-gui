@@ -8,46 +8,69 @@ from nixui.graphics import richtext, field_widgets, generic_widgets, icon
 
 class GenericOptionSetDisplay(QtWidgets.QWidget):
     def __init__(self, statemodel, option=attribute.Attribute(), is_base_viewer=None, *args, **kwargs):
+        """
+        recursively load option path navigation widget, or if leaf field widget
+        field widgets are determined based on the type of the option
+        path navigation widgets are determined based on multiple factors
+        - if there is an "attribute set of" or "list of" type within the children, use the scroll list OptionChildViewer
+        - if the option itself is an "attribute set of" or "list of" type, create their respective option navigation formn
+        - if there aren't very many options left to edit, put them together in an OptionGroupBox
+
+        each path navigation widget recurses and calls GenericOptionSetDisplay
+        """
         super().__init__(*args, **kwargs)
 
-        option = api.get_option_tree().get_next_branching_option(option)
-        self.option = option
+        self.statemodel = statemodel
+        self.is_base_viewer = is_base_viewer
 
         lay = QtWidgets.QHBoxLayout()
-
-        # add appropriate widget to be displayed
-        option_type = api.get_option_tree().get_type(option)
-        if option_type == 'PARENT':
-            option_count = len(api.get_option_tree().children(option))
-            # if the option set contains fewer than 20 options, render a form for option setting
-            if option_count == 0:
-                # if the option set contains fewer than 20 child options, render a form for option setting
-                view = QtWidgets.QLabel(option + str(option_count))
-            elif option_count < 20:
-                if is_base_viewer:
-                    view = OptionGroupBox(statemodel, option)
-                else:
-                    view = OptionGroupBox(statemodel, option, is_base_viewer=True)
-            else:
-                child_options = api.get_option_tree().children(option)
-                if len(child_options) < 10 and all([option_count < 20 for opt in child_options]):
-                    # if there are fewer than 10 child options and each child  contains fewer than 20 options show a tab view
-                    view = OptionTabs(statemodel, option)
-                else:
-                    view = OptionChildViewer(statemodel, option)
-        elif option_type.startswith('attribute set of '):
-            view = AttributeSetOf(statemodel, option)
-        elif option_type.startswith('list of '):
-            view = ListOf(statemodel, option)
-        else:
-            view = field_widgets.GenericOptionDisplay(statemodel, option)
-
         lay.setAlignment(QtCore.Qt.AlignTop)
         lay.setSpacing(0)
         lay.setContentsMargins(0, 0, 0, 0)
-
-        lay.addWidget(view)
+        lay.addWidget(self.get_view(option))
         self.setLayout(lay)
+
+    def get_view(self, option):
+        option_tree = api.get_option_tree()
+        child_option_count = len(option_tree.children(option))
+
+        # we must provide option sets with a dynamic set/list of children their appropriate widget
+        option_type = option_tree.get_type(option)
+        if option_type.startswith('attribute set of '):
+            return AttributeSetOf(self.statemodel, option)
+        if option_type.startswith('list of '):
+            return ListOf(self.statemodel, option)
+
+        # "attribute set of" and "list of" attributes require the full height of the window and
+        # cannot be combined with other options in an OptionGroupBox, therefore if such an
+        # attribute is a descendant an OptionChildViewer must be used
+        # additionally, if there are too many child options, we don't render them in a single OptionGroupBox
+        descendent_types = [
+            option_tree.get_type(child_attr)
+            for child_attr in option_tree.children(option, recursive=True)
+        ]
+        descendent_requires_full_display = any([
+            _type.startswith('attribute set of ') or _type.startswith('list of ')
+            for _type in descendent_types
+        ])
+        if descendent_requires_full_display or child_option_count > 15:
+            return OptionChildViewer(self.statemodel, option)
+
+        # compress descendents
+        option = option_tree.get_next_branching_option(option)
+        option_type = option_tree.get_type(option)
+        # render either an OptionGroupBox or OptionChildViewer based on the type for options with multiple descendents
+        if option_type == 'PARENT':
+            # OptionGroupBox will recursively add child OptionGroupBoxes. Only the outermost OptionGroupBox should
+            # be scrollable. is_base_viewer signals to add the scrollbar
+            if self.is_base_viewer:
+                return OptionGroupBox(self.statemodel, option)
+            else:
+                return OptionGroupBox(self.statemodel, option, is_base_viewer=True)
+
+        # the only other possibility is that the option is a leaf, meaning we add the appropriate field widget
+        return field_widgets.GenericOptionDisplay(self.statemodel, option)
+
 
 
 class ChildCountOptionListItem(generic_widgets.OptionListItem):
@@ -138,14 +161,14 @@ class OptionGroupBox(QtWidgets.QWidget):
 # editable navigation widgets
 #############################
 class EditableListItem(QtWidgets.QListWidgetItem):
-    def __init__(self, option_name, icon_path=None, *args, **kwargs):
+    def __init__(self, option, icon_path=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.option_name = option_name
+        self.option = option
         self.setFlags(self.flags() | QtCore.Qt.ItemIsEditable)
         self.set_text()
 
     def set_text(self):
-        self.setText(str(option))
+        self.setText(str(self.option))
 
     def setData(self, index, value):
         # is valid option name?
@@ -177,7 +200,10 @@ class AttributeSetOf(generic_widgets.ScrollListStackSelector):
         btn_hbox.addWidget(self.add_btn)
         btn_hbox.addWidget(self.remove_btn)
 
-        self.nav_layout.insertLayout(0, btn_hbox)
+        self.nav_layout.insertLayout(1, btn_hbox)
+
+    def get_title(self):
+        return f'Attribute Set\n{self.option}'
 
     def add_clicked(self):
         it = self.ItemCls(self.option)
@@ -195,11 +221,9 @@ class AttributeSetOf(generic_widgets.ScrollListStackSelector):
             self.change_option_view(new_option)
 
     def insert_items(self):
-        pass
-        #for text in api.get_option_tree.children(option):
-        #    icon_path = None
-        #    it = self.ItemCls(text, icon_path)
-        #    self.item_list.addItem(it)
+        for text in api.get_option_tree().children(self.option):
+            it = self.ItemCls(text)
+            self.item_list.addItem(it)
 
     def change_option_view(self, full_option_name):
         view = GenericOptionSetDisplay(statemodel=self.statemodel, option=full_option_name)
@@ -247,7 +271,7 @@ class ListOf(generic_widgets.ScrollListStackSelector):
 
     def change_item(self):
         item = self.item_list.currentItem()
-        new_option = f'{item.option_name}.{item.text()}'
+        new_option = f'{item.option}.{item.text()}'
         if self.current_item != new_option:
             self.current_item = new_option
             self.change_option_view(new_option)

@@ -156,9 +156,15 @@ class OptionTree:
     def is_readonly(self, attribute):
         return self._get_data(attribute).readOnly
 
-    def children(self, attribute):
-
-        return [node.tag for node in self.tree.children(attribute)]
+    def children(self, attribute, recursive=False):
+        if recursive:
+            children = self.tree.leaves(attribute)
+        else:
+            children = self.tree.children(attribute)
+        return [
+            node.tag for node in children
+            if '<name>' not in node.tag
+        ]
 
     def get_next_branching_option(self, attribute):
         while len(self.children(attribute)) == 1:

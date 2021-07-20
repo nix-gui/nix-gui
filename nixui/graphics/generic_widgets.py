@@ -151,13 +151,17 @@ class ScrollListStackSelector(QtWidgets.QWidget):
         self.item_list = self.ListCls()
         self.insert_items()
         self.item_list.currentItemChanged.connect(self.change_item)
-        self.item_list.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+        self.item_list.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.MinimumExpanding)
         self.item_list.setItemDelegate(richtext.HTMLDelegate())
 
         self.item_list.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.item_list.setMinimumWidth(self.item_list.sizeHintForColumn(0))
 
         self.nav_layout = QtWidgets.QVBoxLayout()
+        if self.get_title():
+            self.nav_layout.addWidget(
+                QtWidgets.QLabel(self.get_title())
+            )
         self.nav_layout.addWidget(self.item_list)
 
         self.hbox = QtWidgets.QHBoxLayout()
@@ -167,6 +171,9 @@ class ScrollListStackSelector(QtWidgets.QWidget):
         self.hbox.addWidget(self.stack)
 
         self.set_layout()
+
+    def get_title(self):
+        return None
 
     def set_layout(self):
         self.setLayout(self.hbox)
