@@ -414,27 +414,6 @@ class OneOfField:
             return OneOfComboBoxField(option, choices)
 
 
-class AttributeSetOf:
-    def __init__(self, option, choices):
-        super().__init__()
-        self.option = option
-        self.choices = choices
-
-        for choice in self.choices:
-            self.addItem(choice)
-
-    def validate_field(self, value):
-        return value in self.choices
-
-    def load_value(self, value):
-        self.setCurrentIndex(self.choices.index(value))
-        self.loaded_value = value
-
-    @property
-    def current_value(self):
-        return self.currentText()
-
-
 class DoNothingField(QtWidgets.QLabel):
     stateChanged = QtCore.pyqtSignal()
 
