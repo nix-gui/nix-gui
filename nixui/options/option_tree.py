@@ -125,6 +125,12 @@ class OptionTree:
             if new_value != old_value:
                 yield (attr, old_value, new_value)
 
+    def insert_attribute(self, attribute):
+        self._upsert_node_data(attribute, {})
+
+    def rename_attribute(self, old_attribute, new_attribute):
+        self.tree.update_node(old_attribute, identifier=new_attribute, tag=new_attribute)
+
     def set_value(self, option_path, value):
         self._upsert_node_data(option_path, {'in_memory_value': value})
 

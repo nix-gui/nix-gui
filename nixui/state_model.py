@@ -40,6 +40,12 @@ class StateModel:
             for option, configured_value, current_value in self.option_tree.iter_changes()
         ]
 
+    def rename_option(self, old_option, option):
+        self.option_tree.rename_attribute(old_option, option)
+
+    def add_new_option(self, option):
+        self.option_tree.insert_attribute(option)
+
     def record_update(self, option, new_value):
         old_value = self.option_tree.get_value(option)
         if old_value != new_value:

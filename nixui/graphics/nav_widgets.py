@@ -91,7 +91,7 @@ class OptionChildViewer(generic_widgets.ScrollListStackSelector):
 
         self.option_str = option
 
-    def change_item(self):
+    def change_selected_item(self):
         new_option = self.item_list.currentItem().option
         if self.current_item != new_option:
             self.current_item = new_option
@@ -164,15 +164,18 @@ class EditableListItem(QtWidgets.QListWidgetItem):
     def __init__(self, option, icon_path=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.option = option
+        self.previous_option = option
         self.setFlags(self.flags() | QtCore.Qt.ItemIsEditable)
         self.set_text()
 
     def set_text(self):
-        self.setText(str(self.option))
+        self.setText(str(self.option.get_end()))
 
     def setData(self, index, value):
         # is valid option name?
         if re.match(r'^[a-zA-Z\_][a-zA-Z0-9\_\'\-]*$', value):
+            self.previous_option = self.option
+            self.option = attribute.Attribute.from_insertion(self.option.get_set(), value)
             super().setData(index, value)
 
 
@@ -187,6 +190,8 @@ class AttributeSetOf(generic_widgets.ScrollListStackSelector):
         super().__init__(*args, **kwargs)
 
         self.item_list.itemDoubleClicked.connect(self.item_list.editItem)
+        self.item_list.itemChanged.connect(self.rename_item)
+        self.item_list.model().rowsRemoved.connect(lambda: self.remove_item)
 
         self.add_btn = QtWidgets.QPushButton("", self)
         self.add_btn.setIcon(icon.get_icon('plus.png'))
@@ -202,27 +207,36 @@ class AttributeSetOf(generic_widgets.ScrollListStackSelector):
 
         self.nav_layout.insertLayout(1, btn_hbox)
 
+    def remove_item(self, item):
+        print('not implemented')
+
+    def rename_item(self, item):
+        self.statemodel.rename_option(item.previous_option, item.option)
+
     def get_title(self):
         return f'Attribute Set\n{self.option}'
 
     def add_clicked(self):
-        it = self.ItemCls(self.option)
-        self.item_list.addItem(it)
-        self.item_list.editItem(it)
+        item = self.ItemCls(
+            attribute.Attribute.from_insertion(self.option, 'newAttribute')
+        )
+        self.item_list.addItem(item)
+        self.statemodel.add_new_option(item.option)
+        self.item_list.editItem(item)
 
     def remove_clicked(self):
         self.item_list.takeItem(self.item_list.currentItem())
 
-    def change_item(self):
+    def change_selected_item(self):
         item = self.item_list.currentItem()
-        new_option = f'{item.option}.{item.text()}'
+        new_option = item.option
         if self.current_item != new_option:
             self.current_item = new_option
             self.change_option_view(new_option)
 
     def insert_items(self):
         for option in api.get_option_tree().children(self.option):
-            it = self.ItemCls(str(option.get_end()))
+            it = self.ItemCls(option)
             self.item_list.addItem(it)
 
     def change_option_view(self, full_option_name):
@@ -269,7 +283,7 @@ class ListOf(generic_widgets.ScrollListStackSelector):
     def remove_clicked(self):
         self.item_list.takeItem(self.item_list.currentItem())
 
-    def change_item(self):
+    def change_selected_item(self):
         item = self.item_list.currentItem()
         new_option = f'{item.option}.{item.text()}'
         if self.current_item != new_option:
