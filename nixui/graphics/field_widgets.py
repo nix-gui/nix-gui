@@ -13,6 +13,10 @@ from nixui.graphics import richtext, generic_widgets
 def get_field_type_widget_map():
     return [
         [
+            partial(eq, 'undefined'),
+            UndefinedField,
+        ],
+        [
             partial(eq, 'null'),
             NullField,
         ],
@@ -97,11 +101,12 @@ def get_field_types(option_type):
 
     universal_fields = ['expression', 'reference']
 
-    return possible_types + universal_fields
+    return ['undefined'] + possible_types + universal_fields
 
 
 def get_field_color(field_type):
     field_colors = {
+        'undefined': QtGui.QColor(255, 200, 200),
         'expression': QtGui.QColor(193, 236, 245),
         'reference': QtGui.QColor(174, 250, 174),
         None: QtGui.QColor(255, 255, 240),  # default
@@ -147,9 +152,9 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.entry_stack = QtWidgets.QStackedWidget()
         for t in field_types:
             entry_widget = get_field_widget(t, self.option)
-            entry_widget.focus_change.connect(self.handle_focus_change)
+            entry_widget.stateChanged.connect(self.handle_state_change)
             self.entry_stack.addWidget(entry_widget)
-            self.statemodel.slotmapper.add_slot(('update_field', self.option), entry_widget.load_value)
+            self.statemodel.slotmapper.add_slot(('update_field', self.option), self._load_value)
         self.stacked_widgets = list(map(self.entry_stack.widget, range(self.entry_stack.count())))
 
         # add all to layout
@@ -164,10 +169,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self._load_value()
 
     def _load_value(self):
-        try:
-            option_value = self.statemodel.get_value(self.option)
-        except KeyError:
-            option_value = api.get_option_value(self.option)
+        option_value = self.statemodel.get_value(self.option)
 
         for i, field in enumerate(self.stacked_widgets):
             if field.validate_field(option_value):
@@ -178,12 +180,14 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.starting_value = self.value
 
     def set_type(self, arg):
-        self.entry_stack.setCurrentIndex(
-            self.field_type_selector.checked_index()
+        stack_idx = self.field_type_selector.checked_index()
+        self.entry_stack.widget(stack_idx).load_value(
+            self.statemodel.get_value(self.option)
         )
-        self.handle_focus_change()
+        self.entry_stack.setCurrentIndex(stack_idx)
+        self.handle_state_change()
 
-    def handle_focus_change(self):
+    def handle_state_change(self):
         self.statemodel.slotmapper('value_changed')(self.option, self.value)
 
     @property
@@ -214,39 +218,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.update()
 
 
-class Field:
-    focus_change = QtCore.pyqtSignal()
-
-    def focusOutEvent(self, event):
-        super().focusOutEvent(event)
-        self.focus_change.emit()
-
-
-class NullField(QtWidgets.QLabel, Field):
-    def __init__(self, option, **constraints):
-        super().__init__()
-        self.option = option
-        self.constraints = constraints
-        self.loaded_value = None
-
-    @staticmethod
-    def validate_field(value):
-        return value is None
-
-    def load_value(self, value):
-        self.setText('NULL')
-        self.loaded_value = value
-
-    @property
-    def current_value(self):
-        return None
-
-    def focusOutEvent(self, event):
-        super().focusOutEvent(event)
-        self.focus_change.emit()
-
-
-class BooleanField(QtWidgets.QCheckBox, Field):
+class BooleanField(QtWidgets.QCheckBox):
     def __init__(self, option, **constraints):
         super().__init__()
         self.option = option
@@ -258,6 +230,8 @@ class BooleanField(QtWidgets.QCheckBox, Field):
         return isinstance(value, bool)
 
     def load_value(self, value):
+        if not self.validate_field(value):
+            value = False
         self.setChecked(value)
         self.loaded_value = value
 
@@ -265,17 +239,17 @@ class BooleanField(QtWidgets.QCheckBox, Field):
     def current_value(self):
         return self.isChecked()
 
-    def focusOutEvent(self, event):
-        super().focusOutEvent(event)
-        self.focus_change.emit()
 
+class TextField(QtWidgets.QTextEdit):
+    stateChanged = QtCore.pyqtSignal(str)
 
-class TextField(QtWidgets.QTextEdit, Field):
     def __init__(self, option, **constraints):
         super().__init__()
         self.option = option
         self.constraints = constraints
         self.loaded_value = None
+
+        self.textChanged.connect(lambda: self.stateChanged.emit(self.current_value))
 
     def validate_field(self, value):
         if not isinstance(value, str):
@@ -286,19 +260,20 @@ class TextField(QtWidgets.QTextEdit, Field):
             return True
 
     def load_value(self, value):
+        if not self.validate_field(value):
+            value = ''
         self.setText(value)
         self.loaded_value = value
+
 
     @property
     def current_value(self):
         return self.toPlainText()
 
-    def focusOutEvent(self, event):
-        super().focusOutEvent(event)
-        self.focus_change.emit()
 
-
-class SingleLineTextField(QtWidgets.QLineEdit, Field):
+class SingleLineTextField(QtWidgets.QLineEdit):
+    stateChanged = TextField.stateChanged
+    textChanged = TextField.textChanged
     validate_field = TextField.validate_field
     load_value = TextField.load_value
     current_value = TextField.current_value
@@ -309,17 +284,17 @@ class SingleLineTextField(QtWidgets.QLineEdit, Field):
         self.constraints = constraints
         self.loaded_value = None
 
-    def focusOutEvent(self, event):
-        super().focusOutEvent(event)
-        self.focus_change.emit()
 
+class IntegerField(QtWidgets.QSpinBox):
+    stateChanged = QtCore.pyqtSignal(int)
 
-class IntegerField(QtWidgets.QSpinBox, Field):
     def __init__(self, option, **constraints):
         super().__init__()
         self.option = option
         self.constraints = constraints
         self.loaded_value = None
+
+        self.valueChanged.connect(self.stateChanged)
 
     def validate_field(self, value):
         if not isinstance(value, int):
@@ -329,6 +304,8 @@ class IntegerField(QtWidgets.QSpinBox, Field):
         return minimum <= value <= maximum
 
     def load_value(self, value):
+        if not self.validate_field(value):
+            value = 0
         self.setValue(value)
         self.loaded_value = value
 
@@ -336,12 +313,10 @@ class IntegerField(QtWidgets.QSpinBox, Field):
     def current_value(self):
         return self.value()
 
-    def focusOutEvent(self, event):
-        super().focusOutEvent(event)
-        self.focus_change.emit()
 
+class StringListField(generic_widgets.StringListEditorWidget):
+    # TODO: stateChanged hook
 
-class StringListField(generic_widgets.StringListEditorWidget, Field):
     def __init__(self, option, **constraints):
         super().__init__()
         self.option = option
@@ -365,12 +340,10 @@ class StringListField(generic_widgets.StringListEditorWidget, Field):
     def current_value(self):
         pass  # TODO
 
-    def focusOutEvent(self, event):
-        super().focusOutEvent(event)
-        self.focus_change.emit()
 
+class OneOfRadioFrameField(QtWidgets.QFrame):
+    stateChanged = QtCore.pyqtSignal(str)
 
-class OneOfRadioFrameField(QtWidgets.QFrame, Field):
     def __init__(self, option, choices):
         super().__init__()
         self.option = option
@@ -381,6 +354,7 @@ class OneOfRadioFrameField(QtWidgets.QFrame, Field):
         layout = QtWidgets.QVBoxLayout(self)
         for choice in self.choices:
             btn = QtWidgets.QRadioButton(choice)
+            btn.clicked.connect(lambda: self.stateChanged.emit(self.current_value))
             self.choice_button_map[choice] = btn
             layout.addWidget(btn)
 
@@ -388,8 +362,12 @@ class OneOfRadioFrameField(QtWidgets.QFrame, Field):
         return value in self.choices
 
     def load_value(self, value):
-        self.choice_button_map[value].setChecked(True)
-        self.loaded_value = value
+        if self.validate_field(value):
+            self.choice_button_map[value].setChecked(True)
+            self.loaded_value = value
+        else:
+            for btn in self.choice_button_map.values():
+                btn.setChecked(False)
 
     @property
     def current_value(self):
@@ -397,12 +375,10 @@ class OneOfRadioFrameField(QtWidgets.QFrame, Field):
             if button.isChecked():
                 return value
 
-    def focusOutEvent(self, event):
-        super().focusOutEvent(event)
-        self.focus_change.emit()
 
+class OneOfComboBoxField(QtWidgets.QComboBox):
+    stateChanged = QtCore.pyqtSignal(str)
 
-class OneOfComboBoxField(QtWidgets.QComboBox, Field):
     def __init__(self, option, choices):
         super().__init__()
         self.option = option
@@ -411,20 +387,20 @@ class OneOfComboBoxField(QtWidgets.QComboBox, Field):
         for choice in self.choices:
             self.addItem(choice)
 
+        self.currentTextChanged.connect(self.stateChanged)
+
     def validate_field(self, value):
         return value in self.choices
 
     def load_value(self, value):
+        if not self.validate_field(value):
+            value = ''
         self.setCurrentIndex(self.choices.index(value))
         self.loaded_value = value
 
     @property
     def current_value(self):
         return self.currentText()
-
-    def focusOutEvent(self, event):
-        super().focusOutEvent(event)
-        self.focus_change.emit()
 
 
 class OneOfField:
@@ -436,10 +412,6 @@ class OneOfField:
             return OneOfRadioFrameField(option, choices)
         else:
             return OneOfComboBoxField(option, choices)
-
-    def focusOutEvent(self, event):
-        super().focusOutEvent(event)
-        self.focus_change.emit()
 
 
 class AttributeSetOf:
@@ -462,33 +434,44 @@ class AttributeSetOf:
     def current_value(self):
         return self.currentText()
 
-    def focusOutEvent(self, event):
-        super().focusOutEvent(event)
-        self.focus_change.emit()
 
+class DoNothingField(QtWidgets.QLabel):
+    stateChanged = QtCore.pyqtSignal()
 
-class NotImplementedField(QtWidgets.QLabel, Field):
     def __init__(self, option, **constraints):
         super().__init__()
-        self.option = option
-        self.constraints = constraints
         self.loaded_value = None
 
-    @staticmethod
-    def validate_field(value):
-        return False
+    @classmethod
+    def validate_field(cls, value):
+        return value == cls.legal_value
 
     def load_value(self, value):
-        self.setText('Not Implemented')
+        self.setText(self.label_text)
         self.loaded_value = value
 
     @property
     def current_value(self):
-        return None
+        return self.legal_value
 
-    def focusOutEvent(self, event):
-        super().focusOutEvent(event)
-        self.focus_change.emit()
+
+class NullField(DoNothingField):
+    legal_value = None
+    label_text = 'NULL'
+
+
+class UndefinedField(NullField):
+    legal_value = api.NoDefaultSet
+    label_text = 'Undefined'
+
+
+class NotImplementedField(DoNothingField):
+    legal_value = None
+    label_text = 'Not Implemented'
+
+    @staticmethod
+    def validate_field(value):
+        return False
 
 
 ReferenceField = NotImplementedField

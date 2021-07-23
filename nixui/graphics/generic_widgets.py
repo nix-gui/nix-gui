@@ -29,7 +29,7 @@ class ExclusiveButtonGroup(QtWidgets.QFrame):
         self.setLayout(layout)
 
     def select(self, idx):
-        self.btn_group.buttons()[idx].setChecked(True)
+        self.btn_group.buttons()[idx].click()
 
     def checked_index(self):
         return self.btn_group.checkedId()

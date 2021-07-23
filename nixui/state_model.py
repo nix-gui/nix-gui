@@ -1,6 +1,7 @@
 import collections
 
 from nixui.options import api
+from nixui.utils.logger import logger
 
 
 class SlotMapper:
@@ -44,12 +45,20 @@ class StateModel:
     def record_update(self, option, new_value):
         old_value = self.current_values[option]
         if old_value != new_value:
-            self.update_history.append(
-                Update(option, old_value, new_value)
-            )
+            # replace old update if we're still working on the same option
+            if self.update_history and option == self.update_history[-1].option:
+                update = Update(option, self.update_history[-1].old_value, new_value)
+                self.update_history[-1] = update
+                self.slotmapper('update_recorded')(option, self.update_history[-1].old_value, new_value)
+                logger.debug(f'update: {update}')
+            else:
+                update = Update(option, old_value, new_value)
+                self.update_history.append(update)
+                self.slotmapper('update_recorded')(option, old_value, new_value)
+                logger.info(f'update: {update}')
+
             self.current_values[option] = new_value
 
-        self.slotmapper('update_recorded')(option, old_value, new_value)
 
     def persist_updates(self):
         option_new_value_map = {
@@ -63,5 +72,8 @@ class StateModel:
         last_update = self.update_history.pop()
         self.current_values[last_update.option] = last_update.old_value
 
+        if not self.update_history:
+            self.slotmapper('no_updates_exist')()
+
         self.slotmapper('undo_performed')(last_update.option, last_update.old_value, last_update.new_value)
-        self.slotmapper(('update_field', last_update.option))(last_update.old_value)
+        self.slotmapper(('update_field', last_update.option))()

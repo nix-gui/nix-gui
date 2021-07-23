@@ -24,6 +24,9 @@ class NixGuiMainWindow(QtWidgets.QMainWindow):
     def _create_actions(self):
         self.actions['undo'] = QtWidgets.QAction(icon.get_icon('undo.png'), "&Undo", self)
         self.actions['undo'].triggered.connect(self.statemodel.slotmapper('undo'))
+        self.actions['undo'].setEnabled(False)
+        self.statemodel.slotmapper.add_slot('no_updates_exist', lambda: self.actions['undo'].setEnabled(False))
+        self.statemodel.slotmapper.add_slot('update_recorded', lambda *args, **kwargs: self.actions['undo'].setEnabled(True))
 
         self.actions['search'] = QtWidgets.QAction(icon.get_icon('search.png'), "&Search", self)
 
