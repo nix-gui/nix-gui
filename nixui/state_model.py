@@ -59,7 +59,6 @@ class StateModel:
 
             self.current_values[option] = new_value
 
-
     def persist_updates(self):
         option_new_value_map = {
             u.option: u.new_value
