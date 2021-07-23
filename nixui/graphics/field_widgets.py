@@ -362,7 +362,7 @@ class OneOfRadioFrameField(QtWidgets.QFrame):
         return value in self.choices
 
     def load_value(self, value):
-        if self.validate_field:
+        if self.validate_field(value):
             self.choice_button_map[value].setChecked(True)
             self.loaded_value = value
         else:
