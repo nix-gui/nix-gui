@@ -1,0 +1,67 @@
+#+TITLE: [DRAFT] Extraction mapping from options to related files from a given configuration
+
+A NixOS module can be defined as a set of options, a set of config,
+and a list of imports. From there, the NixOS module evaluator then
+flattens the modules into a single option--config double containing
+all the defined options and declared configuration.
+
+In favor of us, the NixOS module system actually contains file
+references to its options[fn:option-link] and
+definitions[fn:definition-link]. However, the granularity is
+file-based, thus further work is required to extract the intra-file
+location of attributes. This proposal aims to provide a solution for
+that by extending nix-gui's current extraction facilities and using
+the information provided by the NixOS module evaluator and creating a
+mapping between options and its declarations and definitions.
+
+* Definition of terms
+- Attribute path ::
+a generalization of attribute index. Abstractly is a list of keys, but
+can be represented as a dot-separated string of keys, e.g.: "x.y.z".
+
+- Config ::
+the final value for a given option in the NixOS module system.
+
+- Declarations ::
+an option in the NixOS module system created through the use of
+=mkOption=.
+
+- Definition ::
+a value or one of the many values for a given option.
+
+- NixOS module system ::
+the module system provided by
+=<nixpkgs/lib/modules.nix>=. Technically, this is a module system
+provided by Nixpkgs as it is not tightly coupled to NixOS and can be
+utilized in other applications, e.g.: home-manager[fn:home-manager]
+and not-os[fn:not-os].
+
+- Option ::
+an attribute path which is valid for configuration under the NixOS
+module system.
+
+- Submodule ::
+an option with a module as its type. As with normal modules, a
+submodule can be declared with its options, and only reveals to the
+main module its config.
+
+* What is already implemented
+
+At the time of writing this document, =nix-gui= already has a
+rudimentary implementation for obtaining definitions from functional
+non-canonical modules. The discriminator used to determine whether a
+given attribute is a simple recursive type check -- only attribute
+paths with values having a non-set type are considered as config,
+otherwise it appends the attribute to the current attribute path and
+recurses.
+
+* Proposed implementation
+
+For the first phase of this implementation, modifying the config
+extractor to use actual options as its discriminator should allows us
+to determine the feasibility of this approach.
+
+[fn:option-link] https://github.com/NixOS/nixpkgs/blob/fc98ebad157b447064ad1302181887516f4b14bc/lib/modules.nix#L489
+[fn:definition-link] https://github.com/NixOS/nixpkgs/blob/fc98ebad157b447064ad1302181887516f4b14bc/lib/modules.nix#L528
+[fn:home-manager] https://github.com/nix-community/home-manager
+[fn:not-os] https://github.com/cleverca22/not-os
