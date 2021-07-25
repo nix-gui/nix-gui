@@ -8,6 +8,8 @@ from nixui.options.attribute import Attribute
 class UndefinedType:
     def __eq__(self, other):
         return isinstance(other, self.__class__)
+
+
 Undefined = UndefinedType()
 
 

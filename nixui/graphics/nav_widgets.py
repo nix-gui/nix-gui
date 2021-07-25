@@ -202,8 +202,8 @@ class AttributeSetOf(generic_widgets.ScrollListStackSelector):
         self.remove_btn.clicked.connect(self.remove_clicked)
 
         btn_hbox = QtWidgets.QHBoxLayout()
-        btn_hbox.addWidget(self.add_btn)
-        btn_hbox.addWidget(self.remove_btn)
+        btn_hbox.addWidget(self.add_btn, 1)
+        btn_hbox.addWidget(self.remove_btn, 1)
 
         self.nav_layout.insertLayout(1, btn_hbox)
 
@@ -269,9 +269,18 @@ class ListOf(generic_widgets.ScrollListStackSelector):
         self.remove_btn.setIcon(icon.get_icon('trash.png'))
         self.remove_btn.clicked.connect(self.remove_clicked)
 
+        self.up_btn = QtWidgets.QPushButton("△", self)
+        self.up_btn.clicked.connect(self.up_clicked)
+
+        self.down_btn = QtWidgets.QPushButton("▽", self)
+        self.down_btn.clicked.connect(self.down_clicked)
+
         btn_hbox = QtWidgets.QHBoxLayout()
         btn_hbox.addWidget(self.add_btn)
         btn_hbox.addWidget(self.remove_btn)
+
+        btn_hbox.addWidget(self.up_btn)
+        btn_hbox.addWidget(self.down_btn)
 
         self.nav_layout.insertLayout(0, btn_hbox)
 
@@ -282,6 +291,12 @@ class ListOf(generic_widgets.ScrollListStackSelector):
 
     def remove_clicked(self):
         self.item_list.takeItem(self.item_list.currentItem())
+
+    def up_clicked(self):
+        print('up')
+
+    def down_clicked(self):
+        print('down')
 
     def change_selected_item(self):
         item = self.item_list.currentItem()
