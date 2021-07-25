@@ -1,4 +1,4 @@
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtWidgets, QtCore, QtGui
 
 from nixui.graphics import richtext, icon
 
@@ -170,3 +170,17 @@ class ScrollListStackSelector(QtWidgets.QWidget):
 
     def set_layout(self):
         self.setLayout(self.hbox)
+
+
+class OptionListItem(QtWidgets.QListWidgetItem):
+    def __init__(self, option, icon_path=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.option = option
+
+        self.set_text()
+        if icon_path:
+            self.setIcon(QtGui.QIcon(icon_path))
+
+    def set_text(self):
+        self.setText(richtext.get_option_html(self.option))

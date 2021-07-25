@@ -4,9 +4,12 @@ import difflib
 
 from nixui.graphics import generic_widgets
 from nixui.options import object_to_expression
+from nixui.options.attribute import Attribute
 
 
 class DiffedOptionListSelector(generic_widgets.ScrollListStackSelector):
+    ItemCls = generic_widgets.OptionListItem
+
     def __init__(self, updates, *args, **kwargs):
         self.updates_map = {
             u.option: (
@@ -26,7 +29,7 @@ class DiffedOptionListSelector(generic_widgets.ScrollListStackSelector):
             self.item_list.addItem(it)
 
     def change_item(self):
-        option = self.item_list.currentItem().text()
+        option = self.item_list.currentItem().option
         old_value, new_value = self.updates_map[option]
 
         diff = difflib.unified_diff(

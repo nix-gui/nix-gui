@@ -2,12 +2,12 @@ import re
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-from nixui.options import api
+from nixui.options import api, attribute
 from nixui.graphics import richtext, field_widgets, generic_widgets, icon
 
 
 class GenericOptionSetDisplay(QtWidgets.QWidget):
-    def __init__(self, statemodel, option=None, is_base_viewer=None, *args, **kwargs):
+    def __init__(self, statemodel, option=attribute.Attribute(), is_base_viewer=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         option = api.get_next_branching_option(option)
@@ -49,23 +49,14 @@ class GenericOptionSetDisplay(QtWidgets.QWidget):
         self.setLayout(lay)
 
 
-class OptionListItem(QtWidgets.QListWidgetItem):
-    def __init__(self, option_name, icon_path=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.option_name = option_name
-
-        self.set_text()
-        if icon_path:
-            self.setIcon(QtGui.QIcon(icon_path))
-
+class ChildCountOptionListItem(generic_widgets.OptionListItem):
     def set_text(self):
-        child_count = api.get_option_count(self.option_name)
-        self.setText(richtext.get_option_html(self.option_name, child_count))
+        child_count = api.get_option_count(self.option)
+        self.setText(richtext.get_option_html(self.option, child_count))
 
 
 class OptionChildViewer(generic_widgets.ScrollListStackSelector):
-    ItemCls = OptionListItem
+    ItemCls = ChildCountOptionListItem
     ListCls = QtWidgets.QListWidget
 
     def __init__(self, statemodel, option=None, *args, **kwargs):
@@ -77,7 +68,7 @@ class OptionChildViewer(generic_widgets.ScrollListStackSelector):
         self.option_str = option
 
     def change_item(self):
-        new_option = self.item_list.currentItem().option_name
+        new_option = self.item_list.currentItem().option
         if self.current_item != new_option:
             self.current_item = new_option
             self.change_option_view(new_option)
@@ -88,8 +79,8 @@ class OptionChildViewer(generic_widgets.ScrollListStackSelector):
             it = self.ItemCls(text, icon_path)
             self.item_list.addItem(it)
 
-    def change_option_view(self, full_option_name):
-        view = GenericOptionSetDisplay(statemodel=self.statemodel, option=full_option_name)
+    def change_option_view(self, option):
+        view = GenericOptionSetDisplay(statemodel=self.statemodel, option=option)
 
         old_widget = self.current_widget
         self.stack.addWidget(view)
@@ -105,7 +96,7 @@ class OptionTabs(QtWidgets.QTabWidget):
         self.option_str = option
 
         for child_option in api.get_child_options(option):
-            self.addTab(GenericOptionSetDisplay(statemodel, child_option), child_option)
+            self.addTab(GenericOptionSetDisplay(statemodel, child_option), str(child_option))
 
 
 class OptionGroupBox(QtWidgets.QWidget):
@@ -113,7 +104,7 @@ class OptionGroupBox(QtWidgets.QWidget):
         super().__init__(*args, **kwargs)
 
         group_box = QtWidgets.QGroupBox()
-        group_box.setTitle(option)
+        group_box.setTitle(str(option))
 
         vbox = QtWidgets.QVBoxLayout()
 
@@ -151,7 +142,7 @@ class EditableListItem(QtWidgets.QListWidgetItem):
         self.set_text()
 
     def set_text(self):
-        self.setText(self.option_name.split('.')[-1])
+        self.setText(str(option))
 
     def setData(self, index, value):
         # is valid option name?

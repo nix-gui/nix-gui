@@ -4,7 +4,7 @@ import json
 import os
 import subprocess
 
-from nixui.options import parser, nix_eval, object_to_expression
+from nixui.options import parser, nix_eval, object_to_expression, attribute
 from nixui.utils import tree, store, copy_decorator, cache
 
 
@@ -17,7 +17,7 @@ NoDefaultSet = ('NO DEFAULT SET',)
 @cache.cache(return_copy=True, retain_hash_fn=cache.configuration_path_hash_fn)
 def get_option_data():
     defaults_and_schema = nix_eval.get_all_nixos_options()
-    configured_values = {'.'.join(k): v for k, v in parser.get_all_option_values(os.environ['CONFIGURATION_PATH']).items()}
+    configured_values = parser.get_all_option_values(os.environ['CONFIGURATION_PATH'])
     result = {}
     for option, option_data in defaults_and_schema.items():
         result[option] = dict(option_data)
@@ -52,8 +52,8 @@ def get_option_tree():
     options = get_option_data()
     options_tree = tree.Tree()
 
-    for option_name, opt in options.items():
-        options_tree.add_leaf(option_name.split('.'), opt)
+    for attr, attr_data in options.items():
+        options_tree.add_leaf(attr.loc, attr_data)
 
     return options_tree
 
@@ -91,52 +91,38 @@ def get_types():
 ################
 # get values api
 ################
-def full_option_name(parent_option, sub_option):
-    if parent_option and sub_option:
-        return '.'.join([parent_option, sub_option])
-    elif parent_option:
-        return parent_option
-    elif sub_option:
-        return sub_option
-    else:
-        return None
-
-
 def get_next_branching_option(option):
+    # if an attribute is alone in a set, get the child set recursively
     # 0 children = leaf -> exit
     # more than 1 child = branch -> exit
-    branch = [] if option is None else option.split('.')
-    node = get_option_tree().get_node(branch)
+    node = get_option_tree().get_node(option)
     while len(node.get_children()) == 1:
-        node_type = get_option_type('.'.join(branch))
+        node_type = get_option_type(option)
         if node_type.startswith('attribute set of '):
             break
         key = node.get_children()[0]
         node = node.get_node([key])
-        branch += [key]
-    return '.'.join(branch)
+        option = attribute.Attribute.from_insertion(option, key)
+    return option
 
 
 @functools.lru_cache(1000)
 def get_child_options(parent_option):
     # child options sorted by count
     # TODO: sort by hardcoded priority per readme too
-    if not parent_option:
-        child_options = get_option_tree().get_children([])
-    else:
-        branch = parent_option.split('.')
-        child_options = [f'{parent_option}.{o}' for o in get_option_tree().get_children(branch)]
-    return sorted(child_options, key=lambda x: -get_option_count(x))
+    child_options = [
+        attribute.Attribute.from_insertion(parent_option, o)
+        for o in get_option_tree().get_children(parent_option)
+    ]
+    return sorted(child_options, key=lambda x: -get_option_count(x))  # TODO: this is a bad sort and difficult to navigate
 
 
 def get_option_count(parent_option):
-    branch = parent_option.split('.') if parent_option else []
-    return get_option_tree().get_count(branch)
+    return get_option_tree().get_count(parent_option.loc)
 
 
 def get_leaf(option):
-    branch = option.split('.') if option else []
-    node = get_option_tree().get_node(branch)
+    node = get_option_tree().get_node(option)
     return node.get_leaf()
 
 
@@ -169,7 +155,7 @@ def apply_updates(option_value_obj_map):
     option_value_obj_map: map between option string and python object form of value
     """
     option_expr_map = {
-        tuple(option.split('.')): object_to_expression.get_formatted_expression(value_obj)
+        option: object_to_expression.get_formatted_expression(value_obj)
         for option, value_obj in option_value_obj_map.items()
     }
     module_string = parser.inject_expressions(
