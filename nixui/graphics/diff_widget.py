@@ -28,7 +28,7 @@ class DiffedOptionListSelector(generic_widgets.ScrollListStackSelector):
             it = self.ItemCls(option)
             self.item_list.addItem(it)
 
-    def change_item(self):
+    def change_selected_item(self):
         option = self.item_list.currentItem().option
         old_value, new_value = self.updates_map[option]
 

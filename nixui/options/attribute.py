@@ -25,6 +25,13 @@ class Attribute:
     def __iter__(self):
         return iter(self.loc)
 
+    def __len__(self):
+        return len(self.loc)
+
+    def __lt__(self, other):
+        # defined such that iterating over sorted attributes is a bredth first search
+        return (-len(self), str(self)) < (-len(other), str(other))
+
     def __str__(self):
         return '.'.join([
             f'"{attribute}"' if '.' in attribute else attribute
@@ -35,7 +42,7 @@ class Attribute:
         return bool(self.loc)
 
     def __repr__(self):
-        return f'{self.__class__}("{str(self)}")'
+        return f"Attribute('{str(self)}')"
 
     def __hash__(self):
         return hash(tuple(self.loc))

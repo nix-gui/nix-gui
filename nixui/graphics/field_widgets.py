@@ -4,7 +4,7 @@ import re
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-from nixui.options import api
+from nixui.options import api, option_tree
 from nixui.graphics import richtext, generic_widgets
 
 
@@ -13,7 +13,7 @@ from nixui.graphics import richtext, generic_widgets
 def get_field_type_widget_map():
     return [
         [
-            partial(eq, 'undefined'),
+            partial(eq, option_tree.Undefined),
             UndefinedField,
         ],
         [
@@ -122,13 +122,13 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.option = option
         self.starting_value = None
 
-        field_types = get_field_types(api.get_option_type(option))
+        field_types = get_field_types(api.get_option_tree().get_type(option))
 
         # set title and description
         text = QtWidgets.QLabel(richtext.get_option_html(
             option,
-            type_label=api.get_option_type(option),
-            description=api.get_option_description(option),
+            type_label=api.get_option_tree().get_type(option),
+            description=api.get_option_tree().get_description(option),
         ))
         text.setWordWrap(True)
         text.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
@@ -405,34 +405,13 @@ class OneOfComboBoxField(QtWidgets.QComboBox):
 
 class OneOfField:
     def __new__(cls, option):
-        field_type = api.get_option_type(option)
+        field_type = api.get_option_tree().get_type(option)
         choices = [choice.strip('" ') for choice in field_type.split('one of ', 1)[1].split(',')]
 
         if len(choices) < 5:
             return OneOfRadioFrameField(option, choices)
         else:
             return OneOfComboBoxField(option, choices)
-
-
-class AttributeSetOf:
-    def __init__(self, option, choices):
-        super().__init__()
-        self.option = option
-        self.choices = choices
-
-        for choice in self.choices:
-            self.addItem(choice)
-
-    def validate_field(self, value):
-        return value in self.choices
-
-    def load_value(self, value):
-        self.setCurrentIndex(self.choices.index(value))
-        self.loaded_value = value
-
-    @property
-    def current_value(self):
-        return self.currentText()
 
 
 class DoNothingField(QtWidgets.QLabel):
@@ -461,7 +440,7 @@ class NullField(DoNothingField):
 
 
 class UndefinedField(NullField):
-    legal_value = api.NoDefaultSet
+    legal_value = option_tree.Undefined
     label_text = 'Undefined'
 
 

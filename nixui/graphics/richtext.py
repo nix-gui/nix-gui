@@ -42,7 +42,7 @@ def get_option_html(option, child_count=None, type_label=None, description=None)
     capitalized_fancy_name = re.sub(r"(\w)([A-Z])", r"\1 \2", option.loc[-1]).title()
     s = f'<p style="font-size:100%; {no_margin_style}">{capitalized_fancy_name}</p>'
     if child_count:
-        num_children = api.get_option_count(option)
+        num_children = len(api.get_option_tree().children(option))
         s += f'<p style="{sub_style}">{option}{" (" + str(num_children) + ")" if num_children else ""}</p>'
     if type_label:
         s += f'<p style="{sub_style}">Type: {type_label}</p>'

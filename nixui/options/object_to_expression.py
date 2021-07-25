@@ -1,6 +1,7 @@
 import subprocess
 
 from nixui.utils.logger import LogPipe
+from nixui.options.option_tree import Undefined
 
 
 def get_formatted_expression(obj):
@@ -22,7 +23,7 @@ def format_expression(expression_str):
 
 
 def get_expression(obj):
-    if obj == ('NO DEFAULT SET',):  # TODO: clean up this hack, api.py and here should have a unified NO DEFAULT SET
+    if obj == Undefined:
         return '<undefined>'
     elif isinstance(obj, bool):
         return str(obj).lower()

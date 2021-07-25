@@ -11,6 +11,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
+        pythonPackages = pkgs.python39Packages;
 
         nix-dump-syntax-tree-json = with pkgs; rustPlatform.buildRustPackage rec {
            pname = "nix_dump_syntax_tree_json";
@@ -20,7 +21,7 @@
            cargoHash = "sha256-8yRlG8Paza3sE5GqhB8f0yzF8Pl0CI7F0W8VRhEN6BE=";
         };
 
-        pylspclient = pkgs.python3Packages.buildPythonPackage rec {
+        pylspclient = pythonPackages.buildPythonPackage rec {
           pname = "pylspclient";
           version = "0.0.2";
           name = "${pname}-${version}";
@@ -30,17 +31,31 @@
           };
           doCheck = false;
         };
+        treelib = pythonPackages.buildPythonPackage rec {
+          pname = "treelib";
+          version = "1.6.1";
+          name = "${pname}-${version}";
+          src = builtins.fetchurl {
+            url = "https://files.pythonhosted.org/packages/04/b0/2269c328abffbb63979f7143351a24a066776b87526d79956aea5018b80a/treelib-1.6.1.tar.gz";
+            sha256 = "1247rv9fbb8pw3xbkbz04q3vnvvva3hcw002gp1clp5psargzgqw";
+          };
+          propagatedBuildInputs = [
+            pythonPackages.future
+          ];
+          doCheck = false;
+        };
 
       in {
         packages.nix-gui = pkgs.callPackage
           ({ stdenv, lib, rustPlatform, fetchFromGitHub, enable-profiling ? false }:
-            pkgs.python3Packages.buildPythonPackage rec {
+            pythonPackages.buildPythonPackage rec {
               pname = "nix-gui";
               version = "0.1.0";
               src = ./.;
               propagatedBuildInputs = [
-                pkgs.python3Packages.pyqt5
+                pythonPackages.pyqt5
                 pylspclient
+                treelib
                 rnix-lsp.defaultPackage."${system}"
               ];
               makeWrapperArgs = [
@@ -54,8 +69,8 @@
                 pkgs.nix
                 pkgs.nixpkgs-fmt
                 nix-dump-syntax-tree-json
-                pkgs.python3Packages.pytest
-                pkgs.python3Packages.pytest-datafiles
+                pythonPackages.pytest
+                pythonPackages.pytest-datafiles
               ];
               checkPhase = let
                 sample = "${./nixui/tests/sample}";

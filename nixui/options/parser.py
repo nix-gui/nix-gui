@@ -1,5 +1,6 @@
 import uuid
 
+from nixui.utils import cache
 from nixui.options import syntax_tree, nix_eval
 from nixui.options.attribute import Attribute
 
@@ -53,6 +54,7 @@ def apply_indentation(string, num_spaces):
     ])
 
 
+@cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
 def get_all_option_values(root_module_path):
     option_expr_map = {}
     for module_path in [root_module_path]:
@@ -60,6 +62,9 @@ def get_all_option_values(root_module_path):
         for attr_loc, (key_node, value_node) in get_key_value_nodes(module_path, tree).items():
             value_expr = tree.to_string(value_node)
             option_expr_map[attr_loc] = value_expr
+
+    # TODO: remove this hack when option parser retrieves *only* options
+    del option_expr_map[Attribute(['imports'])]
     return option_expr_map
 
 
