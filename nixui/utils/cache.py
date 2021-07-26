@@ -6,11 +6,16 @@ import hashlib
 import pickle
 
 from nixui.utils import store
+import nixui
 
 
 @functools.lru_cache()
 def _get_cache_path(call_signature, key):
-    hashval = hashlib.md5(json.dumps(call_signature, sort_keys=True).encode('utf-8')).hexdigest()
+    hashval = hashlib.md5([
+        json.dumps(call_signature, sort_keys=True).encode('utf-8'),
+        nixui.__version__
+    ]).hexdigest()
+
     filename = f'{hashval}.{key}'
     path = os.path.join(
         store.get_store_path(),
