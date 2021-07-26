@@ -42,7 +42,8 @@ class OptionTree:
     def __init__(self, system_option_data, config_options):
         # load data into Tree with OptionData leaves
         self.tree = Tree()
-        self.tree.create_node(identifier=Attribute([]), data=OptionData(_type='PARENT'))
+        self.root = Attribute([])
+        self.tree.create_node(identifier=self.root, data=OptionData(_type='PARENT'))
 
         # insert option data with parent option data inserted first via `sorted`
         for option_path, option_data_dict in sorted(system_option_data.items(), key=str):
@@ -162,7 +163,8 @@ class OptionTree:
     def is_readonly(self, attribute):
         return self._get_data(attribute).readOnly
 
-    def children(self, attribute, recursive=False):
+    def children(self, attribute=None, recursive=False):
+        attribute = attribute or self.root
         if recursive:
             children = self.tree.leaves(attribute)
         else:

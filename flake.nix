@@ -69,6 +69,7 @@
                 pkgs.nix
                 pkgs.nixpkgs-fmt
                 nix-dump-syntax-tree-json
+                pythonPackages.parsimonious
                 pythonPackages.pytest
                 pythonPackages.pytest-datafiles
               ];
