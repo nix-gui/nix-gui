@@ -72,10 +72,6 @@ class StateModel:
         self.slotmapper('changes_saved')(save_path)
 
     def undo(self, *args, **kwargs):
-        if not self.update_history:
-            self.slotmapper('no_updates_exist')()
-            logger.error('Reached unexpected branch point, attempted to undo when no update history exists')
-
         last_update = self.update_history.pop()
         self.option_tree.set_value(last_update.option, last_update.old_value)
 
