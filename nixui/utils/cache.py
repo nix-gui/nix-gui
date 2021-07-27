@@ -4,13 +4,21 @@ import json
 import os
 import hashlib
 import pickle
+import importlib
 
-from nixui.utils import store
+
+VERSION = importlib.metadata.version('nixui')
+
 
 
 @functools.lru_cache()
 def _get_cache_path(call_signature, key):
-    hashval = hashlib.md5(json.dumps(call_signature, sort_keys=True).encode('utf-8')).hexdigest()
+    hashval = hashlib.md5(
+        json.dumps(
+            [call_signature, VERSION],
+            sort_keys=True
+        ).encode('utf-8'),
+    ).hexdigest()
     filename = f'{hashval}.{key}'
     path = os.path.join(
         store.get_store_path(),
