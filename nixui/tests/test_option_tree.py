@@ -9,7 +9,7 @@ def test_option_tree_simple():
         {attr: 'myvalue'},
     )
     assert t.get_type(attr) == 'mytype'
-    assert t.get_value(attr) == 'myvalue'
+    assert t.get_definition(attr) == 'myvalue'
 
 
 def test_option_tree_simple_attr_set():
@@ -19,9 +19,9 @@ def test_option_tree_simple_attr_set():
         {},
     )
     child_attr = Attribute(['foo', 'bar', 'baz'])
-    t.set_value(child_attr, 'val')
+    t.set_definition(child_attr, 'val')
     assert t.get_type(child_attr) == 'string'
-    assert t.get_value(child_attr) == 'val'
+    assert t.get_definition(child_attr) == 'val'
 
 
 def test_option_tree_attr_set_of_submodules():

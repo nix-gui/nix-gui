@@ -169,12 +169,12 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self._load_value()
 
     def _load_value(self):
-        option_value = self.statemodel.get_value(self.option)
+        option_definition = self.statemodel.get_definition(self.option)
 
         for i, field in enumerate(self.stacked_widgets):
-            if field.validate_field(option_value):
+            if field.validate_field(option_definition):
                 self.field_type_selector.select(i)
-                field.load_value(option_value)
+                field.load_value(option_definition)
                 break
 
         self.starting_value = self.value
@@ -182,7 +182,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
     def set_type(self, arg):
         stack_idx = self.field_type_selector.checked_index()
         self.entry_stack.widget(stack_idx).load_value(
-            self.statemodel.get_value(self.option)
+            self.statemodel.get_definition(self.option)
         )
         self.entry_stack.setCurrentIndex(stack_idx)
         self.handle_state_change()

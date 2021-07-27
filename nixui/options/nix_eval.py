@@ -45,6 +45,7 @@ def get_all_nixos_options():
       }
     }
     """
+    # TODO: remove key from this expression, it isn't used
     res = nix_instantiate_eval(
         """
         with import <nixpkgs/nixos> {};
@@ -54,8 +55,9 @@ def get_all_nixos_options():
         """,
         strict=True
     )
-    # TODO: remove key from this expression, it isn't used
-    return {Attribute(v['loc']): v for v in res.values()}
+    d = {Attribute(v['loc']): v for v in res.values()}
+    # TODO: convert system_default text into OptionDefinition via .from_expression_string
+    return d
 
 
 @cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)

@@ -24,7 +24,7 @@ def format_expression(expression_str):
 
 def get_expression(obj):
     if obj == Undefined:
-        return '<undefined>'
+        return Undefined
     elif isinstance(obj, bool):
         return str(obj).lower()
     elif isinstance(obj, list):

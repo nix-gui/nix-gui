@@ -3,7 +3,7 @@ import functools
 import os
 
 from nixui.options import parser, nix_eval, object_to_expression, option_tree
-from nixui.utils import store, cache
+from nixui.utils import store, remap_dict
 
 
 #############################
@@ -12,7 +12,10 @@ from nixui.utils import store, cache
 @functools.lru_cache()
 def get_option_tree():
     return option_tree.OptionTree(
-        nix_eval.get_all_nixos_options(),
+        remap_dict.key_remapper(
+            nix_eval.get_all_nixos_options(),
+            {'system_default': 'system_default_definition'}
+        ),
         parser.get_all_option_values(os.environ['CONFIGURATION_PATH'])
     )
 

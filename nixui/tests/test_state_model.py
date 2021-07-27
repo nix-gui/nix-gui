@@ -27,13 +27,13 @@ def test_load_edit_save(option_loc, new_value):
     os.environ['NIXGUI_CONFIGURATION_PATH_CAN_BE_CORRUPTED'] = 'true'
     # open, update, save
     m0 = state_model.StateModel()
-    v0 = m0.get_value(option_loc)
+    v0 = m0.get_definition(option_loc)
     m0.record_update(option_loc, new_value)
     m0.persist_updates()
 
     # reopen, verify
     m1 = state_model.StateModel()
-    v1 = m1.get_value(option_loc)
+    v1 = m1.get_definition(option_loc)
     assert v1 == new_value
 
     # reset, verify same as original
@@ -41,5 +41,5 @@ def test_load_edit_save(option_loc, new_value):
     m1.persist_updates()
 
     m2 = state_model.StateModel()
-    v2 = m2.get_value(option_loc)
+    v2 = m2.get_definition(option_loc)
     assert v0 == v2

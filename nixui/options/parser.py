@@ -3,6 +3,7 @@ import uuid
 from nixui.utils import cache
 from nixui.options import syntax_tree, nix_eval
 from nixui.options.attribute import Attribute
+from nixui.options.option_definition import OptionDefinition
 
 
 def inject_expressions(module_path, option_expr_map):
@@ -60,8 +61,9 @@ def get_all_option_values(root_module_path):
     for module_path in [root_module_path]:
         tree = syntax_tree.SyntaxTree(module_path)
         for attr_loc, (key_node, value_node) in get_key_value_nodes(module_path, tree).items():
-            value_expr = tree.to_string(value_node)
-            option_expr_map[attr_loc] = value_expr
+            option_expr_map[attr_loc] = OptionDefinition.from_expression_string(
+                tree.to_string(value_node)
+            )
 
     # TODO: remove this hack when option parser retrieves *only* options
     del option_expr_map[Attribute(['imports'])]
