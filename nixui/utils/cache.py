@@ -6,6 +6,8 @@ import hashlib
 import pickle
 import importlib
 
+from nixui.utils import store
+
 
 VERSION = importlib.metadata.version('nixui')
 
