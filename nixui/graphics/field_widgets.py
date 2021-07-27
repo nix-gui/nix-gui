@@ -4,7 +4,7 @@ import re
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-from nixui.options import api, option_tree
+from nixui.options import api, option_tree, option_definition
 from nixui.graphics import richtext, generic_widgets
 
 
@@ -174,8 +174,11 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         for i, field in enumerate(self.stacked_widgets):
             if field.validate_field(option_definition):
                 self.field_type_selector.select(i)
-                field.load_value(option_definition)
+                field.load_value(option_definition.obj)
                 break
+        else:
+            expression_field = self.stacked_widgets[-1]
+            expression_field.load_value(option_definition.expression_string)
 
         self.starting_value = self.value
 
@@ -188,7 +191,10 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.handle_state_change()
 
     def handle_state_change(self):
-        self.statemodel.slotmapper('value_changed')(self.option, self.value)
+        self.statemodel.slotmapper('value_changed')(
+            self.option,
+            option_definition.OptionDefinition.from_object(self.value)
+        )
 
     @property
     def value(self):

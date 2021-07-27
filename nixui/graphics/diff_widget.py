@@ -13,8 +13,8 @@ class DiffedOptionListSelector(generic_widgets.ScrollListStackSelector):
     def __init__(self, updates, *args, **kwargs):
         self.updates_map = {
             u.option: (
-                object_to_expression.get_formatted_expression(u.old_value),
-                object_to_expression.get_formatted_expression(u.new_value)
+                u.old_definition.expression_string,
+                u.new_definition.expression_string
             )
             for u in updates
         }

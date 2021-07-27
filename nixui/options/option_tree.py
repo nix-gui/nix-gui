@@ -3,10 +3,7 @@ from treelib import Tree, Node
 import typing
 
 from nixui.options.attribute import Attribute
-from nixui.utils.singleton import Singleton
-
-
-Undefined = Singleton()
+from nixui.options.option_definition import OptionDefinition, Undefined
 
 
 @dataclasses.dataclass
@@ -14,9 +11,9 @@ class OptionData:
     description: str = Undefined
     readOnly: bool = Undefined
     _type: str = Undefined
-    system_default_definition: typing.Any = Undefined
-    configured_definition: typing.Any = Undefined
-    in_memory_definition: typing.Any = Undefined
+    system_default_definition: OptionDefinition = OptionDefinition.undefined()
+    configured_definition: OptionDefinition = OptionDefinition.undefined()
+    in_memory_definition: OptionDefinition = OptionDefinition.undefined()
 
     # based on https://stackoverflow.com/a/61426351
     def update(self, new):
@@ -133,14 +130,14 @@ class OptionTree:
         self._upsert_node_data(option_path, {'in_memory_definition': option_definition})
 
     def get_definition(self, attribute, include_in_memory_definition=True):
-        if include_in_memory_definition and self.get_in_memory_definition(attribute) != Undefined:
+        if include_in_memory_definition and self.get_in_memory_definition(attribute) != OptionDefinition.undefined():
             return self.get_in_memory_definition(attribute)
-        elif self.get_configured_definition(attribute) != Undefined:
+        elif self.get_configured_definition(attribute) != OptionDefinition.undefined():
             return self.get_configured_definition(attribute)
-        elif self.get_system_default_definition(attribute) != Undefined:
+        elif self.get_system_default_definition(attribute) != OptionDefinition.undefined():
             return self.get_system_default_definition(attribute)
         else:
-            return Undefined
+            return OptionDefinition.undefined()
 
     def get_in_memory_definition(self, attribute):
         return self._get_data(attribute).in_memory_definition
