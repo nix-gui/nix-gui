@@ -3,8 +3,6 @@ from PyQt5 import QtWidgets
 import difflib
 
 from nixui.graphics import generic_widgets
-from nixui.options import object_to_expression
-from nixui.options.attribute import Attribute
 
 
 class DiffedOptionListSelector(generic_widgets.ScrollListStackSelector):

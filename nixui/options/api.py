@@ -2,7 +2,7 @@ import collections
 import functools
 import os
 
-from nixui.options import parser, nix_eval, object_to_expression, option_tree
+from nixui.options import parser, nix_eval, option_tree
 from nixui.utils import store, remap_dict
 
 
