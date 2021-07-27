@@ -130,14 +130,20 @@ class OptionTree:
         self._upsert_node_data(option_path, {'in_memory_definition': option_definition})
 
     def get_definition(self, attribute, include_in_memory_definition=True):
-        if include_in_memory_definition and self.get_in_memory_definition(attribute) != OptionDefinition.undefined():
-            return self.get_in_memory_definition(attribute)
-        elif self.get_configured_definition(attribute) != OptionDefinition.undefined():
-            return self.get_configured_definition(attribute)
-        elif self.get_system_default_definition(attribute) != OptionDefinition.undefined():
-            return self.get_system_default_definition(attribute)
-        else:
-            return OptionDefinition.undefined()
+        if include_in_memory_definition:
+            in_memory_definition = self.get_in_memory_definition(attribute)
+            if in_memory_definition != OptionDefinition.undefined():
+                return self.get_in_memory_definition(attribute)
+
+        configured_definition = self.get_configured_definition(attribute)
+        if configured_definition != OptionDefinition.undefined():
+            return configured_definition
+
+        system_default_definition = self.get_system_default_definition(attribute)
+        if system_default_definition != OptionDefinition.undefined():
+            return system_default_definition
+
+        return OptionDefinition.undefined()
 
     def get_in_memory_definition(self, attribute):
         return self._get_data(attribute).in_memory_definition
