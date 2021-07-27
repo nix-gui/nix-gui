@@ -1,6 +1,5 @@
 import dataclasses
 from treelib import Tree, Node
-import typing
 
 from nixui.options.attribute import Attribute
 from nixui.options.option_definition import OptionDefinition, Undefined
