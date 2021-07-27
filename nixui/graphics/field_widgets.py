@@ -120,7 +120,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
 
         self.statemodel = statemodel
         self.option = option
-        self.starting_value = None
+        self.starting_definition = None
 
         field_types = get_field_types(api.get_option_tree().get_type(option))
 
@@ -144,8 +144,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
                 for t in field_types
             ]
         )
-        # TODO: remove this when expression and reference editor are done
-        self.field_type_selector.btn_group.buttons()[-2].setEnabled(False)
+        # TODO: remove this when reference editor is done
         self.field_type_selector.btn_group.buttons()[-1].setEnabled(False)
 
         # set fields for entry editing
@@ -154,7 +153,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
             entry_widget = get_field_widget(t, self.option)
             entry_widget.stateChanged.connect(self.handle_state_change)
             self.entry_stack.addWidget(entry_widget)
-            self.statemodel.slotmapper.add_slot(('update_field', self.option), self._load_value)
+            self.statemodel.slotmapper.add_slot(('update_field', self.option), self._load_definition)
         self.stacked_widgets = list(map(self.entry_stack.widget, range(self.entry_stack.count())))
 
         # add all to layout
@@ -166,39 +165,46 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         layout.addWidget(self.entry_stack, stretch=8)
         self.setLayout(layout)
 
-        self._load_value()
+        self._load_definition()
 
-    def _load_value(self):
+    def _load_definition(self):
         option_definition = self.statemodel.get_definition(self.option)
 
         for i, field in enumerate(self.stacked_widgets):
-            if field.validate_field(option_definition):
+            if field.validate_field(option_definition.obj):
                 self.field_type_selector.select(i)
                 field.load_value(option_definition.obj)
                 break
         else:
-            expression_field = self.stacked_widgets[-1]
+            self.field_type_selector.select(len(self.stacked_widgets) - 1)
+            expression_field = self.stacked_widgets[-2]
             expression_field.load_value(option_definition.expression_string)
 
-        self.starting_value = self.value
+        self.starting_definition = self.definition
 
     def set_type(self, arg):
         stack_idx = self.field_type_selector.checked_index()
-        self.entry_stack.widget(stack_idx).load_value(
-            self.statemodel.get_definition(self.option)
-        )
+        current_widget = self.entry_stack.widget(stack_idx)
+        definition = self.statemodel.get_definition(self.option)
+        if isinstance(current_widget, ExpressionField):
+            current_widget.load_value(definition.expression_string)
+        else:
+            current_widget.load_value(definition.obj)
         self.entry_stack.setCurrentIndex(stack_idx)
         self.handle_state_change()
 
     def handle_state_change(self):
-        self.statemodel.slotmapper('value_changed')(
-            self.option,
-            option_definition.OptionDefinition.from_object(self.value)
-        )
+        self.statemodel.slotmapper('form_definition_changed')(self.option, self.definition)
 
     @property
-    def value(self):
-        return self.entry_stack.currentWidget().current_value
+    def definition(self):
+        current_widget = self.entry_stack.currentWidget()
+        expression_widget = self.stacked_widgets[-2]
+        form_value = self.entry_stack.currentWidget().current_value
+        if current_widget == expression_widget:
+            return option_definition.OptionDefinition.from_expression_string(form_value)
+        else:
+            return option_definition.OptionDefinition.from_object(form_value)
 
     def contains_focus(self):
         return (
@@ -217,7 +223,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         super().paintEvent(ev)
         if self.contains_focus():
             self.paint_background_color(233, 245, 248, 255)
-        elif self.starting_value != self.value:
+        elif self.starting_definition != self.definition:
             self.paint_background_color(194, 249, 197, 255)
         else:
             return
@@ -270,7 +276,6 @@ class TextField(QtWidgets.QTextEdit):
             value = ''
         self.setText(value)
         self.loaded_value = value
-
 
     @property
     def current_value(self):
@@ -420,6 +425,33 @@ class OneOfField:
             return OneOfComboBoxField(option, choices)
 
 
+class ExpressionField(QtWidgets.QTextEdit):
+    stateChanged = QtCore.pyqtSignal(str)
+
+    def __init__(self, option, **constraints):
+        super().__init__()
+        self.option = option
+        self.constraints = constraints
+        self.loaded_value = None
+
+        self.setFont(QtGui.QFont("Monospace"))
+
+        self.textChanged.connect(lambda: self.stateChanged.emit(self.current_value))
+
+    def validate_field(self, value):
+        return isinstance(value, str)
+
+    def load_value(self, value):
+        if not self.validate_field(value):
+            value = ''
+        self.setText(value)
+        self.loaded_value = value
+
+    @property
+    def current_value(self):
+        return self.toPlainText()
+
+
 class DoNothingField(QtWidgets.QLabel):
     stateChanged = QtCore.pyqtSignal()
 
@@ -460,4 +492,3 @@ class NotImplementedField(DoNothingField):
 
 
 ReferenceField = NotImplementedField
-ExpressionField = NotImplementedField

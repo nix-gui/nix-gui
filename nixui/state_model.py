@@ -28,7 +28,7 @@ class StateModel:
 
         # TODO: is including the slotmapper overloading the StateModel? What are the alternatives?
         self.slotmapper = SlotMapper()
-        self.slotmapper.add_slot('value_changed', self.record_update)
+        self.slotmapper.add_slot('form_definition_changed', self.record_update)
         self.slotmapper.add_slot('undo', self.undo)
 
     def get_definition(self, option):
@@ -73,7 +73,7 @@ class StateModel:
 
     def undo(self, *args, **kwargs):
         last_update = self.update_history.pop()
-        self.option_tree.set_value(last_update.option, last_update.old_definition)
+        self.option_tree.set_definition(last_update.option, last_update.old_definition)
 
         if not self.update_history:
             self.slotmapper('no_updates_exist')()
