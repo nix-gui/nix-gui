@@ -11,7 +11,8 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        pythonPackages = pkgs.python39Packages;
+        python = pkgs.python39;
+        pythonPackages = python.pkgs;
 
         nix-dump-syntax-tree-json = with pkgs; rustPlatform.buildRustPackage rec {
            pname = "nix_dump_syntax_tree_json";
@@ -92,6 +93,16 @@
           drv = self.packages."${system}".nix-gui;
         };
         defaultApp = self.apps."${system}".nix-gui;
+
+        devShell = pkgs.mkShell {
+          QT_PLUGIN_PATH = "${pkgs.qt5.qtbase}/${pkgs.qt5.qtbase.qtPluginPrefix}";
+          nativeBuildInputs = [
+            python
+          ];
+          inputsFrom = [
+            self.packages."${system}".nix-gui
+          ];
+        };
       }
     );
 }
