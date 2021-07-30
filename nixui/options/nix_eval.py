@@ -61,7 +61,7 @@ def get_modules_defined_attrs(module_path):
         leaves = nix_instantiate_eval(f'import {f} {module_path}', strict=True)
 
     return {
-        Attribute(v['name']): {"position": v['position']}
+        Attribute(v['loc']): {"position": v['position']}
         for v in leaves
     }
 
