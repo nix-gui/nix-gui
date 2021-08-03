@@ -210,27 +210,6 @@ class OptionListItem(QtWidgets.QListWidgetItem):
         self.setText(richtext.get_option_html(self.option))
 
 
-class ChildCountOptionListItem(OptionListItem):
-    def set_text(self):
-        child_count = len(api.get_option_tree().children(self.option))
-        self.setText(richtext.get_option_html(self.option, child_count))
-
-
-class OptionScrollListSelector(QtWidgets.QListWidget):
-    def __init__(self, options):
-        super().__init__()
-
-        for option in options:
-            self.addItem(
-                ChildCountOptionListItem(option)
-            )
-
-        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.MinimumExpanding)
-        self.setItemDelegate(richtext.HTMLDelegate())
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setMinimumWidth(self.sizeHintForColumn(0))
-
-
 class EditableOptionListItem(QtWidgets.QListWidgetItem):
     def __init__(self, option, *args, **kwargs):
         super().__init__(*args, **kwargs)
