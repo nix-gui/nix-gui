@@ -1,6 +1,6 @@
 from functools import partial
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 
 from nixui.options.attribute import Attribute
 
@@ -69,6 +69,10 @@ class NavBar(QtWidgets.QWidget):
         searchbox.returnPressed.connect(
             lambda: set_lookup_key_fn(f'search:{searchbox.text()}')
         )
+
+        # setup shortcuts
+        search_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+F'), self)
+        search_shortcut.activated.connect(lambda: searchbox.setFocus())
 
         # add to layout
         hbox = QtWidgets.QHBoxLayout()
