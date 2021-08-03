@@ -6,7 +6,6 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from nixui.graphics import icon, richtext
 from nixui.options.attribute import Attribute
 from nixui.options import api, option_definition
-from nixui.utils.singleton import Singleton
 
 
 class GenericNavListDisplay:
