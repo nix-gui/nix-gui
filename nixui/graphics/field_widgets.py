@@ -372,10 +372,9 @@ class OneOfComboBoxField(QtWidgets.QComboBox):
         return value in self.choices
 
     def load_value(self, value):
-        if not self.validate_field(value):
-            value = ''
-        self.setCurrentIndex(self.choices.index(value))
-        self.loaded_value = value
+        if self.validate_field(value):
+            self.setCurrentIndex(self.choices.index(value))
+            self.loaded_value = value
 
     @property
     def current_value(self):
