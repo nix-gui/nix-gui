@@ -35,7 +35,9 @@ class OptionScrollListSelector(QtWidgets.QListWidget):
             self.addItem(item)
             self.option_item_map[option.get_end()] = item
 
-        # form look and feel
+        self._setup_scroll_list_selector_theme()  # form look and feel
+
+    def _setup_scroll_list_selector_theme(self):
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.MinimumExpanding)
         self.setItemDelegate(richtext.HTMLDelegate())
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
@@ -209,3 +211,36 @@ class DynamicListOf(QtWidgets.QWidget):
         for option in api.get_option_tree().children(self.option_path):
             it = self.ItemCls(option)
             self.list_widget.addItem(it)
+
+
+class SearchResultListDisplay(QtWidgets.QListWidget):
+    _setup_scroll_list_selector_theme = OptionScrollListSelector._setup_scroll_list_selector_theme
+
+    def __init__(self, search_str, set_option_path_fn=None):
+        super().__init__()
+
+        self.set_option_path_fn = set_option_path_fn
+        self.itemClicked.connect(self.set_option_path_callback)
+
+        # load options
+        options = self.search_tree_for_options(
+            api.get_option_tree(),
+            search_str
+        )
+        for option in options:
+            item = ChildCountOptionListItem(option)
+            self.addItem(item)
+
+        self._setup_scroll_list_selector_theme()  # same look and feel as basic nav displays
+
+    def search_tree_for_options(self, tree, search_str):
+        return [
+            Attribute(['services']),
+            Attribute(['users'])
+        ]
+
+    def set_option_path_callback(self, *args, **kwargs):
+        if self.set_option_path_fn:
+            self.set_option_path_fn(
+                self.currentItem().option
+            )
