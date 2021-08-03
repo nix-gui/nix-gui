@@ -241,6 +241,7 @@ class SearchResultListDisplay(QtWidgets.QListWidget):
             item = ChildCountOptionListItem(
                 option_path,
                 use_fancy_name=False,
+                use_child_count=False,
                 extra_text='Matched ' + ', '.join(matched_operations)
             )
             self.addItem(item)

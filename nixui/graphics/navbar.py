@@ -97,4 +97,5 @@ class NavBar(QtWidgets.QWidget):
             set_lookup_key_fn=set_lookup_key_fn,
             unfocused_text=f'{MAGNIFYING_GLASS_UNICODE} » {search_str}',
             focused_text=f'search:{search_str}',
+            search_str=search_str,
         )
