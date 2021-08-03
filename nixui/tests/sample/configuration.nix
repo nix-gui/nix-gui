@@ -35,6 +35,20 @@ in {
   };
 
   services = {
+
+    # test list of submodules
+    bookstack.nginx.listen = [
+      {
+        addr = "195.154.1.1";
+        port = 443;
+        ssl = true;
+      }
+      {
+        addr = "192.154.1.1";
+        port = 80;
+      }
+    ];
+
     unbound = {
       enable = true;  # local dns
       settings = {
