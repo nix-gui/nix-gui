@@ -1,5 +1,6 @@
 import csv
 from dataclasses import dataclass, field
+import re
 from typing import List
 
 
@@ -37,7 +38,9 @@ class Attribute:
 
     def __str__(self):
         return '.'.join([
-            f'"{attribute}"' if '.' in attribute else attribute
+            attribute
+            if re.match(r'^[a-zA-Z\_][a-zA-Z0-9\_\'\-]*$', attribute)
+            else f'"{attribute}"'
             for attribute in self.loc
         ])
 
