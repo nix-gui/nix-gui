@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtCore
 
 
-from nixui.graphics import nav_widgets, icon, diff_widget
+from nixui.graphics import nav_interface, nav_widgets, icon, diff_widget
 
 
 class NixGuiMainWindow(QtWidgets.QMainWindow):
@@ -11,7 +11,9 @@ class NixGuiMainWindow(QtWidgets.QMainWindow):
         self.statemodel = statemodel
 
         self.setWindowTitle("Nix UI")
-        self.setCentralWidget(nav_widgets.GenericOptionSetDisplay(statemodel=statemodel))
+        self.setCentralWidget(
+            nav_interface.OptionNavigationInterface(statemodel=statemodel)
+        )
 
         self.actions = {}
 
