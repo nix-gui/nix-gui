@@ -108,7 +108,6 @@ class OptionNavigationInterface(QtWidgets.QWidget):
         self.fields_view.replace_widget(QtWidgets.QLabel(''))
 
 
-
 class FieldsGroupBox(QtWidgets.QWidget):
     def __init__(self, statemodel, option=None, is_base_viewer=True, *args, **kwargs):
         super().__init__(*args, **kwargs)

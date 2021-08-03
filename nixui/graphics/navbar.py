@@ -41,7 +41,7 @@ class NavBar(QtWidgets.QWidget):
     - move undo toolbar item here
     - delete search toolbar item
     """
-    def __init__(self, set_lookup_key_fn, unfocused_text, focused_text, up_fn=None):
+    def __init__(self, set_lookup_key_fn, unfocused_text, focused_text, up_fn=None, search_str=None):
         super().__init__()
 
         # create widgets and define behavior
@@ -64,6 +64,8 @@ class NavBar(QtWidgets.QWidget):
 
         searchbox = QtWidgets.QLineEdit()
         searchbox.setPlaceholderText('Search...')
+        if search_str:
+            searchbox.setText(search_str)
         searchbox.returnPressed.connect(
             lambda: set_lookup_key_fn(f'search:{searchbox.text()}')
         )
