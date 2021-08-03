@@ -124,6 +124,10 @@ class OptionTree:
 
     def rename_attribute(self, old_attribute, new_attribute):
         self.tree.update_node(old_attribute, identifier=new_attribute, tag=new_attribute)
+        for node in self.tree.children(new_attribute):
+            old_child_attribute = node.identifier
+            new_child_attribute = Attribute.from_insertion(new_attribute, str(old_child_attribute.get_end()))
+            self.rename_attribute(old_child_attribute, new_child_attribute)
 
     def set_definition(self, option_path, option_definition):
         self._upsert_node_data(option_path, {'in_memory_definition': option_definition})
