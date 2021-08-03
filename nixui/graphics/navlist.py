@@ -50,7 +50,7 @@ class OptionScrollListSelector(QtWidgets.QListWidget):
         if self.set_option_path_fn:
             attr = Attribute.from_insertion(
                 self.base_option_path,
-                str(self.currentItem().option.get_end())
+                self.currentItem().option.get_end()
             )
             self.set_option_path_fn(attr)
 
@@ -70,7 +70,7 @@ class EditableListItem(QtWidgets.QListWidgetItem):
         self.set_text()
 
     def set_text(self):
-        self.setText(str(self.option.get_end()))
+        self.setText(self.option.get_end())
 
     def setData(self, index, value):
         self.previous_option = self.option
@@ -105,7 +105,7 @@ class DynamicAttrsOf(QtWidgets.QWidget):
         self.remove_btn.clicked.connect(self.remove_clicked)
 
         btn_hbox = QtWidgets.QHBoxLayout()
-        btn_hbox.addWidget(QtWidgets.QLabel(str(option_path.get_end())))
+        btn_hbox.addWidget(QtWidgets.QLabel(option_path.get_end()))
         btn_hbox.addWidget(self.add_btn)
         btn_hbox.addWidget(self.remove_btn)
 
@@ -167,7 +167,7 @@ class DynamicListOf(QtWidgets.QWidget):
         self.down_btn.clicked.connect(self.down_clicked)
 
         btn_hbox = QtWidgets.QHBoxLayout()
-        btn_hbox.addWidget(QtWidgets.QLabel(str(option_path.get_end())))
+        btn_hbox.addWidget(QtWidgets.QLabel(option_path.get_end()))
         btn_hbox.addWidget(self.add_btn)
         btn_hbox.addWidget(self.remove_btn)
         btn_hbox.addWidget(self.up_btn)

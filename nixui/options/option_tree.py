@@ -58,7 +58,7 @@ class OptionTree:
                 child_option_path = Attribute.from_insertion(parent_option_path, option_path_key)
                 if child_option_path not in self.tree:
                     # copy attribute-set-of spec to new branch if branch doesn't yet exist
-                    if self._is_attribute_set(parent_option_path) and str(child_option_path.get_end()) != '"<name>"':
+                    if self._is_attribute_set(parent_option_path) and child_option_path.get_end() != '<name>':
                         new_branch = self._get_attribute_set_template_branch(child_option_path)
                         self.tree.paste(parent_option_path, new_branch)
                     else:
@@ -127,7 +127,7 @@ class OptionTree:
         self.tree.update_node(old_attribute, identifier=new_attribute, tag=new_attribute)
         for node in self.tree.children(new_attribute):
             old_child_attribute = node.identifier
-            new_child_attribute = Attribute.from_insertion(new_attribute, str(old_child_attribute.get_end()))
+            new_child_attribute = Attribute.from_insertion(new_attribute, old_child_attribute.get_end())
             self.rename_attribute(old_child_attribute, new_child_attribute)
 
     def set_definition(self, option_path, option_definition):

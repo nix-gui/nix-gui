@@ -219,7 +219,7 @@ class EditableOptionListItem(QtWidgets.QListWidgetItem):
         self.set_text()
 
     def set_text(self):
-        self.setText(str(self.option.get_end()))
+        self.setText(self.option.get_end())
 
     def setData(self, index, value):
         # is valid attribute name?

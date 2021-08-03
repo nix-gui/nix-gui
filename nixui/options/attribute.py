@@ -21,7 +21,7 @@ class Attribute:
         return Attribute(self.loc[:-1])
 
     def get_end(self):
-        return Attribute(self.loc[-1:])
+        return self.loc[-1]
 
     def __bool__(self):
         return bool(self.loc)
