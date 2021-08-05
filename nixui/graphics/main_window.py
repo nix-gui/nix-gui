@@ -19,6 +19,7 @@ class NixGuiMainWindow(QtWidgets.QMainWindow):
 
         self._create_actions()
         self._create_tool_bars()
+        self._create_menu()
 
         status_bar = NixuiStatusBar(self.statemodel)
         self.setStatusBar(status_bar)
@@ -39,6 +40,9 @@ class NixGuiMainWindow(QtWidgets.QMainWindow):
         self.actions['build'] = QtWidgets.QAction(icon.get_icon('build.png'), "&Build", self)
         self.actions['preferences'] = QtWidgets.QAction(icon.get_icon('preferences.png'), "&Preferences", self)
 
+        self.actions['quit'] = QtWidgets.QAction("&Quit", self)
+        self.actions['quit'].triggered.connect(lambda: self.close())
+
         # TODO: enable the below
         self.actions['build'].setEnabled(False)
         self.actions['preferences'].setEnabled(False)
@@ -57,6 +61,11 @@ class NixGuiMainWindow(QtWidgets.QMainWindow):
         preferences_bar = self.addToolBar("Preferences")
         preferences_bar.addAction(self.actions['preferences'])
         preferences_bar.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
+
+    def _create_menu(self):
+        file_menu = self.menuBar().addMenu("File")
+        file_menu.addAction(self.actions['quit'])
+
 
 
 class NixuiStatusBar(QtWidgets.QStatusBar):
