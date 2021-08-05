@@ -72,6 +72,7 @@ class NixGuiMainWindow(QtWidgets.QMainWindow):
         file_menu.addAction(self.actions['quit'])
 
         edit_menu = self.menuBar().addMenu("Edit")
+        edit_menu.addAction(self.actions['undo'])
         edit_menu.addAction(self.actions['view_diff'])
 
 
