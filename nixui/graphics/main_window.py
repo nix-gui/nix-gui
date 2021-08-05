@@ -20,6 +20,7 @@ class NixGuiMainWindow(QtWidgets.QMainWindow):
         self._create_actions()
         self._create_tool_bars()
         self._create_menu()
+        self._create_action_shortcuts()
 
         status_bar = NixuiStatusBar(self.statemodel)
         self.setStatusBar(status_bar)
@@ -64,7 +65,11 @@ class NixGuiMainWindow(QtWidgets.QMainWindow):
 
     def _create_menu(self):
         file_menu = self.menuBar().addMenu("File")
+        file_menu.addAction(self.actions['save'])
         file_menu.addAction(self.actions['quit'])
+
+        edit_menu = self.menuBar().addMenu("Edit")
+        edit_menu.addAction(self.actions['view_diff'])
 
 
 
