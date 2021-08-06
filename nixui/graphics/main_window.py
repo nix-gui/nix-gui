@@ -76,7 +76,6 @@ class NixGuiMainWindow(QtWidgets.QMainWindow):
         edit_menu.addAction(self.actions['view_diff'])
 
 
-
 class NixuiStatusBar(QtWidgets.QStatusBar):
     def __init__(self, statemodel):
         super().__init__()
