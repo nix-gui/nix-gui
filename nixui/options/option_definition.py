@@ -1,7 +1,8 @@
-import json
 import functools
+import pickle
 import subprocess
 
+from nixui.graphics import package_manager
 from nixui.options import nix_eval
 from nixui.utils.singleton import Singleton
 from nixui.utils.logger import logger
@@ -62,7 +63,7 @@ class OptionDefinition:
     def __hash__(self):
         return hash((
             self.passed.get('expression_string'),
-            json.dumps(self.passed.get('obj'), sort_keys=True)
+            pickle.dumps(self.passed.get('obj'))
         ))
 
     def __eq__(self, other):
@@ -112,6 +113,8 @@ def get_expression(obj):
             return f"''\n{obj.strip()}\n''"
         else:
             return f'"{obj}"'
+    elif isinstance(obj, package_manager.Package):
+        return "pkgs.hello"  # TODO
     elif isinstance(obj, int) or isinstance(obj, float):
         return str(obj)
     elif obj is None:
