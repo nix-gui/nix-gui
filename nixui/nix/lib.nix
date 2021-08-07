@@ -14,6 +14,17 @@ let
     ) ys;
 
   evalModuleStub = module_path: import module_path { inherit lib; name = ""; config = {}; pkgs = {}; };
+
+  uniqueStrings = strss:
+    builtins.attrNames (
+      builtins.foldl' (acc: strs:
+        acc // builtins.listToAttrs (
+          builtins.map (s: {
+            name = s;
+            value = null;
+          }) strs)
+      ) {} strss
+    );
 in {
-  inherit recursiveIntersect evalModuleStub;
+  inherit recursiveIntersect evalModuleStub uniqueStrings;
 }
