@@ -5,7 +5,7 @@ import re
 from PyQt5 import QtWidgets, QtGui, QtCore
 
 from nixui.options import api, option_tree, option_definition
-from nixui.graphics import richtext, generic_widgets
+from nixui.graphics import richtext, generic_widgets, package_manager
 
 
 # tuples of (match fn, widget)
@@ -65,8 +65,12 @@ def get_field_type_widget_map():
             partial(IntegerField, minimum=0, maximum=65535),
         ],
         [
-            lambda f: f.startswith('one of '),
+            lambda t: t.startswith('one of '),
             OneOfField,
+        ],
+        [
+            lambda t: t in ('package' 'list of packages'),
+            PackageManagerField,
         ],
         # fake types, allowing for specialized expressions
         [
@@ -390,6 +394,20 @@ class OneOfField:
             return OneOfRadioFrameField(option, choices)
         else:
             return OneOfComboBoxField(option, choices)
+
+
+class PackageManagerField(package_manager.PackageManagerWidget):
+    stateChanged = QtCore.pyqtSignal(str)
+
+    def validate_field(self, value):
+        return True  # TODO
+
+    def load_value(self, value):
+        pass  # TODO
+
+    @property
+    def current_value(self):
+        return package_manager.Package()
 
 
 class ExpressionField(QtWidgets.QTextEdit):
