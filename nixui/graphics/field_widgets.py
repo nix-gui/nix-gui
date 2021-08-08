@@ -199,9 +199,8 @@ class GenericOptionDisplay(QtWidgets.QWidget):
     @property
     def definition(self):
         current_widget = self.entry_stack.currentWidget()
-        expression_widget = self.stacked_widgets[-2]
-        form_value = self.entry_stack.currentWidget().current_value
-        if current_widget == expression_widget:
+        form_value = current_widget.current_value
+        if isinstance(current_widget, ExpressionField):
             return option_definition.OptionDefinition.from_expression_string(form_value)
         else:
             return option_definition.OptionDefinition.from_object(form_value)
