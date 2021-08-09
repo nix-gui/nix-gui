@@ -88,12 +88,14 @@ Case: The type of a field changes
 - https://old.reddit.com/r/NixOS/comments/cu4dle/should_nix_have_a_gui/
 
 * Inspiration
+- [[https://www.tecmint.com/wp-content/uploads/2016/06/XFE-File-Manager.png][XFE File Manager - reasonable placement of "parent directories" ]]
 - [[https://1.bp.blogspot.com/-swnGgdPeWOY/Wbf17eWgVeI/AAAAAAAAMDM/buRYvp78ZBggPFFZL4J_LKjMsF0qmQk1ACLcBGAs/s1600/Peek%2B2017-09-12%2B21-39.gif][Intuitive controls, good search functionality]]
 - [[https://149366088.v2.pressablecdn.com/wp-content/uploads/2017/03/linux-mint-lightdm-settings.png][Good Widgets and layout]]
 - [[https://i.stack.imgur.com/WQOmV.png][Good information display]]
 - [[https://www.ics.com/sites/default/files/pictures/snapshot1.png][Pretty layout]]
 - [[https://4.bp.blogspot.com/-GTgr9qvp5Pg/Wbf30hX74PI/AAAAAAAAMDY/3aT6O7E3C1IaSteDuTO4fSGSobjFrk6hQCLcBGAs/s1600/Peek%2B2017-09-12%2B22-03.gif][Pretty layout]]
 - [[https://wiki.manjaro.org/images/5/58/Time_date_screen.png][Good time(/zone) settings screen]]
+- [[https://geekflare.com/wp-content/uploads/2021/06/clover.jpg][Tabbed instances of the running program]]
 * Credit
 Thanks to the many #qt and #nixos users on [[https://libera.chat/][libera.chat]], and users of the NixOS Matrix server (#community:nixos.org) for answering a a myriad of questions about qt, nix, and nix-eval-lsp's behavior.
 

@@ -3,6 +3,23 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from nixui.graphics import richtext, icon
 
 
+class ReplacableWidget(QtWidgets.QStackedWidget):
+    def __init__(self, starting_widget=None):
+        super().__init__()
+
+        starting_widget = starting_widget or QtWidgets.QLabel()
+        self.current_widget = starting_widget
+
+        self.addWidget(self.current_widget)
+
+    def replace_widget(self, widget):
+        old_widget = self.current_widget
+        self.addWidget(widget)
+        self.setCurrentWidget(widget)
+        self.removeWidget(old_widget)
+        self.current_widget = widget
+
+
 class ExclusiveButtonGroup(QtWidgets.QFrame):
     selection_changed = QtCore.pyqtSignal(str)
 
@@ -191,3 +208,22 @@ class OptionListItem(QtWidgets.QListWidgetItem):
 
     def set_text(self):
         self.setText(richtext.get_option_html(self.option))
+
+
+class EditableOptionListItem(QtWidgets.QListWidgetItem):
+    def __init__(self, option, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.option = option
+        self.previous_option = option
+        self.setFlags(self.flags() | QtCore.Qt.ItemIsEditable)
+        self.set_text()
+
+    def set_text(self):
+        self.setText(self.option.get_end())
+
+    def setData(self, index, value):
+        # is valid attribute name?
+        if re.match(r'^[a-zA-Z\_][a-zA-Z0-9\_\'\-]*$', value):
+            self.previous_option = self.option
+            self.option = attribute.Attribute.from_insertion(self.option.get_set(), value)
+            super().setData(index, value)

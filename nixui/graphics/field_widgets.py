@@ -68,11 +68,6 @@ def get_field_type_widget_map():
             lambda f: f.startswith('one of '),
             OneOfField,
         ],
-        [
-            partial(eq, 'list of strings'),
-            StringListField,
-        ],
-
         # fake types, allowing for specialized expressions
         [
             partial(eq, 'reference'),
@@ -324,33 +319,6 @@ class IntegerField(QtWidgets.QSpinBox):
         return self.value()
 
 
-class StringListField(generic_widgets.StringListEditorWidget):
-    # TODO: stateChanged hook
-
-    def __init__(self, option, **constraints):
-        super().__init__()
-        self.option = option
-        self.constraints = constraints
-        self.loaded_value = None
-
-    @staticmethod
-    def validate_field(value):
-        if not isinstance(value, list):
-            return False
-        return all([
-            isinstance(item, str)
-            for item in value
-        ])
-
-    def load_value(self, value):
-        pass  # TODO
-        # self.loaded_value = value
-
-    @property
-    def current_value(self):
-        pass  # TODO
-
-
 class OneOfRadioFrameField(QtWidgets.QFrame):
     stateChanged = QtCore.pyqtSignal(str)
 
@@ -403,10 +371,9 @@ class OneOfComboBoxField(QtWidgets.QComboBox):
         return value in self.choices
 
     def load_value(self, value):
-        if not self.validate_field(value):
-            value = ''
-        self.setCurrentIndex(self.choices.index(value))
-        self.loaded_value = value
+        if self.validate_field(value):
+            self.setCurrentIndex(self.choices.index(value))
+            self.loaded_value = value
 
     @property
     def current_value(self):

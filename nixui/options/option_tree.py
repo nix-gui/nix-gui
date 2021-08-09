@@ -39,7 +39,8 @@ class OptionTree:
         self.tree.create_node(identifier=Attribute([]), data=OptionData(_type='PARENT'))
 
         # insert option data with parent option data inserted first via `sorted`
-        for option_path, option_data_dict in sorted(system_option_data.items(), key=str):
+        sort_key = lambda s: str(s[0]).replace('"<name>"', '')  # todo, clean up this hack
+        for option_path, option_data_dict in sorted(system_option_data.items(), key=sort_key):
             self._upsert_node_data(option_path, option_data_dict)
         for option_path, option_definition in config_options.items():
             self._upsert_node_data(option_path, {'configured_definition': option_definition})
@@ -57,7 +58,7 @@ class OptionTree:
                 child_option_path = Attribute.from_insertion(parent_option_path, option_path_key)
                 if child_option_path not in self.tree:
                     # copy attribute-set-of spec to new branch if branch doesn't yet exist
-                    if self._is_attribute_set(parent_option_path) and str(child_option_path.get_end()) != '<name>':
+                    if self._is_attribute_set(parent_option_path) and child_option_path.get_end() != '<name>':
                         new_branch = self._get_attribute_set_template_branch(child_option_path)
                         self.tree.paste(parent_option_path, new_branch)
                     else:
@@ -124,6 +125,10 @@ class OptionTree:
 
     def rename_attribute(self, old_attribute, new_attribute):
         self.tree.update_node(old_attribute, identifier=new_attribute, tag=new_attribute)
+        for node in self.tree.children(new_attribute):
+            old_child_attribute = node.identifier
+            new_child_attribute = Attribute.from_insertion(new_attribute, old_child_attribute.get_end())
+            self.rename_attribute(old_child_attribute, new_child_attribute)
 
     def set_definition(self, option_path, option_definition):
         self._upsert_node_data(option_path, {'in_memory_definition': option_definition})
@@ -169,7 +174,7 @@ class OptionTree:
             children = self.tree.children(attribute)
         return [
             node.tag for node in children
-            if '<name>' not in node.tag
+            if '"<name>"' not in node.tag
         ]
 
     def get_next_branching_option(self, attribute):
