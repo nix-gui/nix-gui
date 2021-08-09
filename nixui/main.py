@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 import sys
 
@@ -22,10 +23,17 @@ def handle_args():
         help="Directory containing impacted configuration file.",
         default=nixos_config,
     )
+    optional.add_argument(
+        "-n",
+        "--no-diskcache",
+        help="Cache function results to disk between sessions",
+        action='store_true',
+    )
 
     args = parser.parse_args()
 
     os.environ['CONFIGURATION_PATH'] = args.config_path
+    os.environ['USE_DISKCACHE'] = json.dumps(not args.no_diskcache)
 
 
 def run_program():
