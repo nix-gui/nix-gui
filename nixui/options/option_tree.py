@@ -1,14 +1,8 @@
 import dataclasses
 from treelib import Tree, Node
-import typing
 
 from nixui.options.attribute import Attribute
-
-
-class UndefinedType:
-    def __eq__(self, other):
-        return isinstance(other, self.__class__)
-Undefined = UndefinedType()
+from nixui.options.option_definition import OptionDefinition, Undefined
 
 
 @dataclasses.dataclass
@@ -16,9 +10,9 @@ class OptionData:
     description: str = Undefined
     readOnly: bool = Undefined
     _type: str = Undefined
-    system_default: typing.Any = Undefined
-    configured_value: typing.Any = Undefined
-    in_memory_value: typing.Any = Undefined
+    system_default_definition: OptionDefinition = OptionDefinition.undefined()
+    configured_definition: OptionDefinition = OptionDefinition.undefined()
+    in_memory_definition: OptionDefinition = OptionDefinition.undefined()
 
     # based on https://stackoverflow.com/a/61426351
     def update(self, new):
@@ -37,7 +31,7 @@ class OptionTree:
     Data structure managing option retrieval, option setting, and special handling for attribute sets of submodules
 
     system_options: mapping from Attribute to dict containing {'description', 'readOnly', 'type', 'default'}
-    config_options: mapping from Attribute to configured value
+    config_options: mapping from Attribute to configured definition
     """
     def __init__(self, system_option_data, config_options):
         # load data into Tree with OptionData leaves
@@ -47,8 +41,8 @@ class OptionTree:
         # insert option data with parent option data inserted first via `sorted`
         for option_path, option_data_dict in sorted(system_option_data.items(), key=str):
             self._upsert_node_data(option_path, option_data_dict)
-        for option_path, value in config_options.items():
-            self._upsert_node_data(option_path, {'configured_value': value})
+        for option_path, option_definition in config_options.items():
+            self._upsert_node_data(option_path, {'configured_definition': option_definition})
 
     def _upsert_node_data(self, option_path, option_data_dict):
         """
@@ -120,10 +114,10 @@ class OptionTree:
     def iter_changes(self):
         for node in self.tree.all_nodes():
             attr = node.tag
-            old_value = self.get_value(node.tag, include_in_memory_value=False)
-            new_value = self.get_value(node.tag)
-            if new_value != old_value:
-                yield (attr, old_value, new_value)
+            old_definition = self.get_definition(node.tag, include_in_memory_definition=False)
+            new_definition = self.get_definition(node.tag)
+            if new_definition != old_definition:
+                yield (attr, old_definition, new_definition)
 
     def insert_attribute(self, attribute):
         self._upsert_node_data(attribute, {})
@@ -131,27 +125,33 @@ class OptionTree:
     def rename_attribute(self, old_attribute, new_attribute):
         self.tree.update_node(old_attribute, identifier=new_attribute, tag=new_attribute)
 
-    def set_value(self, option_path, value):
-        self._upsert_node_data(option_path, {'in_memory_value': value})
+    def set_definition(self, option_path, option_definition):
+        self._upsert_node_data(option_path, {'in_memory_definition': option_definition})
 
-    def get_value(self, attribute, include_in_memory_value=True):
-        if include_in_memory_value and self.get_in_memory_value(attribute) != Undefined:
-            return self.get_in_memory_value(attribute)
-        elif self.get_configured_value(attribute) != Undefined:
-            return self.get_configured_value(attribute)
-        elif self.get_system_default(attribute) != Undefined:
-            return self.get_system_default(attribute)
-        else:
-            return Undefined
+    def get_definition(self, attribute, include_in_memory_definition=True):
+        if include_in_memory_definition:
+            in_memory_definition = self.get_in_memory_definition(attribute)
+            if in_memory_definition != OptionDefinition.undefined():
+                return self.get_in_memory_definition(attribute)
 
-    def get_in_memory_value(self, attribute):
-        return self._get_data(attribute).in_memory_value
+        configured_definition = self.get_configured_definition(attribute)
+        if configured_definition != OptionDefinition.undefined():
+            return configured_definition
 
-    def get_configured_value(self, attribute):
-        return self._get_data(attribute).configured_value
+        system_default_definition = self.get_system_default_definition(attribute)
+        if system_default_definition != OptionDefinition.undefined():
+            return system_default_definition
 
-    def get_system_default(self, attribute):
-        return self._get_data(attribute).system_default
+        return OptionDefinition.undefined()
+
+    def get_in_memory_definition(self, attribute):
+        return self._get_data(attribute).in_memory_definition
+
+    def get_configured_definition(self, attribute):
+        return self._get_data(attribute).configured_definition
+
+    def get_system_default_definition(self, attribute):
+        return self._get_data(attribute).system_default_definition
 
     def get_type(self, attribute):
         return self._get_data(attribute)._type

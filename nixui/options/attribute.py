@@ -22,6 +22,9 @@ class Attribute:
     def get_end(self):
         return Attribute(self.loc[-1:])
 
+    def __bool__(self):
+        return bool(self.loc)
+
     def __iter__(self):
         return iter(self.loc)
 
@@ -37,9 +40,6 @@ class Attribute:
             f'"{attribute}"' if '.' in attribute else attribute
             for attribute in self.loc
         ])
-
-    def __bool__(self):
-        return bool(self.loc)
 
     def __repr__(self):
         return f"Attribute('{str(self)}')"
