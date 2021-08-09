@@ -3,7 +3,7 @@ import csv
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
-from nixui.graphics import icon, richtext
+from nixui.graphics import icon, richtext, color_indicator
 from nixui.options.attribute import Attribute
 from nixui.options import api, option_definition
 
@@ -64,7 +64,9 @@ class ChildCountOptionListItem(QtWidgets.QListWidgetItem):
 
         self.option = option
 
-        child_count = len(api.get_option_tree().children(self.option)) if use_child_count else None
+        tree = api.get_option_tree()
+
+        child_count = len(tree.children(self.option)) if use_child_count else None
         self.setText(
             richtext.get_option_html(
                 self.option,
@@ -73,6 +75,13 @@ class ChildCountOptionListItem(QtWidgets.QListWidgetItem):
                 extra_text=extra_text
             )
         )
+
+        bg_color = color_indicator.get_edit_state_color_indicator(
+            tree,
+            self.option
+        )
+        bg_brush = QtGui.QBrush(bg_color)
+        self.setForeground(bg_brush)
 
         if icon_path:
             self.setIcon(QtGui.QIcon(icon_path))

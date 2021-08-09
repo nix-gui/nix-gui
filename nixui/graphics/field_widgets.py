@@ -5,7 +5,7 @@ import re
 from PyQt5 import QtWidgets, QtGui, QtCore
 
 from nixui.options import api, option_tree, option_definition
-from nixui.graphics import richtext, generic_widgets
+from nixui.graphics import color_indicator, richtext, generic_widgets
 
 
 # tuples of (match fn, widget)
@@ -208,20 +208,24 @@ class GenericOptionDisplay(QtWidgets.QWidget):
             any(w.hasFocus() for w in self.field_type_selector.btn_group.buttons())
         )
 
-    def paint_background_color(self, *bg_color_tuple):
+    def paint_background_color(self, bg_color):
         qp = QtGui.QPainter(self)
         r = QtCore.QRect(0, 0, self.width(), self.height())
-        qp.fillRect(r, QtGui.QColor.fromRgb(*bg_color_tuple))
+        qp.fillRect(r, bg_color)
         qp.end()
 
     def paintEvent(self, ev):
         super().paintEvent(ev)
         if self.contains_focus():
-            self.paint_background_color(233, 245, 248, 255)
-        elif self.starting_definition != self.definition:
-            self.paint_background_color(194, 249, 197, 255)
+            self.paint_background_color(
+                QtGui.QColor(233, 245, 248)
+            )
         else:
-            return
+            bg_color = color_indicator.get_edit_state_color_indicator(
+                api.get_option_tree(),
+                self.option
+            )
+            self.paint_background_color(bg_color)
         self.update()
 
 

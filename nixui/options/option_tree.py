@@ -171,15 +171,25 @@ class OptionTree:
     def is_readonly(self, attribute):
         return self._get_data(attribute).readOnly
 
-    def children(self, attribute, recursive=False):
-        if recursive:
-            children = self.tree.leaves(attribute)
-        else:
+    def children(self, attribute, mode="direct"):
+        """
+        attribute: the key to explore children of
+        mode:
+        - "direct": get direct descendents
+        - "full": get all descendents
+        - "leaves": get only descendents which have no children
+        """
+        if mode == "direct":
             children = self.tree.children(attribute)
-        return [
-            node.tag for node in children
+        elif mode == "full":
+            children = Tree(self.tree.subtree(attribute)).all_nodes()
+        elif mode == "leaves":
+            children = self.tree.leaves(attribute)
+        return {
+            node.tag: node.data
+            for node in children
             if '"<name>"' not in node.tag
-        ]
+        }
 
     def get_next_branching_option(self, attribute):
         while len(self.children(attribute)) == 1:
