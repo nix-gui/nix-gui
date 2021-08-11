@@ -1,6 +1,9 @@
 import argparse
+import cProfile
+import pstats
 import json
 import os
+import io
 import sys
 
 from PyQt5 import QtWidgets
@@ -26,14 +29,17 @@ def handle_args():
     optional.add_argument(
         "-n",
         "--no-diskcache",
-        help="Cache function results to disk between sessions",
+        help="Cache function results to disk between sessions.",
+        action='store_true',
+    )
+    optional.add_argument(
+        "-p",
+        "--profile",
+        help="Profile application.",
         action='store_true',
     )
 
-    args = parser.parse_args()
-
-    os.environ['CONFIGURATION_PATH'] = args.config_path
-    os.environ['USE_DISKCACHE'] = json.dumps(not args.no_diskcache)
+    return parser.parse_args()
 
 
 def run_program():
@@ -42,12 +48,24 @@ def run_program():
     app = QtWidgets.QApplication(sys.argv)
     nix_gui = main_window.NixGuiMainWindow(statemodel)
     nix_gui.show()
-    sys.exit(app.exec())
+    app.exec()
 
 
 def main():
-    handle_args()
-    run_program()
+    args = handle_args()
+
+    os.environ['CONFIGURATION_PATH'] = args.config_path
+    os.environ['USE_DISKCACHE'] = json.dumps(not args.no_diskcache)
+
+    if args.profile:
+        with cProfile.Profile() as profile:
+            run_program()
+        p = pstats.Stats(profile)
+        p.strip_dirs()
+        p.sort_stats('cumtime')
+        p.print_stats(50)
+    else:
+        run_program()
 
 
 if __name__ == '__main__':
