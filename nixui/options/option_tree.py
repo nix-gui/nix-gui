@@ -1,4 +1,6 @@
 import dataclasses
+import functools
+import uuid
 
 from treelib import Tree, Node
 
@@ -42,6 +44,7 @@ class OptionTree:
         # cache for faster lookup of changed nodes
         self.in_memory_change_cache = {}
         self.configured_change_cache = {}
+        self.change_marker = None
 
         # insert option data with parent option data inserted first via `sorted`
         sort_key = lambda s: str(s[0]).replace('"<name>"', '')  # todo, clean up this hack
@@ -51,12 +54,16 @@ class OptionTree:
             self._upsert_node_data(option_path, {'configured_definition': option_definition})
             self.configured_change_cache[option_path] = option_definition
 
+    def __hash__(self):
+        return hash(self.change_marker)
+
     def _update_in_memory_change_cache(self, attribute, option_definition):
         in_memory_definition = self.tree.get_node(attribute).data.in_memory_definition
-        if in_memory_definition == option_definition or in_memory_definition == OptionDefinition.undefined():
+        if in_memory_definition == OptionDefinition.undefined():
             del attribute
         else:
             self.in_memory_change_cache[attribute] = option_definition
+        self.change_marker = uuid.uuid4()
 
     def _upsert_node_data(self, option_path, option_data_dict):
         """
@@ -139,6 +146,7 @@ class OptionTree:
             if new_definition != old_definition and new_definition != OptionDefinition.undefined():
                 yield (attr, old_definition, new_definition)
 
+    @functools.lru_cache()
     def get_change_set_with_ancestors(self, get_configured_changes=False):
         attributes_with_mutated_descendents = set()
         for attr, old_d, new_d in self.iter_changes(get_configured_changes):
@@ -209,10 +217,10 @@ class OptionTree:
         """
         if mode == "direct":
             children = self.tree.children(attribute)
-        elif mode == "full":
-            children = Tree(self.tree.subtree(attribute)).all_nodes()
         elif mode == "leaves":
             children = self.tree.leaves(attribute)
+        else:
+            raise ValueError()
         return {
             node.tag: node.data
             for node in children
