@@ -1,4 +1,5 @@
 import dataclasses
+
 from treelib import Tree, Node
 
 from nixui.options.attribute import Attribute
@@ -38,12 +39,24 @@ class OptionTree:
         self.tree = Tree()
         self.tree.create_node(identifier=Attribute([]), data=OptionData(_type='PARENT'))
 
+        # cache for faster lookup of changed nodes
+        self.in_memory_change_cache = {}
+        self.configured_change_cache = {}
+
         # insert option data with parent option data inserted first via `sorted`
         sort_key = lambda s: str(s[0]).replace('"<name>"', '')  # todo, clean up this hack
         for option_path, option_data_dict in sorted(system_option_data.items(), key=sort_key):
             self._upsert_node_data(option_path, option_data_dict)
         for option_path, option_definition in config_options.items():
             self._upsert_node_data(option_path, {'configured_definition': option_definition})
+            self.configured_change_cache[option_path] = option_definition
+
+    def _update_in_memory_change_cache(self, attribute, option_definition):
+        in_memory_definition = self.tree.get_node(attribute).data.in_memory_definition
+        if in_memory_definition == option_definition or in_memory_definition == OptionDefinition.undefined():
+            del attribute
+        else:
+            self.in_memory_change_cache[attribute] = option_definition
 
     def _upsert_node_data(self, option_path, option_data_dict):
         """
@@ -112,13 +125,26 @@ class OptionTree:
             raise ValueError()
         return self.tree.get_node(attribute).data
 
-    def iter_changes(self):
-        for node in self.tree.all_nodes():
-            attr = node.tag
-            old_definition = self.get_definition(node.tag, include_in_memory_definition=False)
-            new_definition = self.get_definition(node.tag)
-            if new_definition != old_definition:
+    def iter_changes(self, get_configured_changes=False):
+        if get_configured_changes:
+            change_cache = self.configured_change_cache
+        else:
+            change_cache = self.in_memory_change_cache
+        for attr, new_definition in change_cache.items():
+            old_definition = self.get_definition(
+                attr,
+                include_in_memory_definition=False,
+                include_configured_change=not get_configured_changes
+            )
+            if new_definition != old_definition and new_definition != OptionDefinition.undefined():
                 yield (attr, old_definition, new_definition)
+
+    def get_change_set_with_ancestors(self, get_configured_changes=False):
+        attributes_with_mutated_descendents = set()
+        for attr, old_d, new_d in self.iter_changes(get_configured_changes):
+            for i in range(len(attr)):
+                attributes_with_mutated_descendents.add(attr[:i])
+        return attributes_with_mutated_descendents
 
     def iter_attribute_data(self):
         for node in self.tree.all_nodes():
@@ -136,16 +162,18 @@ class OptionTree:
 
     def set_definition(self, option_path, option_definition):
         self._upsert_node_data(option_path, {'in_memory_definition': option_definition})
+        self._update_in_memory_change_cache(option_path, option_definition)
 
-    def get_definition(self, attribute, include_in_memory_definition=True):
+    def get_definition(self, attribute, include_in_memory_definition=True, include_configured_change=True):
         if include_in_memory_definition:
             in_memory_definition = self.get_in_memory_definition(attribute)
             if in_memory_definition != OptionDefinition.undefined():
                 return self.get_in_memory_definition(attribute)
 
-        configured_definition = self.get_configured_definition(attribute)
-        if configured_definition != OptionDefinition.undefined():
-            return configured_definition
+        if include_configured_change:
+            configured_definition = self.get_configured_definition(attribute)
+            if configured_definition != OptionDefinition.undefined():
+                return configured_definition
 
         system_default_definition = self.get_system_default_definition(attribute)
         if system_default_definition != OptionDefinition.undefined():
