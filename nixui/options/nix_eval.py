@@ -8,6 +8,11 @@ from nixui.utils import cache
 from nixui.options.attribute import Attribute
 
 
+cache_by_unique_installed_nixos_nixpkgs_version = cache.cache(
+    lambda: nix_instantiate_eval("with import <nixpkgs/nixos> {}; pkgs.lib.version")
+)
+
+
 def nix_instantiate_eval(expr, strict=False):
     logger.debug(expr)
     cmd = [
@@ -26,11 +31,7 @@ def nix_instantiate_eval(expr, strict=False):
     return json.loads(res)
 
 
-def get_nixpkgs_version():
-    return nix_instantiate_eval("with import <nixpkgs> {}; lib.version")
-
-
-@functools.lru_cache()  # TODO: more efficient retain_hash_fn:  @cache(return_copy=True, retain_hash_fn=get_nixpkgs_version)
+@cache_by_unique_installed_nixos_nixpkgs_version
 def get_all_nixos_options():
     """
     Get a JSON representation of `<nixpkgs/nixos>` options.
