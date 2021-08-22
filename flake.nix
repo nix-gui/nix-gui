@@ -76,8 +76,8 @@
               checkPhase = let
                 sample = "${./nixui/tests/sample}";
               in ''
-                export HOME=$TMPDIR
-                export NIX_STATE_DIR=/build
+                export HOME=$NIX_BUILD_TOP
+                export NIX_STATE_DIR=$NIX_BUILD_TOP
                 export NIX_PATH=nixpkgs=${pkgs.path}:nixos-config=${sample}/configuration.nix
                 cd nixui
               '' + (if !enable-profiling then ''
