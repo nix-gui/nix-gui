@@ -37,20 +37,19 @@ def get_all_nixos_options():
     """
     Get a JSON representation of `<nixpkgs/nixos>` options.
     The schema is as follows:
-    {
-      "option.name": {
-        "description": String              # description declared on the option
-        "loc": [ String ]                  # the path of the option e.g.: [ "services" "foo" "enable" ]
-        "readOnly": Bool                   # is the option user-customizable?
-        "type": String                     # either "boolean", "set", "list", "int", "float", or "string"
-        "relatedPackages": Optional, XML   # documentation for packages related to the option
+    [
+      Attribute(loc): {
+        "loc": [ String ],
+        "type": String,
+
+        ...others: { file, column, line }
       }
     }
     """
     with find_library("get_all_nixos_options") as f:
         res = nix_instantiate_eval(f'import {f}', strict=True)
     # TODO: remove key from this expression, it isn't used
-    return {Attribute(v['loc']): v for v in res.values()}
+    return {Attribute(v['loc']): v for v in res}
 
 
 @cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
