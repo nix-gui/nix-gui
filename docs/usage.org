@@ -1,8 +1,15 @@
 This document describes the behavior of Nix-Gui [[https://github.com/lapp0/nix-gui/milestones][v1.0]].
 
 * Running
+Prerequisites:
 - Ensure nixos is installed
-- =CONFIGURATION_PATH=/etc/nixos/configuration.nix nix run github:lapp0/nix-gui=
+
+Run
+- =nix run github:nix-gui/nix-gui nix-gui=
+
+Print help string
+- =nix run github:nix-gui/nix-gui nix-gui -- --help=
+
 
 * Interface
 TODO: screenshot of interface with boxes around different sections

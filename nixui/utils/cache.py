@@ -38,6 +38,11 @@ def _is_in_disk_cache(call_signature, key):
     return os.path.exists(_get_cache_path(call_signature, key))
 
 
+@functools.lru_cache()
+def _use_diskcache():
+    return json.loads(os.environ.get('USE_DISKCACHE', 'true'))
+
+
 def cache(retain_hash_fn=(lambda: 0), return_copy=True, diskcache=True):
     """
     retain_hash_fn: A function which gets a hash value from the passed args.
@@ -52,7 +57,7 @@ def cache(retain_hash_fn=(lambda: 0), return_copy=True, diskcache=True):
             hash_result = retain_hash_fn(*args, **kwargs)
             call_signature = (function.__module__, function.__name__, args, tuple(kwargs.items()))
 
-            if diskcache:
+            if diskcache and _use_diskcache():
                 # if fn-arg results cached in disk but not in memory, load disk to memory
                 if call_signature not in args_return_value_map:
                     if _is_in_disk_cache(call_signature, 'result'):
@@ -69,7 +74,7 @@ def cache(retain_hash_fn=(lambda: 0), return_copy=True, diskcache=True):
                 args_hash_result_map[call_signature] = hash_result
                 args_return_value_map[call_signature] = res
 
-            if diskcache and not _is_in_disk_cache(call_signature, 'result'):
+            if diskcache and _use_diskcache() and not _is_in_disk_cache(call_signature, 'result'):
                 _save_to_disk_cache(call_signature, 'result', res)
                 _save_to_disk_cache(call_signature, 'hash_result', hash_result)
 
