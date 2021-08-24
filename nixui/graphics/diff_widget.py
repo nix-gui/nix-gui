@@ -6,7 +6,7 @@ from nixui.graphics import generic_widgets
 
 
 class DiffedOptionListSelector(generic_widgets.ScrollListStackSelector):
-    ItemCls = generic_widgets.OptionListItem
+    ItemCls = generic_widgets.OptionListItem  # TODO: remove break dependency with generic_widgets.py
 
     def __init__(self, updates, *args, **kwargs):
         self.updates_map = {

@@ -197,6 +197,7 @@ class ScrollListStackSelector(QtWidgets.QWidget):
 
 
 class OptionListItem(QtWidgets.QListWidgetItem):
+    # TODO: remove this widget and break dependency with diff_widget.py by considering diff widget as part of navlist
     def __init__(self, option, icon_path=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

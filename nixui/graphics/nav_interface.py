@@ -2,12 +2,12 @@ from PyQt5 import QtWidgets, QtCore
 
 from nixui.options import api
 from nixui.options.attribute import Attribute
-
 from nixui.graphics import generic_widgets, navbar, navlist, field_widgets
+from nixui.utils.logger import logger
 
 
 class OptionNavigationInterface(QtWidgets.QWidget):
-    def __init__(self, statemodel, starting_option_path=Attribute()):
+    def __init__(self, statemodel, starting_lookup_key='options:'):
         super().__init__()
 
         self.statemodel = statemodel
@@ -40,11 +40,23 @@ class OptionNavigationInterface(QtWidgets.QWidget):
 
         self.setLayout(vbox)
 
-        self.set_option_path(starting_option_path)
+        self.set_lookup_key(starting_lookup_key)
+
+    def set_lookup_key(self, lookup_key):
+        if lookup_key.startswith('options:'):
+            option_str = lookup_key.removeprefix('options:')
+            self.set_option_path(
+                Attribute.from_string(option_str)
+            )
+        elif lookup_key.startswith('search:'):
+            search_str = lookup_key.removeprefix('search:')
+            self.set_search_query(search_str)
+        else:
+            logger.warning('Invalid lookup key, doing nothing.')
 
     def set_option_path(self, option_path):
         self.nav_bar.replace_widget(
-            navbar.NavBar(option_path, self.set_option_path)
+            navbar.NavBar.as_option_tree(option_path, self.set_lookup_key)
         )
         # if 10 or fewer options, navlist with lowest level attribute selected and list of editable fields to the right
         # otherwise, show list of attributes within the clicked attribute and blank to the right
@@ -81,6 +93,19 @@ class OptionNavigationInterface(QtWidgets.QWidget):
                 )
             )
             self.fields_view.replace_widget(QtWidgets.QLabel(''))
+
+    def set_search_query(self, search_str):
+        self.nav_bar.replace_widget(
+            navbar.NavBar.as_search_query(search_str, self.set_lookup_key)
+        )
+
+        self.nav_list.replace_widget(
+            navlist.SearchResultListDisplay(
+                search_str,
+                self.set_option_path,
+            )
+        )
+        self.fields_view.replace_widget(QtWidgets.QLabel(''))
 
 
 class FieldsGroupBox(QtWidgets.QWidget):

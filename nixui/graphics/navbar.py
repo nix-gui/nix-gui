@@ -1,8 +1,12 @@
 from functools import partial
 
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui
 
 from nixui.options.attribute import Attribute
+
+
+MAGNIFYING_GLASS_UNICODE = "🔍"
+TREE_UNICODE = "🌲"
 
 
 class FocusChangeTextLineEdit(QtWidgets.QLineEdit):
@@ -30,33 +34,45 @@ class NavBar(QtWidgets.QWidget):
     - Searchbox
 
     TODO:
+    - restructure so rendering is dependent on NavBar.path_textbox, which is never externally changed.
+      Rather than OptionNavigationInterface handling all updates, have all changes such as clicking an
+      attribute involve changing the lookup key
     - implement ListOf
     - move undo toolbar item here
     - delete search toolbar item
     """
-    def __init__(self, option_path, set_option_fn, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.set_option_fn = set_option_fn
+    def __init__(self, set_lookup_key_fn, unfocused_text, focused_text, up_fn=None, search_str=None):
+        super().__init__()
 
         # create widgets and define behavior
         back_btn = QtWidgets.QPushButton('◀')
         back_btn.clicked.connect(lambda: print('not implemented'))
 
         up_btn = QtWidgets.QPushButton('▲')
-        up_btn.clicked.connect(lambda: set_option_fn(option_path.get_set()))
+        if up_fn is not None:
+            up_btn.clicked.connect(up_fn)
+        else:
+            up_btn.setEnabled(False)
 
         path_textbox = FocusChangeTextLineEdit(
-            unfocused_text=' » '.join(['options'] + list(option_path)),
-            focused_text=str(option_path),
+            unfocused_text=unfocused_text,
+            focused_text=focused_text,
         )
         path_textbox.returnPressed.connect(
-            lambda: set_option_fn(Attribute.from_string(path_textbox.text()))
+            lambda: set_lookup_key_fn(path_textbox.text())
         )
 
         searchbox = QtWidgets.QLineEdit()
         searchbox.setPlaceholderText('Search...')
-        searchbox.returnPressed.connect(lambda: print('not implemented'))
+        if search_str:
+            searchbox.setText(search_str)
+        searchbox.returnPressed.connect(
+            lambda: set_lookup_key_fn(f'search:{searchbox.text()}')
+        )
+
+        # setup shortcuts
+        search_shortcut = QtWidgets.QShortcut(QtGui.QKeySequence('Ctrl+F'), self)
+        search_shortcut.activated.connect(lambda: searchbox.setFocus())
 
         # add to layout
         hbox = QtWidgets.QHBoxLayout()
@@ -69,3 +85,21 @@ class NavBar(QtWidgets.QWidget):
         hbox.setContentsMargins(2, 2, 2, 2)
 
         self.setLayout(hbox)
+
+    @classmethod
+    def as_option_tree(cls, option_path, set_lookup_key_fn):
+        return cls(
+            set_lookup_key_fn=set_lookup_key_fn,
+            unfocused_text=' » '.join([TREE_UNICODE] + list(option_path)),
+            focused_text=f'options:{str(option_path)}',
+            up_fn=lambda: set_lookup_key_fn(f'options:{option_path.get_set()}')
+        )
+
+    @classmethod
+    def as_search_query(cls, search_str, set_lookup_key_fn):
+        return cls(
+            set_lookup_key_fn=set_lookup_key_fn,
+            unfocused_text=f'{MAGNIFYING_GLASS_UNICODE} » {search_str}',
+            focused_text=f'search:{search_str}',
+            search_str=search_str,
+        )

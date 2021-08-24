@@ -30,8 +30,6 @@ class NixGuiMainWindow(QtWidgets.QMainWindow):
         self.statemodel.slotmapper.add_slot('no_updates_exist', lambda: self.actions['undo'].setEnabled(False))
         self.statemodel.slotmapper.add_slot('update_recorded', lambda *args, **kwargs: self.actions['undo'].setEnabled(True))
 
-        self.actions['search'] = QtWidgets.QAction(icon.get_icon('search.png'), "&Search", self)
-
         self.actions['view_diff'] = QtWidgets.QAction(icon.get_icon('diff.png'), "&View Diff", self)
         self.actions['view_diff'].triggered.connect(lambda: diff_widget.DiffDialog(self.statemodel).exec())
 
@@ -42,7 +40,6 @@ class NixGuiMainWindow(QtWidgets.QMainWindow):
         self.actions['preferences'] = QtWidgets.QAction(icon.get_icon('preferences.png'), "&Preferences", self)
 
         # TODO: enable the below
-        self.actions['search'].setEnabled(False)
         self.actions['build'].setEnabled(False)
         self.actions['preferences'].setEnabled(False)
 
@@ -54,7 +51,6 @@ class NixGuiMainWindow(QtWidgets.QMainWindow):
 
         edit_bar = self.addToolBar("Edit")
         edit_bar.addAction(self.actions['undo'])
-        edit_bar.addAction(self.actions['search'])
         edit_bar.addAction(self.actions['view_diff'])
         edit_bar.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
 

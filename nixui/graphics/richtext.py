@@ -34,13 +34,16 @@ class HTMLDelegate(QtWidgets.QStyledItemDelegate):
         return doc
 
 
-def get_option_html(option, child_count=None, type_label=None, description=None):
+def get_option_html(option, use_fancy_name=True, child_count=None, type_label=None, description=None, extra_text=None):
     # TODO: 60% and 100% don't work with QT
     no_margin_style = 'margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px'
     sub_style = f'font-style:italic; color:Gray; font-size:60%; {no_margin_style}'
 
-    capitalized_fancy_name = re.sub(r"(\w)([A-Z])", r"\1 \2", option.loc[-1]).title()
-    s = f'<p style="font-size:100%; {no_margin_style}">{capitalized_fancy_name}</p>'
+    if use_fancy_name:
+        capitalized_fancy_name = re.sub(r"(\w)([A-Z])", r"\1 \2", option.loc[-1]).title()
+        s = f'<p style="font-size:100%; {no_margin_style}">{capitalized_fancy_name}</p>'
+    else:
+        s = f'<p style="font-size:100%; {no_margin_style}">{option}</p>'
     if child_count:
         num_children = len(api.get_option_tree().children(option))
         s += f'<p style="{sub_style}">{option}{" (" + str(num_children) + ")" if num_children else ""}</p>'
@@ -48,4 +51,6 @@ def get_option_html(option, child_count=None, type_label=None, description=None)
         s += f'<p style="{sub_style}">Type: {type_label}</p>'
     if description:
         s += f'<p style="{sub_style}">Description: {description}</p>'
+    if extra_text:
+        s += f'<p style="{sub_style}">{extra_text}</p>'
     return s

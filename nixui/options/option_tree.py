@@ -120,6 +120,11 @@ class OptionTree:
             if new_definition != old_definition:
                 yield (attr, old_definition, new_definition)
 
+    def iter_attribute_data(self):
+        for node in self.tree.all_nodes():
+            if '<name>' not in node.tag:
+                yield (node.identifier, node.data)
+
     def insert_attribute(self, attribute):
         self._upsert_node_data(attribute, {})
 
