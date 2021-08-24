@@ -26,6 +26,12 @@ class Attribute:
     def __bool__(self):
         return bool(self.loc)
 
+    def __getitem__(self, subscript):
+        if isinstance(subscript, slice):
+            return Attribute(self.loc[subscript])
+        else:
+            return self.loc[subscript]
+
     def __iter__(self):
         return iter(self.loc)
 

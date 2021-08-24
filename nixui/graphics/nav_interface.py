@@ -60,7 +60,7 @@ class OptionNavigationInterface(QtWidgets.QWidget):
         )
         # if 10 or fewer options, navlist with lowest level attribute selected and list of editable fields to the right
         # otherwise, show list of attributes within the clicked attribute and blank to the right
-        num_children = len(api.get_option_tree().children(option_path, recursive=True))
+        num_children = len(api.get_option_tree().children(option_path, mode="leaves"))
         if num_children <= 10:
             self.nav_list.replace_widget(
                 navlist.GenericNavListDisplay(
@@ -118,7 +118,7 @@ class FieldsGroupBox(QtWidgets.QWidget):
         vbox = QtWidgets.QVBoxLayout()
 
         for child_option_path in api.get_option_tree().children(option):
-            if len(api.get_option_tree().children(child_option_path, recursive=True)) > 1:
+            if len(api.get_option_tree().children(child_option_path)) > 1:
                 vbox.addWidget(FieldsGroupBox(
                     statemodel,
                     child_option_path,
