@@ -49,7 +49,7 @@ def get_all_nixos_options():
     # TODO: remove key from this expression, it isn't used
     res = nix_instantiate_eval(
         """
-        with import <nixpkgs/nixos> {};
+        with import <nixpkgs/nixos> { configuration = {}; };
         builtins.mapAttrs
            (n: v: builtins.removeAttrs v ["default" "declarations"])
            (pkgs.nixosOptionsDoc { inherit options; }).optionsNix
