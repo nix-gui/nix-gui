@@ -3,7 +3,7 @@ This document describes the behavior of Nix-Gui [[https://github.com/lapp0/nix-g
 * Running
 Prerequisites:
 - Ensure nixos is installed
-- Ensure =nix.extraOptions = ''experimental-features = nix-command flakes'';= is set to enable [[https://nixos.wiki/wiki/Flakes][Nix Flakes]]
+- Ensure =nix.extraOptions = ''experimental-features = nix-command flakes'';= is set in =configuration.nix= (and you've rebuilt) to enable [[https://nixos.wiki/wiki/Flakes][Nix Flakes]]
 
 
 Run
