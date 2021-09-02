@@ -2,6 +2,7 @@ import json
 import subprocess
 import functools
 import importlib.resources
+from contextlib import contextmanager
 from string import Template
 
 from nixui.utils.logger import LogPipe, logger
@@ -31,8 +32,10 @@ def nix_instantiate_eval(expr, strict=False):
 
     return json.loads(res)
 
+@contextmanager
 def find_library(name):
-    return importlib.resources.path('nixui.nix', f'{name}.nix')
+    with importlib.resources.path('nixui.nix', f'lib.nix') as f:
+        yield f'(import {f}).{name}'
 
 @cache_by_unique_installed_nixos_nixpkgs_version
 def get_all_nixos_options():
@@ -49,23 +52,18 @@ def get_all_nixos_options():
       }
     }
     """
-    with find_library("get_all_nixos_options") as f:
-        res = nix_instantiate_eval(f'import {f}', strict=True)
+    with find_library('get_all_nixos_options') as fn:
+        res = nix_instantiate_eval(fn, strict=True)
     # TODO: remove key from this expression, it isn't used
     return {Attribute(v['loc']): v for v in res.values()}
 
 
 @cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
 def get_modules_defined_attrs(module_path):
-    with find_library("get_modules_defined_attrs") as f:
-        leaves = nix_instantiate_eval(f'import {f} {module_path}', strict=True)
+    with find_library('get_modules_defined_attrs') as fn:
+        leaves = nix_instantiate_eval(f'{fn} {module_path}', strict=True)
 
     return {
         Attribute(v['loc']): {"position": v['position']}
         for v in leaves
     }
-
-
-def eval_attribute(module_path, attribute):
-    with find_library("module_path") as f:
-        return nix_instantiate_eval(f'import {f} {module_path} {attribute}')
