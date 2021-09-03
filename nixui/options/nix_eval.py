@@ -11,7 +11,7 @@ from nixui.options.attribute import Attribute
 
 
 cache_by_unique_installed_nixos_nixpkgs_version = cache.cache(
-    lambda: nix_instantiate_eval("with import <nixpkgs/nixos> {}; pkgs.lib.version")
+    lambda: nix_instantiate_eval("with import <nixpkgs/nixos> { configuration = {}; }; pkgs.lib.version")
 )
 
 
