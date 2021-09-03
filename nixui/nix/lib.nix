@@ -1,15 +1,12 @@
 let
   inherit (import <nixpkgs> {}) pkgs lib;
 in lib.makeExtensible (self: {
-  recursiveIntersect = xs: ys:
-    builtins.mapAttrs (k: ys':
-      let
-        xs' = xs."${k}";
-      in
-        if (xs'._type or "") == "option"
-        then { inherit (xs') loc; } // { position = builtins.unsafeGetAttrPos k ys; }
-        else (self.recursiveIntersect xs' ys')
-    ) ys;
+  collectDeclarationPositions = options: declarations:
+    lib.concatMap
+      (k: if ((options."${k}"._type or "") == "option")
+          then [{loc = options."${k}".loc; position = builtins.unsafeGetAttrPos k declarations;}]
+          else self.collectDeclarationPositions options."${k}" declarations."${k}")
+      (builtins.attrNames declarations);
 
   evalModuleStub = module_path: import module_path { inherit lib; name = ""; config = {}; pkgs = {}; };
 
@@ -20,12 +17,12 @@ in lib.makeExtensible (self: {
     (pkgs.nixosOptionsDoc { inherit options; }).optionsNix;
 
   get_modules_defined_attrs = module_path: let
-    inherit (self) recursiveIntersect evalModuleStub;
+    inherit (self) collectDeclarationPositions evalModuleStub;
 
     nixos = import <nixpkgs/nixos> {configuration={};};
 
     config = builtins.removeAttrs (evalModuleStub module_path) ["imports"];
   in
-    lib.collect (x: x ? loc) (recursiveIntersect nixos.options config);
+    collectDeclarationPositions nixos.options config;
 
 })
