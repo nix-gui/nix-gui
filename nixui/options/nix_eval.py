@@ -1,6 +1,8 @@
 import json
 import subprocess
 import functools
+import importlib.resources
+from contextlib import contextmanager
 from string import Template
 
 from nixui.utils.logger import LogPipe, logger
@@ -9,7 +11,7 @@ from nixui.options.attribute import Attribute
 
 
 cache_by_unique_installed_nixos_nixpkgs_version = cache.cache(
-    lambda: nix_instantiate_eval("with import <nixpkgs/nixos> {}; pkgs.lib.version")
+    lambda: nix_instantiate_eval("with import <nixpkgs/nixos> { configuration = {}; }; pkgs.lib.version")
 )
 
 
@@ -30,6 +32,10 @@ def nix_instantiate_eval(expr, strict=False):
 
     return json.loads(res)
 
+@contextmanager
+def find_library(name):
+    with importlib.resources.path('nixui.nix', f'lib.nix') as f:
+        yield f'(import {f}).{name}'
 
 @cache_by_unique_installed_nixos_nixpkgs_version
 def get_all_nixos_options():
@@ -46,80 +52,18 @@ def get_all_nixos_options():
       }
     }
     """
+    with find_library('get_all_nixos_options') as fn:
+        res = nix_instantiate_eval(fn, strict=True)
     # TODO: remove key from this expression, it isn't used
-    res = nix_instantiate_eval(
-        """
-        with import <nixpkgs/nixos> { configuration = {}; };
-        builtins.mapAttrs
-           (n: v: builtins.removeAttrs v ["default" "declarations"])
-           (pkgs.nixosOptionsDoc { inherit options; }).optionsNix
-        """,
-        strict=True
-    )
-    d = {Attribute(v['loc']): v for v in res.values()}
-    # TODO: convert system_default text into OptionDefinition via .from_expression_string
-    return d
+    return {Attribute(v['loc']): v for v in res.values()}
 
 
 @cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
 def get_modules_defined_attrs(module_path):
-    leaves_expr_template = Template("""
-let
-  config = import ${module_path} {config = {}; pkgs = import <nixpkgs> {}; lib = import <nixpkgs/lib>;};
-  closure = builtins.tail (builtins.genericClosure {
-    startSet = [{ key = builtins.toJSON []; value = {value = config;}; }];
-    operator = {key, value}: builtins.filter (x: x != null) (
-      if
-        builtins.isAttrs value.value
-      then
-        builtins.map (new_key:
-          let
-            pos = (builtins.unsafeGetAttrPos new_key value.value);
-          in
-            if
-              builtins.isNull pos || (pos.file != builtins.toString "${module_path}")
-            then null
-            else {
-              key = builtins.toJSON ((builtins.fromJSON key) ++ [new_key]);
-              value = {
-                value = builtins.getAttr new_key value.value;
-                inherit pos;
-              };
-            }
-        ) (builtins.attrNames value.value)
-      else []
-    );
-  });
-  leaves = builtins.filter (x: !(builtins.isAttrs x.value.value)) closure;
-in
-builtins.map (x: {name = builtins.fromJSON x.key; position = x.value.pos;}) leaves
-    """)
-
-    leaves = nix_instantiate_eval(leaves_expr_template.substitute(module_path=module_path), strict=True)
+    with find_library('get_modules_defined_attrs') as fn:
+        leaves = nix_instantiate_eval(f'{fn} {module_path}', strict=True)
 
     return {
-        Attribute(v['name']): {"position": v['position']}
+        Attribute(v['loc']): {"position": v['position']}
         for v in leaves
     }
-
-
-def eval_attribute(module_path, attribute):
-    expr = (
-        "(import " +
-        module_path +
-        " {config = {}; pkgs = import <nixpkgs> {}; lib = import <nixpkgs/lib>;})." +
-        attribute
-    )
-    return nix_instantiate_eval(expr)
-
-
-def eval_attribute_position(module_path, attribute):
-    expr = (
-        "builtins.unsafeGetAttrPos \"" +
-        attribute.get_end() +
-        "\" (import " +
-        module_path +
-        "{config = {}; pkgs = import <nixpkgs> {}; lib = import <nixpkgs/lib>;})" +
-        (f'.{attribute.get_set()}' if attribute.get_set() else '')
-    )
-    return nix_instantiate_eval(expr)
