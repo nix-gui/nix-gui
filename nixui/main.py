@@ -3,7 +3,6 @@ import cProfile
 import pstats
 import json
 import os
-import io
 import sys
 
 from PyQt5 import QtWidgets
