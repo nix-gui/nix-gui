@@ -39,7 +39,7 @@ class OptionTree:
     def __init__(self, system_option_data, config_options):
         # load data into Tree with OptionData leaves
         self.tree = Tree()
-        self.tree.create_node(identifier=Attribute([]), data=OptionData(_type='PARENT'))
+        self.tree.create_node(identifier=Attribute([]), data=OptionData(_type='attribute set'))
 
         # cache for faster lookup of changed nodes
         self.in_memory_change_cache = {}
@@ -86,7 +86,7 @@ class OptionTree:
                             child_option_path,
                             child_option_path,
                             parent=parent_option_path,
-                            data=OptionData(_type='PARENT')
+                            data=OptionData(_type='attribute set')
                         )
                 parent_option_path = child_option_path
 

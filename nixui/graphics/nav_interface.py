@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtCore
 
-from nixui.options import api
+from nixui.options import api, types
 from nixui.options.attribute import Attribute
 from nixui.graphics import generic_widgets, navbar, navlist, field_widgets
 from nixui.utils.logger import logger
@@ -58,33 +58,14 @@ class OptionNavigationInterface(QtWidgets.QWidget):
         self.nav_bar.replace_widget(
             navbar.NavBar.as_option_tree(option_path, self.set_lookup_key)
         )
+        num_children = len(api.get_option_tree().children(option_path, mode="leaves"))
+        option_type = types.from_nix_type_str(
+            api.get_option_tree().get_type(option_path)
+        )
         # if 10 or fewer options, navlist with lowest level attribute selected and list of editable fields to the right
         # otherwise, show list of attributes within the clicked attribute and blank to the right
-        num_children = len(api.get_option_tree().children(option_path, mode="leaves"))
-        if num_children <= 10:
-            self.nav_list.replace_widget(
-                navlist.GenericNavListDisplay(
-                    self.statemodel,
-                    option_path.get_set(),
-                    self.set_option_path,
-                    selected=option_path.get_end()
-                )
-            )
-            if num_children == 1:
-                self.fields_view.replace_widget(
-                    field_widgets.GenericOptionDisplay(
-                        self.statemodel,
-                        option_path
-                    )
-                )
-            else:
-                self.fields_view.replace_widget(
-                    FieldsGroupBox(
-                        self.statemodel,
-                        option_path
-                    )
-                )
-        else:
+        # TODO: option type checking should probably take place in the same place where all type -> field resolving occurs
+        if type(option_type) in (types.Attrs, types.AttrsOf, types.ListOf) or num_children > 10:
             self.nav_list.replace_widget(
                 navlist.GenericNavListDisplay(
                     self.statemodel,
@@ -93,6 +74,21 @@ class OptionNavigationInterface(QtWidgets.QWidget):
                 )
             )
             self.fields_view.replace_widget(QtWidgets.QLabel(''))
+        else:
+            self.nav_list.replace_widget(
+                navlist.GenericNavListDisplay(
+                    self.statemodel,
+                    option_path.get_set(),
+                    self.set_option_path,
+                    selected=option_path.get_end()
+                )
+            )
+            self.fields_view.replace_widget(
+                FieldsGroupBox(
+                    self.statemodel,
+                    option_path
+                )
+            )
 
     def set_search_query(self, search_str):
         self.nav_bar.replace_widget(

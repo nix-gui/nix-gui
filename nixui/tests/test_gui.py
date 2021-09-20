@@ -25,5 +25,4 @@ def test_integration_load_option_fields(qtbot):
     nav_interface = nix_gui.centralWidget()
 
     for attr, _ in random.sample(list(statemodel.option_tree.iter_attribute_data()), 1000):
-        print(attr)
         nav_interface.set_option_path(attr)
