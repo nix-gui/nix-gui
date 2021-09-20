@@ -70,11 +70,16 @@
                 pkgs.nixpkgs-fmt
                 nix-dump-syntax-tree-json
                 pythonPackages.pytest
+                pythonPackages.pytest-qt
                 pythonPackages.pytest-datafiles
               ];
               checkPhase = let
                 sample = "${./nixui/tests/sample}";
               in ''
+                export QT_QPA_PLATFORM=offscreen
+                export QT_PLUGIN_PATH="${pkgs.qt5.qtbase}/${pkgs.qt5.qtbase.qtPluginPrefix}"
+                export XDG_RUNTIME_DIR=$TMPDIR
+
                 export HOME=$TMPDIR
                 export NIX_STATE_DIR=/build
                 export NIX_PATH=nixpkgs=${pkgs.path}:nixos-config=${sample}/configuration.nix
@@ -86,10 +91,29 @@
                 python3 -c "import pstats; p = pstats.Stats('profile'); p.strip_dirs(); p.sort_stats('cumtime'); p.print_stats(50)"
               '');
             }) { };
+        packages.scrape-github = pkgs.callPackage
+          ({ stdenv, lib}:
+            pythonPackages.buildPythonPackage rec {
+              pname = "scrape-github";
+              version = "0.1.0";
+              src = ./.;
+              propagatedBuildInputs = [
+                pythonPackages.PyGithub
+              ];
+              makeWrapperArgs = [
+                "--prefix PATH : ${nix-dump-syntax-tree-json}/bin"
+              ];
+              doCheck = false;
+            }) { };
         checks.profile = self.packages.${system}.nix-gui.override { enable-profiling = true; };
         defaultPackage = self.packages.${system}.nix-gui;
-        apps.nix-gui = flake-utils.lib.mkApp {
-          drv = self.packages."${system}".nix-gui;
+        apps = {
+          nix-gui = flake-utils.lib.mkApp {
+            drv = self.packages."${system}".nix-gui;
+          };
+          scrape-github = flake-utils.lib.mkApp {
+            drv = self.packages."${system}".scrape-github;
+          };
         };
         defaultApp = self.apps."${system}".nix-gui;
       }
