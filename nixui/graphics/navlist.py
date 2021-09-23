@@ -5,15 +5,18 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 
 from nixui.graphics import icon, richtext, color_indicator
 from nixui.options.attribute import Attribute
-from nixui.options import api, option_definition
+from nixui.options import api, option_definition, types
 
 
 class GenericNavListDisplay:
-    def __new__(cls, statemodel, set_option_path_fn, option_path, selected=None):
-        option_type = api.get_option_tree().get_type(option_path)
-        if option_type.startswith('attribute set of '):
+    def __new__(cls, statemodel, set_option_path_fn, option_path, option_type=None, selected=None):
+        if option_type is None:
+            option_type = types.from_nix_type_str(
+                api.get_option_tree().get_type(option_path)
+            )
+        if option_type == types.AttrsOf:
             return DynamicAttrsOf(statemodel, option_path, set_option_path_fn, selected)
-        elif option_type.startswith('list of '):
+        elif option_type == types.ListOf:
             return DynamicListOf(statemodel, option_path, set_option_path_fn, selected)
         else:
             return StaticAttrsOf(option_path, set_option_path_fn, selected)

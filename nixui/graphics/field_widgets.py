@@ -9,7 +9,15 @@ from nixui.graphics import color_indicator, richtext, generic_widgets
 
 
 def get_field_widget_classes_from_type(option_type):
-    if isinstance(option_type, types.Either):
+    if isinstance(option_type, types.ListOf):
+        return [ListOfRedirect]
+    elif isinstance(option_type, types.AttrsOf):
+        return [AttrsOfRedirect]
+    elif isinstance(option_type, types.Attrs):
+        return [AttrsRedirect]
+    elif isinstance(option_type, types.Submodule):
+        return [SubmoduleRedirect]
+    elif isinstance(option_type, types.Either):
         widgets = set()
         for subtype in option_type.subtypes:
             widgets |= set(get_field_widget_classes_from_type(subtype))
@@ -29,6 +37,10 @@ def get_field_widget_classes_from_type(option_type):
     elif isinstance(option_type, types.Path):
         return [NotImplementedField]
     elif isinstance(option_type, types.Package):
+        return [NotImplementedField]
+    elif isinstance(option_type, types.Function):
+        return [NotImplementedField]
+    elif isinstance(option_type, types.Anything):
         return [NotImplementedField]
     else:
         raise NotImplementedError(option_type)
@@ -74,9 +86,10 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.entry_stack = QtWidgets.QStackedWidget()
         for field_widget_class in field_widget_classes:
             entry_widget = field_widget_class(self.option)
-            entry_widget.stateChanged.connect(self.handle_state_change)
+            if not isinstance(entry_widget, Redirect):
+                entry_widget.stateChanged.connect(self.handle_state_change)
+                self.statemodel.slotmapper.add_slot(('update_field', self.option), self._load_definition)
             self.entry_stack.addWidget(entry_widget)
-            self.statemodel.slotmapper.add_slot(('update_field', self.option), self._load_definition)
         self.stacked_widgets = list(map(self.entry_stack.widget, range(self.entry_stack.count())))
 
         # set type selector
