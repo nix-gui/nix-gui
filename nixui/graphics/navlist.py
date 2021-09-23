@@ -9,7 +9,7 @@ from nixui.options import api, option_definition
 
 
 class GenericNavListDisplay:
-    def __new__(cls, statemodel, option_path, set_option_path_fn, selected=None):
+    def __new__(cls, statemodel, set_option_path_fn, option_path, selected=None):
         option_type = api.get_option_tree().get_type(option_path)
         if option_type.startswith('attribute set of '):
             return DynamicAttrsOf(statemodel, option_path, set_option_path_fn, selected)

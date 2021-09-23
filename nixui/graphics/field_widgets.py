@@ -55,10 +55,12 @@ def get_label_color_for_widget(field_widget):
 
 
 class GenericOptionDisplay(QtWidgets.QWidget):
-    def __init__(self, statemodel, option, *args, **kwargs):
+    def __init__(self, statemodel, set_option_path_fn, option, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.statemodel = statemodel
+        self.set_option_path_fn = set_option_path_fn
+
         self.option = option
         self.starting_definition = None
 
@@ -130,7 +132,10 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         stack_idx = self.field_type_selector.checked_index()
         current_widget = self.entry_stack.widget(stack_idx)
         definition = self.statemodel.get_definition(self.option)
-        if isinstance(current_widget, ExpressionField):
+        if isinstance(current_widget, Redirect):
+            self.set_option_path_fn(self.option, current_widget.option_type)
+            return
+        elif isinstance(current_widget, ExpressionField):
             current_widget.load_value(definition.expression_string)
         else:
             current_widget.load_value(definition.obj)
@@ -176,6 +181,37 @@ class GenericOptionDisplay(QtWidgets.QWidget):
             )
             self.paint_background_color(bg_color)
         self.update()
+
+
+class Redirect(QtWidgets.QLabel):
+    """
+    not actual fields or widgets, but encode information to
+    allow for redirection when its corresponding button is pressed
+    """
+    stateChanged = QtCore.pyqtSignal(str)
+    def __init__(self, option, *args, **kwargs):
+        super().__init__()
+        pass
+
+
+class SubmoduleRedirect(Redirect):
+    option_type = types.Submodule
+    name = "Submodule"
+
+
+class ListOfRedirect(Redirect):
+    option_type = types.ListOf
+    name = "List of"
+
+
+class AttrsRedirect(Redirect):
+    option_type = types.Attrs
+    name = "Attrs"
+
+
+class AttrsOfRedirect(Redirect):
+    option_type = types.AttrsOf
+    name = "Attrs of"
 
 
 class BooleanField(QtWidgets.QCheckBox):
