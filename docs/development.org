@@ -1,3 +1,9 @@
+* Development
+  In order to obtain a development environment, one can run:
+#+BEGIN_src bash
+$ nix develop
+$ CONFIGURATION_PATH=$(realpath nixui/tests/sample/configuration.nix) python -m nixui.main
+#+END_src bash
 * Development Goals
 ** 0) Intuition
 =nix-gui= is UX focused. All counterintuitive elements should be considered a bug. Bug reports can be filed at https://github.com/lapp0/nix-gui/issues There are no stupid questions. This program is intended to make nixos usable by someone with basic competence in Ubuntu, Mint, Windows, or OS X.

@@ -156,7 +156,8 @@ class OptionTree:
 
     def iter_attribute_data(self):
         for node in self.tree.all_nodes():
-            yield (node.identifier, node.data)
+            if '<name>' not in node.tag:
+                yield (node.identifier, node.data)
 
     def insert_attribute(self, attribute):
         self._upsert_node_data(attribute, {})

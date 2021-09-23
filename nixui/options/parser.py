@@ -65,8 +65,6 @@ def get_all_option_values(root_module_path):
                 tree.to_string(value_node)
             )
 
-    # TODO: remove this hack when option parser retrieves *only* options
-    del option_expr_map[Attribute(['imports'])]
     return option_expr_map
 
 

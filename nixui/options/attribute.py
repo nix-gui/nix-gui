@@ -43,6 +43,11 @@ class Attribute:
         return (-len(self), str(self)) < (-len(other), str(other))
 
     def __str__(self):
+        """
+        regexp based on
+        https://github.com/NixOS/nix/blob/99f8fc995b2f080cc0a6fe934c8d9c777edc3751/src/libexpr/lexer.l#L97
+        https://github.com/NixOS/nixpkgs/blob/8da27ef161e8bd0403c8f9ae030ef1e91cb6c475/pkgs/tools/nix/nixos-option/libnix-copy-paste.cc#L52
+        """
         return '.'.join([
             attribute
             if re.match(r'^[a-zA-Z\_][a-zA-Z0-9\_\'\-]*$', attribute)

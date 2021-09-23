@@ -11,7 +11,8 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        pythonPackages = pkgs.python39Packages;
+        python = pkgs.python39;
+        pythonPackages = python.pkgs;
 
         nix-dump-syntax-tree-json = with pkgs; rustPlatform.buildRustPackage rec {
            pname = "nix_dump_syntax_tree_json";
@@ -78,10 +79,10 @@
               in ''
                 export QT_QPA_PLATFORM=offscreen
                 export QT_PLUGIN_PATH="${pkgs.qt5.qtbase}/${pkgs.qt5.qtbase.qtPluginPrefix}"
-                export XDG_RUNTIME_DIR=$TMPDIR
+                export XDG_RUNTIME_DIR=$NIX_BUILD_TOP
 
-                export HOME=$TMPDIR
-                export NIX_STATE_DIR=/build
+                export HOME=$NIX_BUILD_TOP
+                export NIX_STATE_DIR=$NIX_BUILD_TOP
                 export NIX_PATH=nixpkgs=${pkgs.path}:nixos-config=${sample}/configuration.nix
                 cd nixui
               '' + (if !enable-profiling then ''
@@ -99,6 +100,16 @@
           };
         };
         defaultApp = self.apps."${system}".nix-gui;
+
+        devShell = pkgs.mkShell {
+          QT_PLUGIN_PATH = "${pkgs.qt5.qtbase}/${pkgs.qt5.qtbase.qtPluginPrefix}";
+          nativeBuildInputs = [
+            python
+          ];
+          inputsFrom = [
+            self.packages."${system}".nix-gui
+          ];
+        };
       }
     );
 }
