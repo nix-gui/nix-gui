@@ -1,8 +1,8 @@
+import os
 import uuid
 
 from nixui.utils import cache
 from nixui.options import syntax_tree, nix_eval
-from nixui.options.attribute import Attribute
 from nixui.options.option_definition import OptionDefinition
 
 
@@ -64,6 +64,16 @@ def get_all_option_values(root_module_path):
             option_expr_map[attr_loc] = OptionDefinition.from_expression_string(
                 tree.to_string(value_node)
             )
+
+        # recurse for all imports
+        imports_node = get_imports_node(module_path, tree)
+        _, imports_value_node = [e for e in imports_node.elems if isinstance(e, syntax_tree.Node)]
+        imports_definition = OptionDefinition.from_expression_string(
+            imports_value_node.to_string()
+        )
+        for import_path in imports_definition.obj:
+            full_import_path = os.path.join(os.dirname(root_module_path), import_path)
+            option_expr_map.update(**get_all_option_values(full_import_path))
 
     return option_expr_map
 
