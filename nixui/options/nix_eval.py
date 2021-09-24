@@ -102,6 +102,11 @@ def get_modules_import_position(module_path):
     # TODO: should be part of lib.nix
     expression = f"""
     builtins.unsafeGetAttrPos "imports"
-    (import {module_path} {{config = {{}}; pkgs = import <nixpkgs> {{}}; lib = {{}};}})
+    (import {module_path} {{
+      config = {{}};
+      pkgs = import <nixpkgs> {{}};
+      lib = {{}};
+      modulesPath = builtins.dirOf {module_path};
+    }})
     """
     return nix_instantiate_eval(expression, strict=True)
