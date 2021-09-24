@@ -1,4 +1,3 @@
-import os
 import json
 import subprocess
 import functools
@@ -59,10 +58,12 @@ def nix_instantiate_eval(expr, strict=False, show_trace=False, retry_show_trace_
     else:
         return json.loads(out)
 
+
 @contextmanager
 def find_library(name):
     with importlib.resources.path('nixui.nix', f'lib.nix') as f:
         yield f'(import {f}).{name}'
+
 
 @cache_by_unique_installed_nixos_nixpkgs_version
 def get_all_nixos_options():
