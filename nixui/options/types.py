@@ -21,13 +21,13 @@ def from_nix_type_str(nix_type_str, or_legal=True):
 
     # types "containing" other types in their definitions
     elif nix_type_str == 'listOf':
-        return ListOf()
+        return ListOfType()
     elif nix_type_str.startswith('list of') and nix_type_str.endswith('s'):
-        return ListOf(
+        return ListOfType(
             from_nix_type_str(nix_type_str.removeprefix('list of ').removesuffix('s'))
         )
     elif nix_type_str.startswith('attribute set of'):
-        return AttrsOf(
+        return AttrsOfType(
             from_nix_type_str(nix_type_str.removeprefix('attribute set of ').removesuffix('s'))
         )
 
@@ -40,35 +40,35 @@ def from_nix_type_str(nix_type_str, or_legal=True):
             except ValueError:
                 continue
             else:
-                if isinstance(left, Either):
-                    if isinstance(right, Either):
-                        return Either(left.subtypes + right.subtypes)
+                if isinstance(left, EitherType):
+                    if isinstance(right, EitherType):
+                        return EitherType(left.subtypes + right.subtypes)
                     else:
-                        return Either(left.subtypes + [right])
-                elif isinstance(right, Either):
-                    return Either([left] + right.subtypes)
+                        return EitherType(left.subtypes + [right])
+                elif isinstance(right, EitherType):
+                    return EitherType([left] + right.subtypes)
                 else:
-                    return Either([left, right])
+                    return EitherType([left, right])
         else:
             return from_nix_type_str(nix_type_str, or_legal=False)
     elif nix_type_str.startswith('function that evaluates to a(n) '):
-        return Function(
+        return FunctionType(
             from_nix_type_str(nix_type_str.removeprefix('function that evaluates to a(n) '))
         )
 
     # simple types with criteria
     elif nix_type_str.startswith('lazy attribute set of'):
-        return AttrsOf(
+        return AttrsOfType(
             from_nix_type_str(nix_type_str.removeprefix('lazy attribute set of ')),
             lazy=True
         )
     elif nix_type_str.startswith('non-empty list of') and nix_type_str.endswith('s'):
-        return ListOf(
+        return ListOfType(
             from_nix_type_str(nix_type_str.removeprefix('non-empty list of ').removesuffix('s')),
             minimum=1,
         )
     elif nix_type_str.startswith('pair of'):
-        return ListOf(
+        return ListOfType(
             from_nix_type_str(nix_type_str.removeprefix('pair of ')),
             minimum=2,
             maximum=2,
@@ -77,60 +77,59 @@ def from_nix_type_str(nix_type_str, or_legal=True):
         # TODO: fix this hack, (((list of) strings) concatenated with "foo"), not # ((list of) string concatenated with "foo"s)
         s = nix_type_str.split('concatenated with')[1]
         s = s.strip('"')
-        return Str(concatenated_with=s)
+        return StrType(concatenated_with=s)
     elif nix_type_str.startswith('string (with check: '):
         check = nix_type_str.split('(with check: ')[1].removesuffix(')')
-        return Str(check=check)
+        return StrType(check=check)
     elif nix_type_str.startswith('string matching the pattern'):
-        return Str(
+        return StrType(
             legal_pattern=nix_type_str.removeprefix('string matching the pattern ')
         )
     elif nix_type_str == 'unsigned integer, meaning >=0':
-        return Int(minimum=0)
+        return IntType(minimum=0)
     elif nix_type_str == 'positive integer, meaning >0':
-        return Int(minimum=1)
+        return IntType(minimum=1)
     elif nix_type_str.startswith('integer between') and nix_type_str.endswith('(both inclusive)'):
         s = nix_type_str.removeprefix('integer between ').removesuffix(' (both inclusive)')
         minimum, maximum = s.split(' and ')
-        return Int(minimum=int(minimum), maximum=int(maximum))
+        return IntType(minimum=int(minimum), maximum=int(maximum))
     elif nix_type_str.startswith('one of'):
         s = nix_type_str.removeprefix('one of ')
-        return OneOf([x.strip('"') for x in s.split(', ')])
+        return OneOfType([x.strip('"') for x in s.split(', ')])
     elif nix_type_str == '16 bit unsigned integer; between 0 and 65535 (both inclusive)':
-        return Int(minimum=0, maximum=65535)
+        return IntType(minimum=0, maximum=65535)
     elif nix_type_str in ('path, not containing newlines', 'path, not containing newlines or colons'):
-        return Path()  # TODO: special handling
+        return PathType()  # TODO: special handling
     elif nix_type_str.startswith('a floating point number in range'):
         s = nix_type_str.removeprefix('a floating point number in range ').lstrip('[').rstrip(']')
         minimum, maximum = s.split(', ')
-        return Float(minimum=float(minimum), maximum=float(maximum))  # TODO: special handling
-
+        return FloatType(minimum=float(minimum), maximum=float(maximum))  # TODO: special handling
 
     # simple types
     elif nix_type_str == 'lambda':
-        return Function()
+        return FunctionType()
     elif nix_type_str == 'attribute set':
-        return Attrs()
+        return AttrsType()
     elif nix_type_str == 'boolean':
-        return Bool()
+        return BoolType()
     elif nix_type_str == 'unspecified':
-        return Unspecified()
+        return UnspecifiedType()
     elif nix_type_str == 'string':
-        return Str()
+        return StrType()
     elif nix_type_str in ('int', 'signed integer', 'integer of at least 16 bits'):
-        return Int()
+        return IntType()
     elif nix_type_str in ('float', 'floating point number'):
-        return Float()
+        return FloatType()
     elif nix_type_str == 'path':
-        return Path()
+        return PathType()
     elif nix_type_str == 'package':
-        return Package()
+        return PackageType()
     elif nix_type_str == 'submodule':
-        return Submodule()
+        return SubmoduleType()
     elif nix_type_str == 'null':
-        return Null()
+        return NullType()
     elif nix_type_str == 'anything':
-        return Anything()
+        return AnythingType()
 
     # no good handling yet
     elif (
@@ -176,99 +175,95 @@ def from_nix_type_str(nix_type_str, or_legal=True):
             'Traffic Server records value'
         )
         ):
-        return Anything()
+        return AnythingType()
 
     else:
         raise ValueError(nix_type_str)
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class Unspecified:
+class UnspecifiedType:
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class Anything:
+class AnythingType:
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class Bool:
+class BoolType:
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class Int:
+class IntType:
     minimum: int = None
     maximum: int = None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class Float:
+class FloatType:
     minimum: float = None
     maximum: float = None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class Str:
+class StrType:
     concatenated_with: str = None
     check: str = None
     legal_pattern: str = None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class Attrs:
+class AttrsType:
     pass
 
 
 # TODO: path is broken, it's divided between being a type class and a data class
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class Path:
-    cwd: str = None
-    path: str = None
-
-    def eval_path(self):
-        return os.path.join(self.cwd, self.path)
-
-
-@dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class Package:
+class PathType:
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class Function:
+class PackageType:
+    pass
+
+
+@dataclasses.dataclass(frozen=True, unsafe_hash=True)
+class FunctionType:
     return_type: typing.Any = None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class ListOf:
+class ListOfType:
     subtype: typing.Any = None
     minimum: int = None
     maximum: int = None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class AttrsOf:
+class AttrsOfType:
     subtype: typing.Any
     lazy: bool = False
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class Null:
+class NullType:
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class Submodule:
+class SubmoduleType:
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class Either:
+class EitherType:
     subtypes: tuple = tuple()
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class OneOf:
+class OneOfType:
     choices: tuple = tuple()
