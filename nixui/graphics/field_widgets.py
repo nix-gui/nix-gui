@@ -9,38 +9,38 @@ from nixui.graphics import color_indicator, richtext, generic_widgets
 
 
 def get_field_widget_classes_from_type(option_type):
-    if isinstance(option_type, types.ListOf):
+    if isinstance(option_type, types.ListOfType):
         return [ListOfRedirect]
-    elif isinstance(option_type, types.AttrsOf):
+    elif isinstance(option_type, types.AttrsOfType):
         return [AttrsOfRedirect]
-    elif isinstance(option_type, types.Attrs):
+    elif isinstance(option_type, types.AttrsType):
         return [AttrsRedirect]
-    elif isinstance(option_type, types.Submodule):
+    elif isinstance(option_type, types.SubmoduleType):
         return [SubmoduleRedirect]
-    elif isinstance(option_type, types.Either):
+    elif isinstance(option_type, types.EitherType):
         widgets = set()
         for subtype in option_type.subtypes:
             widgets |= set(get_field_widget_classes_from_type(subtype))
         return list(widgets)
-    elif isinstance(option_type, types.Unspecified):
+    elif isinstance(option_type, types.UnspecifiedType):
         return [UndefinedField]
-    elif isinstance(option_type, types.Null):
+    elif isinstance(option_type, types.NullType):
         return [NullField]
-    elif isinstance(option_type, types.Bool):
+    elif isinstance(option_type, types.BoolType):
         return [BooleanField]
-    elif isinstance(option_type, types.Str):
+    elif isinstance(option_type, types.StrType):
         return [TextField]
-    elif isinstance(option_type, types.Int):
+    elif isinstance(option_type, types.IntType):
         return [IntegerField]
-    elif isinstance(option_type, types.OneOf):
+    elif isinstance(option_type, types.OneOfType):
         return [OneOfField]
-    elif isinstance(option_type, types.Path):
+    elif isinstance(option_type, types.PathType):
         return [NotImplementedField]
-    elif isinstance(option_type, types.Package):
+    elif isinstance(option_type, types.PackageType):
         return [NotImplementedField]
-    elif isinstance(option_type, types.Function):
+    elif isinstance(option_type, types.FunctionType):
         return [NotImplementedField]
-    elif isinstance(option_type, types.Anything):
+    elif isinstance(option_type, types.AnythingType):
         return [NotImplementedField]
     else:
         raise NotImplementedError(option_type)
@@ -210,22 +210,22 @@ class Redirect(QtWidgets.QLabel):
 
 
 class SubmoduleRedirect(Redirect):
-    option_type = types.Submodule
+    option_type = types.SubmoduleType
     name = "Submodule"
 
 
 class ListOfRedirect(Redirect):
-    option_type = types.ListOf
+    option_type = types.ListOfType
     name = "List of"
 
 
 class AttrsRedirect(Redirect):
-    option_type = types.Attrs
+    option_type = types.AttrsType
     name = "Attrs"
 
 
 class AttrsOfRedirect(Redirect):
-    option_type = types.AttrsOf
+    option_type = types.AttrsOfType
     name = "Attrs of"
 
 

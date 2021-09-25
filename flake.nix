@@ -86,7 +86,7 @@
                 export NIX_PATH=nixpkgs=${pkgs.path}:nixos-config=${sample}/configuration.nix
                 cd nixui
               '' + (if !enable-profiling then ''
-                python3 -m pytest
+                python3 -m pytest -vv
               '' else ''
                 python3 -m cProfile -o profile -m pytest
                 python3 -c "import pstats; p = pstats.Stats('profile'); p.strip_dirs(); p.sort_stats('cumtime'); p.print_stats(50)"

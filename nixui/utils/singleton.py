@@ -1,6 +1,9 @@
+import dataclasses
+
+
+@dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class Singleton:
-    def __init__(self, name):
-        self.name = name
+    name: str
 
     def __eq__(self, other):
         return (

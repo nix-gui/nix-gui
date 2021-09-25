@@ -1,9 +1,10 @@
+import os
 import uuid
 
+from nixui.utils.logger import logger
 from nixui.utils import cache
 from nixui.options import syntax_tree, nix_eval
-from nixui.options.attribute import Attribute
-from nixui.options.option_definition import OptionDefinition
+from nixui.options.option_definition import OptionDefinition, Unresolvable
 
 
 def inject_expressions(module_path, option_expr_map):
@@ -56,20 +57,47 @@ def apply_indentation(string, num_spaces):
 
 
 @cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
-def get_all_option_values(root_module_path):
+def get_all_option_values(module_path):
+    logger.info(f'Retrieving option values for module "{module_path}"')
+    # get option_expr_map for module_path
     option_expr_map = {}
-    for module_path in [root_module_path]:
-        tree = syntax_tree.SyntaxTree(module_path)
-        for attr_loc, (key_node, value_node) in get_key_value_nodes(module_path, tree).items():
-            option_expr_map[attr_loc] = OptionDefinition.from_expression_string(
-                tree.to_string(value_node)
-            )
+    tree = syntax_tree.SyntaxTree(module_path)
+    for attr_loc, (key_node, value_node) in get_key_value_nodes(module_path, tree).items():
+        option_expr_map[attr_loc] = OptionDefinition.from_expression_string(
+            value_node.to_string()
+        )
+
+    # get imports node from syntax tree and recurse if possible
+    imports_node = get_imports_node(module_path, tree)
+    if imports_node is None:
+        return option_expr_map
+
+    # extract definition from imports_node
+    _, imports_value_node = [e for e in imports_node.elems if isinstance(e, syntax_tree.Node)]
+    imports_definition = OptionDefinition.from_expression_string(
+        imports_value_node.to_string(),
+        {'module_dir': os.path.dirname(module_path)}
+    )
+    # for each valid parsable import, recurse
+    for i, import_path in enumerate(imports_definition.obj):
+        if import_path == Unresolvable:
+            logger.error(f'failed to load element {i} of \n{imports_definition.expression_string}')
+            continue
+        full_import_path = import_path.eval_full_path()
+        try:
+            # TODO: this isn't the correct way to merge attributes between modules, it needs to be implemented
+            option_expr_map.update(get_all_option_values(full_import_path))
+        except nix_eval.NixEvalError as e:
+            logger.error(e)  # TODO: ensure all legal import elements are resolved and don't `continue`
+            continue
 
     return option_expr_map
 
 
 def get_imports_node(module_path, tree):
     import_pos = nix_eval.get_modules_import_position(module_path)
+    if import_pos is None:
+        return None
     return tree.get_node_at_line_column(
         import_pos['line'],
         import_pos['column'],

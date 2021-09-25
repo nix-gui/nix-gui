@@ -14,9 +14,9 @@ class GenericNavListDisplay:
             option_type = types.from_nix_type_str(
                 api.get_option_tree().get_type(option_path)
             )
-        if option_type == types.AttrsOf:
+        if option_type == types.AttrsOfType:
             return DynamicAttrsOf(statemodel, option_path, set_option_path_fn, selected)
-        elif option_type == types.ListOf:
+        elif option_type == types.ListOfType:
             return DynamicListOf(statemodel, option_path, set_option_path_fn, selected)
         else:
             return StaticAttrsOf(option_path, set_option_path_fn, selected)

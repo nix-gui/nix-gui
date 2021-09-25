@@ -1,4 +1,3 @@
-import os
 import json
 import subprocess
 import functools
@@ -58,10 +57,12 @@ def nix_instantiate_eval(expr, strict=False, show_trace=False, retry_show_trace_
                 err_str = err.decode('ISO-8859-1')
             raise NixEvalError(err_str)
 
+
 @contextmanager
 def find_library(name):
     with importlib.resources.path('nixui.nix', f'lib.nix') as f:
         yield f'(import {f}).{name}'
+
 
 @cache_by_unique_installed_nixos_nixpkgs_version
 def get_all_nixos_options():
@@ -100,6 +101,11 @@ def get_modules_import_position(module_path):
     # TODO: should be part of lib.nix
     expression = f"""
     builtins.unsafeGetAttrPos "imports"
-    (import {module_path} {{config = {{}}; pkgs = import <nixpkgs> {{}}; lib = {{}};}})
+    (import {module_path} {{
+      config = {{}};
+      pkgs = import <nixpkgs> {{}};
+      lib = {{}};
+      modulesPath = builtins.dirOf {module_path};
+    }})
     """
     return nix_instantiate_eval(expression, strict=True)
