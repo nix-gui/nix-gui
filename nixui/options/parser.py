@@ -57,7 +57,7 @@ def apply_indentation(string, num_spaces):
 
 @cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
 def get_all_option_values(module_path):
-    logger.info(f'Retrieving option values for module "{module_path}"'
+    logger.info(f'Retrieving option values for module "{module_path}"')
     # get option_expr_map for module_path
     option_expr_map = {}
     tree = syntax_tree.SyntaxTree(module_path)
