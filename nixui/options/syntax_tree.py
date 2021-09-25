@@ -1,12 +1,35 @@
 import collections
+import dataclasses
+import functools
 import subprocess
 import json
+import tempfile
 import uuid
 
 
-Node = collections.namedtuple('Node', ['id', 'name', 'position', 'elems'])
-Token = collections.namedtuple('Token', ['id', 'name', 'position', 'quoted'])
 NumRange = collections.namedtuple('NumRange', ['start', 'end'])
+
+
+@dataclasses.dataclass
+class Token:
+    id: uuid.UUID
+    name: str
+    position: NumRange
+    quoted: str
+
+    def to_string(self):
+        return self.quoted
+
+
+@dataclasses.dataclass
+class Node:
+    id: uuid.UUID
+    name: str
+    position: NumRange
+    elems: list
+
+    def to_string(self):
+        return ''.join(elem.to_string() for elem in self.elems)
 
 
 class SyntaxTree:
@@ -15,11 +38,20 @@ class SyntaxTree:
         self.tree = self._get_tree(self.module_path)  # mutable, with call to self._load_structures()
         self._load_structures()
 
+    @classmethod
+    @functools.lru_cache()
+    def from_string(cls, expression_string):
+        with tempfile.NamedTemporaryFile(mode='w') as temp:
+            temp.write(expression_string)
+            temp.flush()
+            return cls(temp.name)
+
     def _load_structures(self):
         self.flattened_nodes = self._get_flattened_nodes(self.tree)
         self.elem_ids = {elem.id: elem for elem in self.flattened_nodes}
         self.elem_parent_map = self._get_elem_parent_map(self.flattened_nodes)
         self.column_line_index_mapper = self._get_column_line_index_map(self.module_path)
+        self.root_id = self._get_root_id(self.elem_parent_map)
 
     @classmethod
     def _get_tree(cls, module_path):
@@ -71,6 +103,16 @@ class SyntaxTree:
         mapper = lambda line, col: line_index_map[line] + col
         return mapper
 
+    @staticmethod
+    def _get_root_id(elem_parent_map):
+        node = next(iter(elem_parent_map.values()))
+        while True:
+            new_node = elem_parent_map.get(node)
+            if new_node is None:
+                return node
+            node = new_node
+        return node
+
     def to_string(self, node=None):
         """
         Get code string from AST
@@ -100,7 +142,7 @@ class SyntaxTree:
                             return new_node
         return None
 
-    def get_node_at_line_column(self, line, column, legal_type):
+    def get_node_at_line_column(self, line, column, legal_type=None):
         # 'line' and 'column' are 1-indexed
         character_index = self.column_line_index_mapper(line - 1, column - 1)
         return self.get_node_at_position(character_index, legal_type)
