@@ -68,9 +68,13 @@ def get_all_option_values(root_module_path):
     return option_expr_map
 
 
-def get_imported_modules(module_path):
-    # TODO: fix this, possibly using rnix-lsp
-    return nix_eval.eval_attribute(module_path, "imports")
+def get_imports_node(module_path, tree):
+    import_pos = nix_eval.get_modules_import_position(module_path)
+    return tree.get_node_at_line_column(
+        import_pos['line'],
+        import_pos['column'],
+        legal_type='NODE_KEY_VALUE'
+    )
 
 
 def get_returned_attr_set_node(module_path, tree):
@@ -79,7 +83,8 @@ def get_returned_attr_set_node(module_path, tree):
     """
     # TODO: fix HACK, currently we assume the node containing `imports` is the returned attr set
     #       but this may not always be the case?
-    imports_key_node, _ = get_key_value_nodes(module_path, tree)[Attribute(['imports'])]
+    imports_node = get_imports_node(module_path, tree)
+    imports_key_node, _ = [e for e in imports_node.elems if isinstance(e, syntax_tree.Node)]
     imports_key_value_node = tree.get_parent(imports_key_node)
     returned_attr_set_node = tree.get_parent(imports_key_value_node)
     return returned_attr_set_node
