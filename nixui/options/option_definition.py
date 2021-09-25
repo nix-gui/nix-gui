@@ -1,12 +1,10 @@
 import dataclasses
-import json
 import functools
 import os
 import subprocess
 
 from nixui.options import nix_eval, syntax_tree, types
 from nixui.utils.singleton import Singleton
-from nixui.utils.logger import logger
 from nixui.utils import hash_by_json
 
 
@@ -159,15 +157,14 @@ def get_formatted_expression(obj):
 
 @functools.lru_cache()
 def format_expression(expression_str):
-    if True:  # with LogPipe('INFO') as log_pipe:
-        p = subprocess.run(
-            ['nixpkgs-fmt'],
-            stdout=subprocess.PIPE,
-            input=expression_str,
-            encoding='ascii',
-            stderr=subprocess.PIPE,  # log_pipe,
-        )
-        return p.stdout
+    p = subprocess.run(
+        ['nixpkgs-fmt'],
+        stdout=subprocess.PIPE,
+        input=expression_str,
+        encoding='ascii',
+        stderr=subprocess.PIPE,  # log_pipe,
+    )
+    return p.stdout
 
 
 def get_expression(obj):
