@@ -45,8 +45,9 @@ class OptionDefinition:
     - todo: ???
     """
     def __init__(self, context=None, **kwargs):
-        self.context = context or {}
+        assert kwargs != {}
         self.passed = kwargs
+        self.context = context or {}
 
     @classmethod
     def from_object(cls, obj, context=None):
