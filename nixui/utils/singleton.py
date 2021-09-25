@@ -13,6 +13,3 @@ class Singleton:
 
     def __repr__(self):
         return f'Singleton("{self.name}")'
-
-    def toJSON(self):
-        return f'SINGLETON {self.name}'
