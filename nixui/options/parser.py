@@ -1,3 +1,4 @@
+import os
 import uuid
 
 from nixui.utils.logger import logger
