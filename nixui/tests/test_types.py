@@ -1,7 +1,7 @@
 from nixui.options import types
 
 
-def test_integration_load_specific_options(nix_gui_main_window):
+def test_convert_complex_typestring():
     nix_type_str = '16 bit unsigned integer; between 0 and 65535 (both inclusive) or one of "auto" or submodule or list of 16 bit unsigned integer; between 0 and 65535 (both inclusive) or one of "auto" or submodules'
     option_type = types.from_nix_type_str(nix_type_str)
     expected = types.EitherType(
