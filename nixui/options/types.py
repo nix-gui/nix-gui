@@ -16,21 +16,19 @@ def from_nix_type_str(nix_type_str, or_legal=True):
       - does nix include a regexp or expression for us to validate with?
     """
 
+    # cases where there is no criteria to recurse on
     if nix_type_str == '':
         return None
 
-    # types "containing" other types in their definitions
+    # return types for Function()
     elif nix_type_str == 'listOf':
         return ListOf()
-    elif nix_type_str.startswith('list of') and nix_type_str.endswith('s'):
-        return ListOf(
-            from_nix_type_str(nix_type_str.removeprefix('list of ').removesuffix('s'))
-        )
-    elif nix_type_str.startswith('attribute set of'):
-        return AttrsOf(
-            from_nix_type_str(nix_type_str.removeprefix('attribute set of ').removesuffix('s'))
-        )
 
+    # or type: this can be ambiguous, for example "list of int or bools or package"
+    # for each " or ", we split and recurse:
+    # - (list of int) or (bools or package) - illegal because no "s" at end of "list of ints"
+    # - (list of int or bools) or (package) - legal
+    # then we reconstruct the result `Either(Either(a, b), c)` into `Either(a, b, c)`
     elif ' or ' in nix_type_str and or_legal:
         chunks = nix_type_str.split(' or ')
         for i in range(1, len(chunks)):
@@ -51,6 +49,16 @@ def from_nix_type_str(nix_type_str, or_legal=True):
                     return Either([left, right])
         else:
             return from_nix_type_str(nix_type_str, or_legal=False)
+
+    # types "containing" other types in their definitions
+    elif nix_type_str.startswith('list of') and nix_type_str.endswith('s'):
+        return ListOf(
+            from_nix_type_str(nix_type_str.removeprefix('list of ').removesuffix('s'))
+        )
+    elif nix_type_str.startswith('attribute set of'):
+        return AttrsOf(
+            from_nix_type_str(nix_type_str.removeprefix('attribute set of ').removesuffix('s'))
+        )
     elif nix_type_str.startswith('function that evaluates to a(n) '):
         return Function(
             from_nix_type_str(nix_type_str.removeprefix('function that evaluates to a(n) '))
@@ -104,7 +112,6 @@ def from_nix_type_str(nix_type_str, or_legal=True):
         s = nix_type_str.removeprefix('a floating point number in range ').lstrip('[').rstrip(']')
         minimum, maximum = s.split(', ')
         return Float(minimum=float(minimum), maximum=float(maximum))  # TODO: special handling
-
 
     # simple types
     elif nix_type_str == 'lambda':
@@ -221,7 +228,6 @@ class Attrs:
     pass
 
 
-# TODO: path is broken, it's divided between being a type class and a data class
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class Path:
     cwd: str = None
