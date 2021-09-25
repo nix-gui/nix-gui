@@ -45,19 +45,18 @@ def nix_instantiate_eval(expr, strict=False, show_trace=False, retry_show_trace_
         stderr=subprocess.PIPE,
     )
     out, err = p.communicate()
-    if err:
-        if out:
-            return json.loads(out)
-        elif retry_show_trace_on_error and not show_trace:
+
+    if out:
+        return json.loads(out)
+    else:
+        if retry_show_trace_on_error and not show_trace:
             return nix_instantiate_eval(expr, strict, show_trace=True)
         else:
             try:
                 err_str = err.decode('utf-8')
-            except:
+            except:  # TODO: appropriate decode error
                 err_str = err.decode('ISO-8859-1')
             raise NixEvalError(err_str)
-    else:
-        return json.loads(out)
 
 @contextmanager
 def find_library(name):

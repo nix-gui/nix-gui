@@ -86,6 +86,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.entry_stack = QtWidgets.QStackedWidget()
         for field_widget_class in field_widget_classes:
             entry_widget = field_widget_class(self.option)
+            # TODO: fix this hacky handling of `Redirect` (#109)
             if not isinstance(entry_widget, Redirect):
                 entry_widget.stateChanged.connect(self.handle_state_change)
                 self.statemodel.slotmapper.add_slot(('update_field', self.option), self._load_definition)
@@ -145,6 +146,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         stack_idx = self.field_type_selector.checked_index()
         current_widget = self.entry_stack.widget(stack_idx)
         definition = self.statemodel.get_definition(self.option)
+        # TODO: fix this hacky handling of `Redirect` (#109)
         if isinstance(current_widget, Redirect):
             self.set_option_path_fn(self.option, current_widget.option_type)
             return
@@ -195,6 +197,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.update()
 
 
+# TODO: fix this hacky handling of `Redirect` (#109)
 class Redirect(QtWidgets.QLabel):
     """
     not actual fields or widgets, but encode information to
