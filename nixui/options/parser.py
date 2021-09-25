@@ -63,7 +63,7 @@ def get_all_option_values(module_path):
     tree = syntax_tree.SyntaxTree(module_path)
     for attr_loc, (key_node, value_node) in get_key_value_nodes(module_path, tree).items():
         option_expr_map[attr_loc] = OptionDefinition.from_expression_string(
-            tree.to_string(value_node)
+            value_node.to_string()
         )
 
     # get imports node from syntax tree and recurse if possible
@@ -87,7 +87,7 @@ def get_all_option_values(module_path):
             # TODO: this isn't the correct way to merge attributes between modules, it needs to be implemented
             option_expr_map.update(get_all_option_values(full_import_path))
         except nix_eval.NixEvalError as e:
-            logger.error(e)
+            logger.error(e)  # TODO: ensure all legal import elements are resolved and don't `continue`
             continue
 
     return option_expr_map
