@@ -71,11 +71,16 @@
                 pkgs.nixpkgs-fmt
                 nix-dump-syntax-tree-json
                 pythonPackages.pytest
+                pythonPackages.pytest-qt
                 pythonPackages.pytest-datafiles
               ];
               checkPhase = let
                 sample = "${./nixui/tests/sample}";
               in ''
+                export QT_QPA_PLATFORM=offscreen
+                export QT_PLUGIN_PATH="${pkgs.qt5.qtbase}/${pkgs.qt5.qtbase.qtPluginPrefix}"
+                export XDG_RUNTIME_DIR=$NIX_BUILD_TOP
+
                 export HOME=$NIX_BUILD_TOP
                 export NIX_STATE_DIR=$NIX_BUILD_TOP
                 export NIX_PATH=nixpkgs=${pkgs.path}:nixos-config=${sample}/configuration.nix
@@ -89,8 +94,10 @@
             }) { };
         checks.profile = self.packages.${system}.nix-gui.override { enable-profiling = true; };
         defaultPackage = self.packages.${system}.nix-gui;
-        apps.nix-gui = flake-utils.lib.mkApp {
-          drv = self.packages."${system}".nix-gui;
+        apps = {
+          nix-gui = flake-utils.lib.mkApp {
+            drv = self.packages."${system}".nix-gui;
+          };
         };
         defaultApp = self.apps."${system}".nix-gui;
 

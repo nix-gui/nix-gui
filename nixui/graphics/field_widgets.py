@@ -4,120 +4,108 @@ import re
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
-from nixui.options import api, option_tree, option_definition
+from nixui.options import api, option_tree, option_definition, types
 from nixui.graphics import color_indicator, richtext, generic_widgets
 
 
-# tuples of (match fn, widget)
-@lru_cache
-def get_field_type_widget_map():
-    return [
-        [
-            partial(eq, option_tree.Undefined),
-            UndefinedField,
-        ],
-        [
-            partial(eq, 'null'),
-            NullField,
-        ],
-        [
-            partial(eq, 'boolean'),
-            BooleanField,
-        ],
-        [
-            partial(eq, 'string'),
-            TextField,
-        ],
-        [
-            lambda f: f.startswith('strings concatenated with '),
-            TextField,
-        ],
-        [
-            partial(eq, 'string, not containing newlines or colons'),
-            partial(SingleLineTextField, regexp=r"^[^(:|\n|(\r\n)]*$")
-        ],
-        [
-            partial(eq, 'YAML value'),
-            partial(TextField, regexp=r"([ ]+)?((\w+|[^\w\s\r\n])([ ]*))?(?:\r)?(\n)?")
-        ],
-        [
-            partial(eq, 'JSON value'),
-            partial(TextField, regexp=r"\{.*\:\{.*\:.*\}\}")
-        ],
-        [
-            partial(eq, 'signed integer'),
-            IntegerField,
-        ],
-        [
-            partial(eq, 'integer'),
-            IntegerField,
-        ],
-        [
-            partial(eq, 'unsigned integer, meaning >=0'),
-            partial(IntegerField, minimum=0),
-        ],
-        [
-            partial(eq, 'positive integer, meaning >0'),
-            partial(IntegerField, minimum=1),
-        ],
-        [
-            partial(eq, '16 bit unsigned integer; between 0 and 65535 (both inclusive)'),
-            partial(IntegerField, minimum=0, maximum=65535),
-        ],
-        [
-            lambda f: f.startswith('one of '),
-            OneOfField,
-        ],
-        # fake types, allowing for specialized expressions
-        [
-            partial(eq, 'reference'),
-            ReferenceField,
-        ],
-        [
-            partial(eq, 'expression'),
-            ExpressionField
-        ],
-    ]
-
-
-def get_field_widget(field_type, option):
-    for type_label_validator, widget_constructor in get_field_type_widget_map():
-        if type_label_validator(field_type):
-            return widget_constructor(option)
+def get_field_widget_classes_from_type(option_type):
+    if isinstance(option_type, types.ListOf):
+        return [ListOfRedirect]
+    elif isinstance(option_type, types.AttrsOf):
+        return [AttrsOfRedirect]
+    elif isinstance(option_type, types.Attrs):
+        return [AttrsRedirect]
+    elif isinstance(option_type, types.Submodule):
+        return [SubmoduleRedirect]
+    elif isinstance(option_type, types.Either):
+        widgets = set()
+        for subtype in option_type.subtypes:
+            widgets |= set(get_field_widget_classes_from_type(subtype))
+        return list(widgets)
+    elif isinstance(option_type, types.Unspecified):
+        return [UndefinedField]
+    elif isinstance(option_type, types.Null):
+        return [NullField]
+    elif isinstance(option_type, types.Bool):
+        return [BooleanField]
+    elif isinstance(option_type, types.Str):
+        return [TextField]
+    elif isinstance(option_type, types.Int):
+        return [IntegerField]
+    elif isinstance(option_type, types.OneOf):
+        return [OneOfField]
+    elif isinstance(option_type, types.Path):
+        return [NotImplementedField]
+    elif isinstance(option_type, types.Package):
+        return [NotImplementedField]
+    elif isinstance(option_type, types.Function):
+        return [NotImplementedField]
+    elif isinstance(option_type, types.Anything):
+        return [NotImplementedField]
     else:
-        return NotImplementedField(option)
+        raise NotImplementedError(option_type)
 
 
-def get_field_types(option_type):
-    if ' or ' in option_type:
-        possible_types = option_type.split(' or ')
-    else:
-        possible_types = [option_type]
-
-    universal_fields = ['expression', 'reference']
-
-    return ['undefined'] + possible_types + universal_fields
+def get_field_widget_classes(option_type):
+    return (
+        [UndefinedField] +
+        get_field_widget_classes_from_type(option_type) +
+        [ExpressionField, ReferenceField]
+    )
 
 
-def get_field_color(field_type):
+def get_label_color_for_widget(field_widget):
     field_colors = {
-        'undefined': QtGui.QColor(255, 200, 200),
-        'expression': QtGui.QColor(193, 236, 245),
-        'reference': QtGui.QColor(174, 250, 174),
-        None: QtGui.QColor(255, 255, 240),  # default
+        UndefinedField: QtGui.QColor(255, 200, 200),  # TODO: create
+        ExpressionField: QtGui.QColor(193, 236, 245),
+        ReferenceField: QtGui.QColor(174, 250, 174),
     }
-    return field_colors.get(field_type, field_colors[None])
+    return field_colors.get(
+        field_widget,
+        QtGui.QColor(255, 255, 240),  # default
+    )
 
 
 class GenericOptionDisplay(QtWidgets.QWidget):
-    def __init__(self, statemodel, option, *args, **kwargs):
+    def __init__(self, statemodel, set_option_path_fn, option, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.statemodel = statemodel
+        self.set_option_path_fn = set_option_path_fn
+
         self.option = option
         self.starting_definition = None
 
-        field_types = get_field_types(api.get_option_tree().get_type(option))
+        field_widget_classes = get_field_widget_classes(
+            types.from_nix_type_str(
+                api.get_option_tree().get_type(option)
+            )
+        )
+
+        # set fields for entry editing
+        self.entry_stack = QtWidgets.QStackedWidget()
+        for field_widget_class in field_widget_classes:
+            entry_widget = field_widget_class(self.option)
+            # TODO: fix this hacky handling of `Redirect` (#109)
+            if not isinstance(entry_widget, Redirect):
+                entry_widget.stateChanged.connect(self.handle_state_change)
+                self.statemodel.slotmapper.add_slot(('update_field', self.option), self._load_definition)
+            self.entry_stack.addWidget(entry_widget)
+        self.stacked_widgets = list(map(self.entry_stack.widget, range(self.entry_stack.count())))
+
+        # set type selector
+        self.field_type_selector = generic_widgets.ExclusiveButtonGroup(
+            choices=[
+                (
+                    w.name,
+                    self.set_type,
+                    get_label_color_for_widget(w)
+                )
+                for w in self.stacked_widgets
+            ]
+        )
+        # TODO: remove this when reference editor is done
+        self.field_type_selector.btn_group.buttons()[-1].setEnabled(False)
 
         # set title and description
         text = QtWidgets.QLabel(richtext.get_option_html(
@@ -127,29 +115,6 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         ))
         text.setWordWrap(True)
         text.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
-
-        # set type selector
-        self.field_type_selector = generic_widgets.ExclusiveButtonGroup(
-            choices=[
-                (
-                    'one of' if t.startswith('one of ') else t,
-                    self.set_type,
-                    get_field_color(t)
-                )
-                for t in field_types
-            ]
-        )
-        # TODO: remove this when reference editor is done
-        self.field_type_selector.btn_group.buttons()[-1].setEnabled(False)
-
-        # set fields for entry editing
-        self.entry_stack = QtWidgets.QStackedWidget()
-        for t in field_types:
-            entry_widget = get_field_widget(t, self.option)
-            entry_widget.stateChanged.connect(self.handle_state_change)
-            self.entry_stack.addWidget(entry_widget)
-            self.statemodel.slotmapper.add_slot(('update_field', self.option), self._load_definition)
-        self.stacked_widgets = list(map(self.entry_stack.widget, range(self.entry_stack.count())))
 
         # add all to layout
         description_layout = QtWidgets.QVBoxLayout()
@@ -181,7 +146,11 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         stack_idx = self.field_type_selector.checked_index()
         current_widget = self.entry_stack.widget(stack_idx)
         definition = self.statemodel.get_definition(self.option)
-        if isinstance(current_widget, ExpressionField):
+        # TODO: fix this hacky handling of `Redirect` (#109)
+        if isinstance(current_widget, Redirect):
+            self.set_option_path_fn(self.option, current_widget.option_type)
+            return
+        elif isinstance(current_widget, ExpressionField):
             current_widget.load_value(definition.expression_string)
         else:
             current_widget.load_value(definition.obj)
@@ -228,7 +197,40 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.update()
 
 
+# TODO: fix this hacky handling of `Redirect` (#109)
+class Redirect(QtWidgets.QLabel):
+    """
+    not actual fields or widgets, but encode information to
+    allow for redirection when its corresponding button is pressed
+    """
+    stateChanged = QtCore.pyqtSignal(str)
+    def __init__(self, option, *args, **kwargs):
+        super().__init__()
+        pass
+
+
+class SubmoduleRedirect(Redirect):
+    option_type = types.Submodule
+    name = "Submodule"
+
+
+class ListOfRedirect(Redirect):
+    option_type = types.ListOf
+    name = "List of"
+
+
+class AttrsRedirect(Redirect):
+    option_type = types.Attrs
+    name = "Attrs"
+
+
+class AttrsOfRedirect(Redirect):
+    option_type = types.AttrsOf
+    name = "Attrs of"
+
+
 class BooleanField(QtWidgets.QCheckBox):
+    name = "Boolean"
     def __init__(self, option, **constraints):
         super().__init__()
         self.option = option
@@ -251,6 +253,7 @@ class BooleanField(QtWidgets.QCheckBox):
 
 
 class TextField(QtWidgets.QTextEdit):
+    name = "String"
     stateChanged = QtCore.pyqtSignal(str)
 
     def __init__(self, option, **constraints):
@@ -295,6 +298,7 @@ class SingleLineTextField(QtWidgets.QLineEdit):
 
 
 class IntegerField(QtWidgets.QSpinBox):
+    name = "Int"
     stateChanged = QtCore.pyqtSignal(int)
 
     def __init__(self, option, **constraints):
@@ -324,6 +328,7 @@ class IntegerField(QtWidgets.QSpinBox):
 
 
 class OneOfRadioFrameField(QtWidgets.QFrame):
+    name = "One of"
     stateChanged = QtCore.pyqtSignal(str)
 
     def __init__(self, option, choices):
@@ -359,6 +364,7 @@ class OneOfRadioFrameField(QtWidgets.QFrame):
 
 
 class OneOfComboBoxField(QtWidgets.QComboBox):
+    name = 'One of'
     stateChanged = QtCore.pyqtSignal(str)
 
     def __init__(self, option, choices):
@@ -396,6 +402,7 @@ class OneOfField:
 
 
 class ExpressionField(QtWidgets.QTextEdit):
+    name = "expression"
     stateChanged = QtCore.pyqtSignal(str)
 
     def __init__(self, option, **constraints):
@@ -443,16 +450,19 @@ class DoNothingField(QtWidgets.QLabel):
 
 
 class NullField(DoNothingField):
+    name = "Null"
     legal_value = None
     label_text = 'NULL'
 
 
 class UndefinedField(NullField):
+    name = "Undefined"
     legal_value = option_tree.Undefined
     label_text = 'Undefined'
 
 
 class NotImplementedField(DoNothingField):
+    name = "Not Implemented!"
     legal_value = None
     label_text = 'Not Implemented'
 
@@ -461,4 +471,6 @@ class NotImplementedField(DoNothingField):
         return False
 
 
-ReferenceField = NotImplementedField
+
+class ReferenceField(NotImplementedField):
+    name = "Reference"

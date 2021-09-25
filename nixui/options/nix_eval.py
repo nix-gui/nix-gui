@@ -1,3 +1,4 @@
+import os
 import json
 import subprocess
 import functools
@@ -5,7 +6,7 @@ import importlib.resources
 from contextlib import contextmanager
 from string import Template
 
-from nixui.utils.logger import LogPipe, logger
+from nixui.utils.logger import logger
 from nixui.utils import cache
 from nixui.options.attribute import Attribute
 
@@ -15,7 +16,16 @@ cache_by_unique_installed_nixos_nixpkgs_version = cache.cache(
 )
 
 
-def nix_instantiate_eval(expr, strict=False):
+class NixEvalError(Exception):
+    def __init__(self, msg):
+        self.msg = msg
+        super().__init__([self.msg])
+
+    def __str__(self):
+        return f'NixEvalError("""\n{self.msg}\n""")'
+
+
+def nix_instantiate_eval(expr, strict=False, show_trace=False, retry_show_trace_on_error=True):
     logger.debug(expr)
     cmd = [
         "nix-instantiate",
@@ -26,11 +36,27 @@ def nix_instantiate_eval(expr, strict=False):
     ]
     if strict:
         cmd.append('--strict')
+    if show_trace:
+        cmd.append('--show-trace')
 
-    with LogPipe('INFO') as log_pipe:
-        res = subprocess.check_output(cmd, stderr=log_pipe)
+    p = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    out, err = p.communicate()
 
-    return json.loads(res)
+    if out:
+        return json.loads(out)
+    else:
+        if retry_show_trace_on_error and not show_trace:
+            return nix_instantiate_eval(expr, strict, show_trace=True)
+        else:
+            try:
+                err_str = err.decode('utf-8')
+            except:  # TODO: appropriate decode error
+                err_str = err.decode('ISO-8859-1')
+            raise NixEvalError(err_str)
 
 @contextmanager
 def find_library(name):

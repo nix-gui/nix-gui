@@ -10,8 +10,9 @@ from nixui.utils import store
 
 @functools.lru_cache()
 def _get_cache_path(call_signature, key):
-    hashval = hashlib.md5(json.dumps(call_signature, sort_keys=True).encode('utf-8')).hexdigest()
-    filename = f'{hashval}.{key}'
+    module, function, args, kwargs = call_signature
+    hashval = hashlib.md5(json.dumps([args, kwargs], sort_keys=True).encode('utf-8')).hexdigest()
+    filename = f'{module}/{function}/{hashval}.{key}'
     path = os.path.join(
         store.get_store_path(),
         'func_cache',
@@ -43,7 +44,7 @@ def _use_diskcache():
     return json.loads(os.environ.get('USE_DISKCACHE', 'true'))
 
 
-def cache(retain_hash_fn=(lambda: 0), return_copy=True, diskcache=True):
+def cache(retain_hash_fn=(lambda *args, **kwargs: 0), return_copy=True, diskcache=True):
     """
     retain_hash_fn: A function which gets a hash value from the passed args.
                     If the hash is the same as last run, use the cached version.

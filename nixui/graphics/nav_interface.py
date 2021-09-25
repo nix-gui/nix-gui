@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtCore
 
-from nixui.options import api
+from nixui.options import api, types
 from nixui.options.attribute import Attribute
 from nixui.graphics import generic_widgets, navbar, navlist, field_widgets
 from nixui.utils.logger import logger
@@ -54,26 +54,43 @@ class OptionNavigationInterface(QtWidgets.QWidget):
         else:
             logger.warning('Invalid lookup key, doing nothing.')
 
-    def set_option_path(self, option_path):
+    def set_option_path(self, option_path, option_type=None):
         self.nav_bar.replace_widget(
             navbar.NavBar.as_option_tree(option_path, self.set_lookup_key)
         )
+        num_children = len(api.get_option_tree().children(option_path, mode="leaves"))
+        if option_type is None:
+            option_type = types.from_nix_type_str(
+                api.get_option_tree().get_type(option_path)
+            )
+
         # if 10 or fewer options, navlist with lowest level attribute selected and list of editable fields to the right
         # otherwise, show list of attributes within the clicked attribute and blank to the right
-        num_children = len(api.get_option_tree().children(option_path, mode="leaves"))
-        if num_children <= 10:
+        # TODO: option type checking should probably take place in the same place where all type -> field resolving occurs
+        if option_type in (types.Attrs, types.AttrsOf, types.ListOf) or num_children > 10:
             self.nav_list.replace_widget(
                 navlist.GenericNavListDisplay(
                     self.statemodel,
-                    option_path.get_set(),
                     self.set_option_path,
+                    option_path,
+                    option_type
+                )
+            )
+            self.fields_view.replace_widget(QtWidgets.QLabel(''))
+        else:
+            self.nav_list.replace_widget(
+                navlist.GenericNavListDisplay(
+                    self.statemodel,
+                    self.set_option_path,
+                    option_path.get_set(),
                     selected=option_path.get_end()
                 )
             )
-            if num_children == 1:
+            if num_children <= 1:
                 self.fields_view.replace_widget(
                     field_widgets.GenericOptionDisplay(
                         self.statemodel,
+                        self.set_option_path,
                         option_path
                     )
                 )
@@ -81,18 +98,10 @@ class OptionNavigationInterface(QtWidgets.QWidget):
                 self.fields_view.replace_widget(
                     FieldsGroupBox(
                         self.statemodel,
-                        option_path
+                        self.set_option_path,
+                        option_path,
                     )
                 )
-        else:
-            self.nav_list.replace_widget(
-                navlist.GenericNavListDisplay(
-                    self.statemodel,
-                    option_path,
-                    self.set_option_path,
-                )
-            )
-            self.fields_view.replace_widget(QtWidgets.QLabel(''))
 
     def set_search_query(self, search_str):
         self.nav_bar.replace_widget(
@@ -109,7 +118,7 @@ class OptionNavigationInterface(QtWidgets.QWidget):
 
 
 class FieldsGroupBox(QtWidgets.QWidget):
-    def __init__(self, statemodel, option=None, is_base_viewer=True, *args, **kwargs):
+    def __init__(self, statemodel, set_option_path_fn, option=None, is_base_viewer=True, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         group_box = QtWidgets.QGroupBox()
@@ -121,12 +130,14 @@ class FieldsGroupBox(QtWidgets.QWidget):
             if len(api.get_option_tree().children(child_option_path)) > 1:
                 vbox.addWidget(FieldsGroupBox(
                     statemodel,
+                    set_option_path_fn,
                     child_option_path,
                     is_base_viewer=False
                 ))
             else:
                 vbox.addWidget(field_widgets.GenericOptionDisplay(
                     statemodel,
+                    set_option_path_fn,
                     child_option_path
                 ))
             vbox.addWidget(generic_widgets.SeparatorLine())
