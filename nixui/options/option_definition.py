@@ -105,7 +105,7 @@ class OptionDefinition:
         elif obj is None:
             return types.NullType()
         else:
-            raise Exception
+            raise NotImplementedError
 
     @property
     def expression_string(self):
