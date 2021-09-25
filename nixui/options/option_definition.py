@@ -190,9 +190,9 @@ def get_expression(obj):
         raise TypeError(str((type(obj), obj)))
 
 
-#############################
-# Expression string to object
-#############################
+################################################
+# Syntax tree (from expression string) to object
+################################################
 def expression_node_to_python_object(value_node, context):
     if value_node.name == 'NODE_LIST':
         # recursively generate list object
