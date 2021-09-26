@@ -165,7 +165,7 @@ def format_expression(expression_str):
         encoding='ascii',
         stderr=subprocess.PIPE,  # log_pipe,
     )
-    return p.stdout
+    return p.stdout.strip()
 
 
 def get_expression(obj):
