@@ -1,12 +1,10 @@
 import dataclasses
-import json
 import functools
 import os
 import subprocess
 
 from nixui.options import nix_eval, syntax_tree, types
 from nixui.utils.singleton import Singleton
-from nixui.utils.logger import logger
 from nixui.utils import hash_by_json
 
 
@@ -47,8 +45,9 @@ class OptionDefinition:
     - todo: ???
     """
     def __init__(self, context=None, **kwargs):
-        self.context = context or {}
+        assert kwargs != {}
         self.passed = kwargs
+        self.context = context or {}
 
     @classmethod
     def from_object(cls, obj, context=None):
@@ -106,7 +105,7 @@ class OptionDefinition:
         elif obj is None:
             return types.NullType()
         else:
-            raise Exception
+            raise NotImplementedError
 
     @property
     def expression_string(self):
@@ -159,15 +158,14 @@ def get_formatted_expression(obj):
 
 @functools.lru_cache()
 def format_expression(expression_str):
-    if True:  # with LogPipe('INFO') as log_pipe:
-        p = subprocess.run(
-            ['nixpkgs-fmt'],
-            stdout=subprocess.PIPE,
-            input=expression_str,
-            encoding='ascii',
-            stderr=subprocess.PIPE,  # log_pipe,
-        )
-        return p.stdout
+    p = subprocess.run(
+        ['nixpkgs-fmt'],
+        stdout=subprocess.PIPE,
+        input=expression_str,
+        encoding='ascii',
+        stderr=subprocess.PIPE,  # log_pipe,
+    )
+    return p.stdout.strip()
 
 
 def get_expression(obj):
@@ -192,9 +190,9 @@ def get_expression(obj):
         raise TypeError(str((type(obj), obj)))
 
 
-#############################
-# Expression string to object
-#############################
+################################################
+# Syntax tree (from expression string) to object
+################################################
 def expression_node_to_python_object(value_node, context):
     if value_node.name == 'NODE_LIST':
         # recursively generate list object
