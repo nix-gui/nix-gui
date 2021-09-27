@@ -56,7 +56,7 @@ def get_relevant_repos(access_token):
     Query 0: `extension:nix filename:"configuration.nix"`
     Query 1: `extension:nix filename:"home.nix"`
     """
-    search_params = ("timeZone", "systemPackages", "networking", "services", "fonts", "boot", "usb_storage", "ahci")
+    search_params = ("timeZone", "systemPackages", "networking", "services", "fonts", "boot", "usb_storage", "ahci", "homeDirectory")
     base_queries = [
         'extension:nix filename:"configuration.nix"',
         'extension:nix filename:"home.nix"',
