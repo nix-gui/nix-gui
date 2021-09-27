@@ -41,7 +41,7 @@ def blob_to_filebytes(token, blob_url):
 
 
 @cache.cache()
-def get_option_values_for_all_configuration_nix(access_token, repo):
+def get_option_values(access_token, repo):
     with tempfile.TemporaryDirectory() as temp_dir:
 
         # write all nix files
@@ -54,7 +54,7 @@ def get_option_values_for_all_configuration_nix(access_token, repo):
 
         for blob_path, blob_url in blob_path_url_map.items():
             file_path = os.path.join(temp_dir, blob_path)
-            if file_path.endswith('/configuration.nix'):
+            if file_path.endswith('/configuration.nix') or file_path.endswith('/home.nix'):
                 configuration_dot_nix_paths.add(file_path)
             if not os.path.exists(os.path.dirname(file_path)):
                 os.makedirs(os.path.dirname(file_path))
@@ -145,7 +145,7 @@ def iter_repo_option_values(repos, access_token):
                 'pniedzwiedzinski/raspberry',
         ):
             continue  # TODO: fix - idk why these repos configuration.nix have such weird parsing behavior
-        option_values = get_option_values_for_all_configuration_nix(access_token, repo)
+        option_values = get_option_values(access_token, repo)
         if option_values:
             count += 1
             yield option_values
