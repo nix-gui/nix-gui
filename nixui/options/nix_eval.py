@@ -1,7 +1,7 @@
 import json
 import subprocess
 import functools
-import pkgutil
+import importlib.resources
 from contextlib import contextmanager
 from string import Template
 
@@ -60,8 +60,8 @@ def nix_instantiate_eval(expr, strict=False, show_trace=False, retry_show_trace_
 
 @contextmanager
 def find_library(name):
-    expr = pkgutil.get_data('nixui', 'nix/lib.nix')
-    yield f'(import {expr}).{name}'
+    with importlib.resources.path('nixui.nix', 'lib.nix') as f:
+        yield f'(import {f}).{name}'
 
 
 @cache_by_unique_installed_nixos_nixpkgs_version
