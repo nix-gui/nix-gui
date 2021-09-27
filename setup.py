@@ -18,12 +18,9 @@ setup(
     package_data={
         'nixui': [
             'icons/*',
-            'tests/sample/*'
+            'tests/sample/*',
+            'nix/*.nix',
         ],
-        'nixui.nix': [
-            '*.nix'
-        ]
-
     },
     include_package_data=True,
     entry_points={
