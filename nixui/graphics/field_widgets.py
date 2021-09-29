@@ -106,7 +106,8 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.field_type_selector.btn_group.buttons()[-1].setEnabled(False)
 
         # set title and description
-        text = QtWidgets.QLabel(str(option))
+        text = generic_widgets.ClickableLabel(str(option))
+        text.clicked.connect(lambda: set_option_path_fn(option))
         tooltip = generic_widgets.ToolTip(
             richtext.get_option_html(
                 option,

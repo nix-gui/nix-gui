@@ -220,3 +220,18 @@ class ToolTip(QtWidgets.QLabel):
         self.setToolTip(text)
 
 
+class ClickableLabel(QtWidgets.QLabel):
+    clicked = QtCore.pyqtSignal()
+
+    def mousePressEvent(self, ev):
+        self.clicked.emit()
+
+    def enterEvent(self, ev):
+        f = self.font()
+        f.setUnderline(True)
+        self.setFont(f)
+
+    def leaveEvent(self, ev):
+        f = self.font()
+        f.setUnderline(False)
+        self.setFont(f)
