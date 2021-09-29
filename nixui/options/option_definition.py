@@ -138,7 +138,9 @@ class OptionDefinition:
 
     def __eq__(self, other):
         # optimized __eq__ operator intended to avoid expensive operations
-        if self.is_undefined and other.is_undefined:
+        if not isinstance(other, OptionDefinition):
+            return False
+        elif self.is_undefined and other.is_undefined:
             return True
         elif self.is_undefined != other.is_undefined:
             return False

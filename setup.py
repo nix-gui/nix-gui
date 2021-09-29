@@ -13,6 +13,7 @@ setup(
         'nixui.options',
         'nixui.graphics',
         'nixui.utils',
+        'nixui.nix',
         'scrape_github',
     ],
     package_data={
@@ -23,7 +24,6 @@ setup(
         'nixui.nix': [
             '*.nix'
         ]
-
     },
     include_package_data=True,
     entry_points={

@@ -8,8 +8,7 @@ import requests
 import tempfile
 import re
 
-
-from github import Github
+from github import Github, UnknownObjectException
 
 
 @cache.cache()
@@ -41,20 +40,20 @@ def blob_to_filebytes(token, blob_url):
 
 
 @cache.cache()
-def get_option_values_for_all_configuration_nix(access_token, repo):
+def get_option_values(access_token, repo):
     with tempfile.TemporaryDirectory() as temp_dir:
 
         # write all nix files
         configuration_dot_nix_paths = set()
         blob_path_url_map = get_repos_blob_urls(access_token, repo)
 
-        # repo too large, skipping
+        # repo too large (probably a library), skipping
         if len(blob_path_url_map) > 500:
             return None
 
         for blob_path, blob_url in blob_path_url_map.items():
             file_path = os.path.join(temp_dir, blob_path)
-            if file_path.endswith('/configuration.nix'):
+            if file_path.endswith('/configuration.nix') or file_path.endswith('/home.nix'):
                 configuration_dot_nix_paths.add(file_path)
             if not os.path.exists(os.path.dirname(file_path)):
                 os.makedirs(os.path.dirname(file_path))
@@ -102,6 +101,8 @@ def get_option_values_for_all_configuration_nix(access_token, repo):
                     return None  # TODO: Handle Maybe?
                 elif re.match("error: the contents of the file.*cannot be represented as a Nix string", e.msg):
                     return None  # TODO: Handle Maybe?
+                elif re.match("error: value is an? .* while a .* was expected", e.msg):
+                    return None  # TODO: Handle Maybe?
                 elif re.match("error: getting status of '.*': Permission denied", e.msg):
                     return None  # ignore - file missing, requests root
                 elif re.findall("error: opening file", e.msg):
@@ -112,6 +113,8 @@ def get_option_values_for_all_configuration_nix(access_token, repo):
                     return None  # ignore - file missing, repo may be valid but isn't usable for scraping
                 elif re.match("error: path '.*' has a trailing slash\n", e.msg):
                     return None  # ignore - weird git repo with # in filename https://github.com/bennofs/repros/tree/master/nixpkgs/%2319054
+                elif re.match("error: use TODO", e.msg):
+                    return None  # ignore
                 elif re.match("error: fontconfig-ultimate has been removed", e.msg):
                     return None  # TODO: generic handler for specific messages like this?
                 elif re.match("error: fetchurl does not support md5 anymore", e.msg):
@@ -127,17 +130,21 @@ def get_option_values_for_all_configuration_nix(access_token, repo):
                     print()
             except json.decoder.JSONDecodeError as e:
                 return None  # TODO: Handle, file not valid linux path, e.g. `<nix-ld/modules/nix-ld.nix>`
+            except IsADirectoryError:
+                return None  # TODO: Handle
+            except AttributeError:
+                return None  # fails for https://github.com/Chattered/configfiles/blob/master/configuration.nix#L6
 
 
 def iter_repo_option_values(repos, access_token):
     count = 0
     for i, repo in enumerate(repos):
-        print(repo)
         if repo in (
-                'Alddar/new_infra',
+                'Atemu/nixos-config',
                 'Gtoyos/nixsys',
                 'HendrikRoth/nixos-configuration__old',
                 'Roxxers/nixconf',
+                'alexandergall/alx-hydra-config',
                 'ghuntley/ghuntley',
                 'hurricanehrndz/dotfiles',
                 'luka5/nixconfig',
@@ -145,9 +152,14 @@ def iter_repo_option_values(repos, access_token):
                 'pniedzwiedzinski/raspberry',
         ):
             continue  # TODO: fix - idk why these repos configuration.nix have such weird parsing behavior
-        option_values = get_option_values_for_all_configuration_nix(access_token, repo)
+        print(repo)
+        try:
+            option_values = get_option_values(access_token, repo)
+        except UnknownObjectException:
+            pass  # repo deleted during processing
         if option_values:
             count += 1
+            print(repo, len(option_values), 'options found')
             yield option_values
         else:
             print(repo, 'no options')
