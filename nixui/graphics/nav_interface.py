@@ -29,8 +29,7 @@ class OptionNavigationInterface(QtWidgets.QWidget):
         nav_hbox.setContentsMargins(0, 0, 0, 0)
 
         # hack to make nav bar left aligned taking 1/3rd of window
-        nav_hbox.addWidget(self.nav_bar, 1)
-        nav_hbox.addWidget(QtWidgets.QLabel(''), 2)
+        nav_hbox.addWidget(self.nav_bar)
 
         vbox = QtWidgets.QVBoxLayout()
         vbox.setSpacing(0)
