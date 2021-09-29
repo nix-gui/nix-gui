@@ -1,5 +1,3 @@
-from functools import partial, lru_cache
-from operator import eq
 import re
 
 from PyQt5 import QtWidgets, QtGui, QtCore
