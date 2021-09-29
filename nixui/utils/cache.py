@@ -62,8 +62,14 @@ def cache(retain_hash_fn=(lambda *args, **kwargs: 0), return_copy=True, diskcach
                 # if fn-arg results cached in disk but not in memory, load disk to memory
                 if call_signature not in args_return_value_map:
                     if _is_in_disk_cache(call_signature, 'result'):
-                        args_hash_result_map[call_signature] = _get_from_disk_cache(call_signature, 'hash_result')
-                        args_return_value_map[call_signature] = _get_from_disk_cache(call_signature, 'result')
+                        try:
+                            hash_result = _get_from_disk_cache(call_signature, 'hash_result')
+                            result = _get_from_disk_cache(call_signature, 'result')
+                        except EOFError:
+                            pass  # indicates that the cached result didn't save properly
+                        else:
+                            args_hash_result_map[call_signature] = hash_result
+                            args_return_value_map[call_signature] = result
 
             # if cached in memory and the hash-check is consistent, return the memcached result, otherwise calculate the result
             if call_signature in args_return_value_map and hash_result == args_hash_result_map[call_signature]:
