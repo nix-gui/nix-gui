@@ -55,6 +55,7 @@ class ToggleSwitch(QtWidgets.QWidget):
 
     def mousePressEvent(self, event):
         self.setChecked(not self.__value)
+        self.stateChanged.emit(self.__value)
 
     def isChecked(self):
         return self.__value
@@ -94,8 +95,6 @@ class ToggleSwitch(QtWidgets.QWidget):
         else:
             self.__labelon.hide()
         self.__value = not self.__value
-
-        self.stateChanged.emit(self.__value)
 
     def paintEvent(self, event):
         s = self.size()
