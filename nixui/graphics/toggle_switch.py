@@ -17,9 +17,10 @@ class ToggleSwitch(QtWidgets.QWidget):
         font_metrics = QtGui.QFontMetrics(font)
 
         font_height = font_metrics.height()
+        off_text_width = font_metrics.width(off_text)
         font_width = max(
             font_metrics.width(on_text),
-            font_metrics.width(off_text)
+            off_text_width
         )
 
         self.widget_height = font_height + 4
@@ -30,7 +31,7 @@ class ToggleSwitch(QtWidgets.QWidget):
         self.__labeloff = QtWidgets.QLabel(self)
         self.__labeloff.setText(off_text)
         self.__labeloff.setStyleSheet("""color: rgb(255, 255, 255); font-weight: bold;""")
-        self.__background = Background(self.widget_height - 4, self)
+        self.__background = Background(self.widget_height, self)
         self.__labelon = QtWidgets.QLabel(self)
         self.__labelon.setText(on_text)
         self.__labelon.setStyleSheet("""color: rgb(255, 255, 255); font-weight: bold;""")
@@ -43,17 +44,18 @@ class ToggleSwitch(QtWidgets.QWidget):
         self.__value = False
         self.setFixedSize(self.widget_width, self.widget_height)
 
-        self.__background.resize(self.widget_width, self.widget_height)
+        self.__background.resize(self.widget_width - 4, self.widget_height - 4)
         self.__background.move(2, 2)
         self.__circle.move(2, 2)
-        self.__labelon.move(12, 5)
-        self.__labeloff.move(33, 5)
+        self.__labelon.move(self.widget_height / 2, 2)
+        self.__labeloff.move(self.widget_width - off_text_width - self.widget_height / 2, 2)
 
     def setDuration(self, time):
         self.__duration = time
 
     def mousePressEvent(self, event):
-        self.setValue(not self.__value)
+        self.setChecked(not self.__value)
+        self.stateChanged.emit(self.__value)
 
     def isChecked(self):
         return self.__value
@@ -70,7 +72,7 @@ class ToggleSwitch(QtWidgets.QWidget):
 
         xs = 2
         y = 2
-        xf = self.width() - 22
+        xf = self.width() - self.widget_height + 4
         hback = self.widget_height
         isize = QtCore.QSize(hback, hback)
         bsize = QtCore.QSize(self.width() - self.widget_height / 2, hback)
@@ -78,7 +80,7 @@ class ToggleSwitch(QtWidgets.QWidget):
             xf = 2
             xs = self.width() - 22
             bsize = QtCore.QSize(hback, hback)
-            isize = QtCore.QSize(self.width() - self.widget_height / 2, hback)
+            isize = QtCore.QSize(self.widget_width, hback)
 
         self.__circlemove.setStartValue(QtCore.QPoint(xs, y))
         self.__circlemove.setEndValue(QtCore.QPoint(xf, y))
@@ -93,8 +95,6 @@ class ToggleSwitch(QtWidgets.QWidget):
         else:
             self.__labelon.hide()
         self.__value = not self.__value
-
-        self.stateChanged.emit(self.__value)
 
     def paintEvent(self, event):
         s = self.size()
