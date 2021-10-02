@@ -79,22 +79,15 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         description_layout.addWidget(self.is_defined_toggle)
 
         # field widget selector and stacked widget containing field widgets for display
-        definition_layout = QtWidgets.QHBoxLayout()
         self.entry_stack = self._get_field_stack_widget(option)
         self.stacked_widgets = list(map(self.entry_stack.widget, range(self.entry_stack.count())))
-        self.field_selector = self._get_field_selection_layout(self.stacked_widgets)
-        definition_layout.addWidget(self.field_selector)
-        definition_layout.addWidget(self.entry_stack)
-
-        # stack to toggle visibility in definition
-        self.definition_stack = QtWidgets.QStackedWidget()
-        self.definition_stack.addWidget(QtWidgets.QLabel())
-        self.definition_stack.addLayout(definition_layout)
+        self.field_selector = self._get_field_selection_widget(self.stacked_widgets)
 
         # put together horizontally
         layout = QtWidgets.QHBoxLayout()
         layout.addLayout(description_layout)
-        layout.addWidget(self.definition_stack)
+        layout.addWidget(self.field_selector)
+        layout.addWidget(self.entry_stack)
         self.setLayout(layout)
 
         self._load_definition()
@@ -134,7 +127,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
 
         return entry_stack
 
-    def _get_field_selection_layout(self, field_widgets):
+    def _get_field_selection_widget(self, field_widgets):
         # TODO: remove this when reference editor is done
         #self.field_selector.btn_group.buttons()[-1].setEnabled(False)
 
@@ -152,11 +145,10 @@ class GenericOptionDisplay(QtWidgets.QWidget):
     def _load_definition(self):
         option_definition = self.statemodel.get_definition(self.option)
 
+        self.is_defined_toggle.setChecked(not option_definition.is_undefined)
+        self.set_is_defined()
         if option_definition.is_undefined:
-            self.is_defined_toggle.setChecked(False)
             return
-        else:
-            self.is_defined_toggle.setChecked(True)
 
         for i, field in enumerate(self.stacked_widgets):
             if field.validate_field(option_definition.obj):
@@ -185,12 +177,12 @@ class GenericOptionDisplay(QtWidgets.QWidget):
 
     def set_is_defined(self):
         if self.is_defined_toggle.isChecked():
-            self.set_type()
-            self.definition_stack.setCurrentIndex(1)
+            self.field_selector.setVisible(True)
+            self.entry_stack.setVisible(True)
         else:
-            self.definition_stack.setCurrentIndex(0)
+            self.field_selector.setVisible(False)
+            self.entry_stack.setVisible(False)
         self.handle_state_change()
-
 
     def handle_state_change(self):
         self.statemodel.slotmapper('form_definition_changed')(self.option, self.definition)
@@ -199,7 +191,9 @@ class GenericOptionDisplay(QtWidgets.QWidget):
     def definition(self):
         current_widget = self.entry_stack.currentWidget()
         form_value = current_widget.current_value
-        if isinstance(current_widget, field_widgets.ExpressionField):
+        if not self.is_defined_toggle.isChecked():
+            return option_definition.OptionDefinition.undefined()
+        elif isinstance(current_widget, field_widgets.ExpressionField):
             return option_definition.OptionDefinition.from_expression_string(form_value)
         else:
             return option_definition.OptionDefinition.from_object(form_value)
