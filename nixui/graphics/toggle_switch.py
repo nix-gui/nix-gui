@@ -10,7 +10,7 @@ def get_default_font():
 class ToggleSwitch(QtWidgets.QWidget):
     stateChanged = QtCore.pyqtSignal(bool)
 
-    def __init__(self, on_text="Yes", off_text="No", font=None):
+    def __init__(self, on_text="Yes", off_text="No", starting_value=False, font=None):
         super().__init__()
 
         font = font or get_default_font()
@@ -41,7 +41,7 @@ class ToggleSwitch(QtWidgets.QWidget):
         self.__ellipsemove = None
         self.__enabled = True
         self.__duration = 100
-        self.__value = False
+        self.__value = None
         self.setFixedSize(self.widget_width, self.widget_height)
 
         self.__background.resize(self.widget_width - 4, self.widget_height - 4)
@@ -50,25 +50,24 @@ class ToggleSwitch(QtWidgets.QWidget):
         self.__labelon.move(self.widget_height / 2, 2)
         self.__labeloff.move(self.widget_width - off_text_width - self.widget_height / 2, 2)
 
+        self.setChecked(starting_value)
+
     def setDuration(self, time):
         self.__duration = time
 
     def mousePressEvent(self, event):
-        self.setChecked(not self.__value)
+        self.setChecked(not self.__value, animate=True)
         self.stateChanged.emit(self.__value)
 
     def isChecked(self):
         return self.__value
 
-    def setChecked(self, value):
-        if not self.__enabled:
+    def setChecked(self, value, animate=False):
+        if not self.__enabled or self.__value == value:
             return
 
-        self.__circlemove = QtCore.QPropertyAnimation(self.__circle, b"pos")
-        self.__circlemove.setDuration(self.__duration)
-
-        self.__ellipsemove = QtCore.QPropertyAnimation(self.__background, b"size")
-        self.__ellipsemove.setDuration(self.__duration)
+        old_value = not value
+        self.__value = value
 
         xs = 2
         y = 2
@@ -76,25 +75,36 @@ class ToggleSwitch(QtWidgets.QWidget):
         hback = self.widget_height
         isize = QtCore.QSize(hback, hback)
         bsize = QtCore.QSize(self.width() - self.widget_height / 2, hback)
-        if self.__value:
+        if old_value:
             xf = 2
             xs = self.width() - 22
             bsize = QtCore.QSize(hback, hback)
             isize = QtCore.QSize(self.widget_width, hback)
 
-        self.__circlemove.setStartValue(QtCore.QPoint(xs, y))
-        self.__circlemove.setEndValue(QtCore.QPoint(xf, y))
+        if animate:
+            self.__circlemove = QtCore.QPropertyAnimation(self.__circle, b"pos")
+            self.__circlemove.setDuration(self.__duration)
 
-        self.__ellipsemove.setStartValue(isize)
-        self.__ellipsemove.setEndValue(bsize)
+            self.__ellipsemove = QtCore.QPropertyAnimation(self.__background, b"size")
+            self.__ellipsemove.setDuration(self.__duration)
 
-        self.__circlemove.start()
-        self.__ellipsemove.start()
-        if not self.__value:
+            self.__circlemove.setStartValue(QtCore.QPoint(xs, y))
+            self.__circlemove.setEndValue(QtCore.QPoint(xf, y))
+
+            self.__ellipsemove.setStartValue(isize)
+            self.__ellipsemove.setEndValue(bsize)
+
+            self.__circlemove.start()
+            self.__ellipsemove.start()
+        else:
+            self.__circle.move(QtCore.QPoint(xf, y))
+            self.__background.resize(bsize)
+        if self.__value:
             self.__labelon.show()
         else:
             self.__labelon.hide()
-        self.__value = not self.__value
+
+
 
     def paintEvent(self, event):
         s = self.size()
