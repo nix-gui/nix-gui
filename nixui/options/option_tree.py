@@ -59,8 +59,8 @@ class OptionTree:
 
     def _update_in_memory_change_cache(self, attribute, option_definition):
         in_memory_definition = self.tree.get_node(attribute).data.in_memory_definition
-        if in_memory_definition == OptionDefinition.undefined():
-            del attribute
+        if in_memory_definition == self.tree.get_node(attribute).data.configured_definition:
+            del self.in_memory_change_cache[attribute]
         else:
             self.in_memory_change_cache[attribute] = option_definition
         self.change_marker = uuid.uuid4()
@@ -143,7 +143,7 @@ class OptionTree:
                 include_in_memory_definition=False,
                 include_configured_change=not get_configured_changes
             )
-            if new_definition != old_definition and new_definition != OptionDefinition.undefined():
+            if new_definition != old_definition:
                 yield (attr, old_definition, new_definition)
 
     @functools.lru_cache()
