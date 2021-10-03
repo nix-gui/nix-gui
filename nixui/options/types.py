@@ -15,7 +15,6 @@ def from_nix_type_str(nix_type_str, or_legal=True):
     we also need to extract validation data, e.g. "not containing newlines or colons"
       - does nix include a regexp or expression for us to validate with?
     """
-
     # cases where there is no criteria to recurse on
     if nix_type_str == '':
         return None
@@ -74,10 +73,18 @@ def from_nix_type_str(nix_type_str, or_legal=True):
 
     # simple types with criteria
     elif nix_type_str.startswith('lazy attribute set of'):
-        return AttrsOfType(
-            from_nix_type_str(nix_type_str.removeprefix('lazy attribute set of ')),
-            lazy=True
-        )
+        try:
+            return AttrsOfType(
+                from_nix_type_str(nix_type_str.removeprefix('lazy attribute set of ')),
+                lazy=True
+            )
+        except:
+            return AttrsOfType(
+                from_nix_type_str(
+                    nix_type_str.removeprefix('lazy attribute set of ').removesuffix('s')
+                ),
+                lazy=True
+            )
     elif nix_type_str.startswith('non-empty list of') and nix_type_str.endswith('s'):
         return ListOfType(
             from_nix_type_str(nix_type_str.removeprefix('non-empty list of ').removesuffix('s')),
@@ -101,10 +108,16 @@ def from_nix_type_str(nix_type_str, or_legal=True):
         return StrType(
             legal_pattern=nix_type_str.removeprefix('string matching the pattern ')
         )
+    elif nix_type_str.startswith('string without spaces'):
+        return StrType(legal_pattern=r'\S*')
     elif nix_type_str == 'unsigned integer, meaning >=0':
         return IntType(minimum=0)
     elif nix_type_str == 'positive integer, meaning >0':
         return IntType(minimum=1)
+    elif nix_type_str == '16 bit unsigned integer; between 0 and 65535 (both inclusive)':
+        return IntType(minimum=0, maximum=65535)
+    elif nix_type_str == '8 bit unsigned integer; between 0 and 255 (both inclusive)':
+        return IntType(minimum=0, maximum=255)
     elif nix_type_str.startswith('integer between') and nix_type_str.endswith('(both inclusive)'):
         s = nix_type_str.removeprefix('integer between ').removesuffix(' (both inclusive)')
         minimum, maximum = s.split(' and ')
@@ -112,8 +125,6 @@ def from_nix_type_str(nix_type_str, or_legal=True):
     elif nix_type_str.startswith('one of'):
         s = nix_type_str.removeprefix('one of ')
         return OneOfType([x.strip('"') for x in s.split(', ')])
-    elif nix_type_str == '16 bit unsigned integer; between 0 and 65535 (both inclusive)':
-        return IntType(minimum=0, maximum=65535)
     elif nix_type_str in ('path, not containing newlines', 'path, not containing newlines or colons'):
         return PathType()  # TODO: special handling
     elif nix_type_str.startswith('a floating point number in range'):
@@ -152,6 +163,7 @@ def from_nix_type_str(nix_type_str, or_legal=True):
         nix_type_str.startswith('ncdns.conf configuration type') or
         nix_type_str.startswith('libconfig configuration') or
         nix_type_str.startswith('privoxy configuration type') or
+        nix_type_str.startswith('unbound.conf configuration type.') or
         nix_type_str in (
             'systemd option',
             'JSON value',
@@ -176,6 +188,7 @@ def from_nix_type_str(nix_type_str, or_legal=True):
             'submodule or signed integer convertible to it',
             'submodules or list of attribute sets convertible to it',
             'submodules or list of attribute sets convertible to it',
+            'submodule or boolean convertible to it',
             'davmail config type (str, int, bool or attribute set thereof)',
             'submodules or list of unspecifieds convertible to it',
             'freeciv-server params',
@@ -188,7 +201,9 @@ def from_nix_type_str(nix_type_str, or_legal=True):
             'dataset/template options',
             'signed integer or boolean convertible to it',
             'tuple of (unsigned integer, meaning >=0 or one of "level auto", "level full-speed", "level disengage") (unsigned integer, meaning >=0) (unsigned integer, meaning >=0)',
-            'Traffic Server records value'
+            'Traffic Server records value',
+            'package with provided sessions',
+            'znc values (null, atoms (str, int, bool), list of atoms, or attrsets of znc values)',
         )
         ):
         return AnythingType()
