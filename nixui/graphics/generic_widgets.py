@@ -238,3 +238,12 @@ class ClickableLabel(QtWidgets.QLabel):
         f = self.font()
         f.setUnderline(False)
         self.setFont(f)
+
+
+class CenteredContainer(QtWidgets.QWidget):
+    def __init__(self, child_widget):
+        super().__init__()
+        layout = QtWidgets.QHBoxLayout()
+        layout.setAlignment(QtCore.Qt.AlignVCenter)
+        layout.addWidget(child_widget)
+        self.setLayout(layout)
