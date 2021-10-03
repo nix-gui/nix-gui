@@ -90,6 +90,8 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         layout.addWidget(self.entry_stack)
         self.setLayout(layout)
 
+        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
+
         self._load_definition()
 
     @staticmethod
