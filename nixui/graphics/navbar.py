@@ -88,12 +88,14 @@ class NavBar(QtWidgets.QWidget):
 
     @classmethod
     def as_option_tree(cls, option_path, set_lookup_key_fn):
-        return cls(
+        kwargs = dict(
             set_lookup_key_fn=set_lookup_key_fn,
             unfocused_text=' » '.join([TREE_UNICODE] + list(option_path)),
-            focused_text=f'options:{str(option_path)}',
-            up_fn=lambda: set_lookup_key_fn(f'options:{option_path.get_set()}')
+            focused_text=f'options:{str(option_path)}'
         )
+        if option_path:
+            kwargs['up_fn'] = lambda: set_lookup_key_fn(f'options:{option_path.get_set()}')
+        return cls(**kwargs)
 
     @classmethod
     def as_search_query(cls, search_str, set_lookup_key_fn):
