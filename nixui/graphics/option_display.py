@@ -44,7 +44,6 @@ def get_field_widget_classes_from_type(option_type):
 
 def get_field_widget_classes(option_type):
     return (
-        [field_widgets.UndefinedField] +
         get_field_widget_classes_from_type(option_type) +
         [field_widgets.ExpressionField, field_widgets.ReferenceField]
     )
@@ -52,7 +51,6 @@ def get_field_widget_classes(option_type):
 
 def get_label_color_for_widget(field_widget):
     field_colors = {
-        field_widgets.UndefinedField: QtGui.QColor(255, 200, 200),  # TODO: create
         field_widgets.ExpressionField: QtGui.QColor(193, 236, 245),
         field_widgets.ReferenceField: QtGui.QColor(174, 250, 174),
     }
@@ -77,6 +75,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.is_defined_toggle = toggle_switch.ToggleSwitch("Defined", "Undefined")
         self.is_defined_toggle.stateChanged.connect(self.set_is_defined)
         description_layout.addWidget(self.is_defined_toggle)
+        description_layout.addStretch()  # align widgets to top
 
         # field widget selector and stacked widget containing field widgets for display
         self.entry_stack = self._get_field_stack_widget(option)
@@ -87,6 +86,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         layout = QtWidgets.QHBoxLayout()
         layout.addLayout(description_layout)
         layout.addWidget(self.field_selector)
+        layout.addStretch()
         layout.addWidget(self.entry_stack)
         self.setLayout(layout)
 
@@ -151,6 +151,8 @@ class GenericOptionDisplay(QtWidgets.QWidget):
             return
 
         for i, field in enumerate(self.stacked_widgets):
+            if isinstance(field, field_widgets.Redirect):
+                continue
             if field.validate_field(option_definition.obj):
                 self.field_selector.select(i)
                 field.load_value(option_definition.obj)
@@ -179,6 +181,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         if self.is_defined_toggle.isChecked():
             self.field_selector.setVisible(True)
             self.entry_stack.setVisible(True)
+            self.field_selector.select(0)
         else:
             self.field_selector.setVisible(False)
             self.entry_stack.setVisible(False)
@@ -189,11 +192,14 @@ class GenericOptionDisplay(QtWidgets.QWidget):
 
     @property
     def definition(self):
-        current_widget = self.entry_stack.currentWidget()
-        form_value = current_widget.current_value
         if not self.is_defined_toggle.isChecked():
             return option_definition.OptionDefinition.undefined()
-        elif isinstance(current_widget, field_widgets.ExpressionField):
+        current_widget = self.entry_stack.currentWidget()
+        if isinstance(current_widget, field_widgets.Redirect):
+            #  TODO: implement getting definition based on value of descendents
+            return option_definition.OptionDefinition.from_object('CHECK DESCENDENTS')
+        form_value = current_widget.current_value
+        if isinstance(current_widget, field_widgets.ExpressionField):
             return option_definition.OptionDefinition.from_expression_string(form_value)
         else:
             return option_definition.OptionDefinition.from_object(form_value)

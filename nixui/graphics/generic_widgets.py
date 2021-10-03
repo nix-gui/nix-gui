@@ -23,10 +23,13 @@ class ReplacableWidget(QtWidgets.QStackedWidget):
 class ExclusiveButtonGroup(QtWidgets.QFrame):
     selection_changed = QtCore.pyqtSignal(str)
 
-    def __init__(self, choices=[]):
+    def __init__(self, choices=[], vertical=True):
         super().__init__()
 
-        layout = QtWidgets.QHBoxLayout(self)
+        if vertical:
+            layout = QtWidgets.QVBoxLayout(self)
+        else:
+            layout = QtWidgets.QHBoxLayout(self)
 
         self.btn_group = QtWidgets.QButtonGroup()
         self.btn_group.setExclusive(True)
