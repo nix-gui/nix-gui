@@ -3,7 +3,6 @@ import re
 from PyQt5 import QtWidgets, QtGui, QtCore
 
 from nixui.options import api
-from nixui.graphics import color_indicator
 
 
 class HTMLDelegate(QtWidgets.QStyledItemDelegate):
@@ -14,11 +13,20 @@ class HTMLDelegate(QtWidgets.QStyledItemDelegate):
         style.drawControl(QtWidgets.QStyle.CE_ItemViewItem, option, painter)
         ctx = QtGui.QAbstractTextDocumentLayout.PaintContext()
         textRect = style.subElementRect(QtWidgets.QStyle.SE_ItemViewItemText, option, None)
+
+        self.paint_background(painter, option, index)
+
         painter.save()
         painter.translate(textRect.topLeft())
         painter.setClipRect(textRect.translated(-textRect.topLeft()))
         doc.documentLayout().draw(painter, ctx)
         painter.restore()
+
+    def paint_background(self, painter, option, index):
+        if index is not None:
+            item = option.widget.itemFromIndex(index)
+            if hasattr(item, 'bg_color'):
+                painter.fillRect(option.rect, item.bg_color)
 
     def sizeHint(self, option, index):
         doc = self._builddoc(option, index)
@@ -54,8 +62,4 @@ def get_option_html(option, use_fancy_name=True, child_count=None, type_label=No
         s += f'<p style="{sub_style}">Description: {description}</p>'
     if extra_text:
         s += f'<p style="{sub_style}">{extra_text}</p>'
-
-    color = color_indicator.get_edit_state_color_indicator(api.get_option_tree(), option)
-    return f"""
-    <div style="background-color: {color.name()}">{s}</div>
-    """
+    return s
