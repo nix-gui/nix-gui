@@ -211,20 +211,27 @@ class OptionListItem(QtWidgets.QListWidgetItem):
         self.setText(richtext.get_option_html(self.option))
 
 
-class EditableOptionListItem(QtWidgets.QListWidgetItem):
-    def __init__(self, option, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.option = option
-        self.previous_option = option
-        self.setFlags(self.flags() | QtCore.Qt.ItemIsEditable)
-        self.set_text()
+class ToolTip(QtWidgets.QLabel):
+    def __init__(self, text, *args, **kwargs):
+        super().__init__()
+        self.setPixmap(
+            icon.get_pixmap('info_circle.png').scaled(30, 30)
+        )
+        self.setToolTip(text)
 
-    def set_text(self):
-        self.setText(self.option.get_end())
 
-    def setData(self, index, value):
-        # is valid attribute name?
-        if re.match(r'^[a-zA-Z\_][a-zA-Z0-9\_\'\-]*$', value):
-            self.previous_option = self.option
-            self.option = attribute.Attribute.from_insertion(self.option.get_set(), value)
-            super().setData(index, value)
+class ClickableLabel(QtWidgets.QLabel):
+    clicked = QtCore.pyqtSignal()
+
+    def mousePressEvent(self, ev):
+        self.clicked.emit()
+
+    def enterEvent(self, ev):
+        f = self.font()
+        f.setUnderline(True)
+        self.setFont(f)
+
+    def leaveEvent(self, ev):
+        f = self.font()
+        f.setUnderline(False)
+        self.setFont(f)

@@ -1,11 +1,9 @@
-from functools import partial, lru_cache
-from operator import eq
 import re
 
 from PyQt5 import QtWidgets, QtGui, QtCore
 
 from nixui.options import api, option_tree, option_definition, types
-from nixui.graphics import color_indicator, richtext, generic_widgets
+from nixui.graphics import color_indicator, richtext, generic_widgets, toggle_switch
 
 
 def get_field_widget_classes_from_type(option_type):
@@ -108,17 +106,23 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.field_type_selector.btn_group.buttons()[-1].setEnabled(False)
 
         # set title and description
-        text = QtWidgets.QLabel(richtext.get_option_html(
-            option,
-            type_label=api.get_option_tree().get_type(option),
-            description=api.get_option_tree().get_description(option),
-        ))
-        text.setWordWrap(True)
-        text.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
+        text = generic_widgets.ClickableLabel(str(option))
+        text.clicked.connect(lambda: set_option_path_fn(option))
+        tooltip = generic_widgets.ToolTip(
+            richtext.get_option_html(
+                option,
+                type_label=api.get_option_tree().get_type(option),
+                description=api.get_option_tree().get_description(option),
+            )
+        )
 
         # add all to layout
+        option_details_layout = QtWidgets.QHBoxLayout()
+        option_details_layout.addWidget(tooltip)
+        option_details_layout.addWidget(text)
+        option_details_layout.addStretch()
         description_layout = QtWidgets.QVBoxLayout()
-        description_layout.addWidget(text, stretch=3)
+        description_layout.addLayout(option_details_layout)
         description_layout.addWidget(self.field_type_selector, stretch=1)
         layout = QtWidgets.QHBoxLayout()
         layout.addLayout(description_layout)
@@ -229,10 +233,14 @@ class AttrsOfRedirect(Redirect):
     name = "Attrs of"
 
 
-class BooleanField(QtWidgets.QCheckBox):
+class BooleanField(toggle_switch.ToggleSwitch):
     name = "Boolean"
+
     def __init__(self, option, **constraints):
-        super().__init__()
+        super().__init__(
+            on_text='True',
+            off_text='False',
+        )
         self.option = option
         self.constraints = constraints
         self.loaded_value = None
@@ -469,7 +477,6 @@ class NotImplementedField(DoNothingField):
     @staticmethod
     def validate_field(value):
         return False
-
 
 
 class ReferenceField(NotImplementedField):
