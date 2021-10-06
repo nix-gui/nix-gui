@@ -154,14 +154,14 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         for i, field in enumerate(self.stacked_widgets):
             if isinstance(field, field_widgets.Redirect):
                 continue
-            if field.validate_field(option_definition.obj):
+            elif isinstance(field, field_widgets.ExpressionField):
+                self.field_selector.select(i)
+                field.load_value(option_definition.expression_string)
+                break
+            elif field.validate_field(option_definition.obj):
                 self.field_selector.select(i)
                 field.load_value(option_definition.obj)
                 break
-        else:
-            self.field_selector.select(len(self.stacked_widgets) - 1)
-            expression_field = self.stacked_widgets[-2]
-            expression_field.load_value(option_definition.expression_string)
 
     def set_type(self, arg=None):
         stack_idx = self.field_selector.checked_index()
