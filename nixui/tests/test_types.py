@@ -26,7 +26,6 @@ def test_convert_complex_typestring():
 @pytest.mark.slow
 def test_all_types_convertible(option_tree):
     for attr in option_tree.iter_attributes():
-        print(attr)
         types.from_nix_type_str(
             option_tree.get_type(attr)
         )
