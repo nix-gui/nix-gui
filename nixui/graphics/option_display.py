@@ -55,7 +55,7 @@ def get_label_color_for_widget(field_widget):
         field_widgets.ReferenceField: QtGui.QColor(174, 250, 174),
     }
     return field_colors.get(
-        field_widget,
+        type(field_widget),
         QtGui.QColor(255, 255, 240),  # default
     )
 
