@@ -111,12 +111,16 @@ class FieldsGroupBox(QtWidgets.QWidget):
     def __init__(self, statemodel, set_option_path_fn, option=None, is_base_viewer=True, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        option_paths = api.get_option_tree().children(option)
         group_box = QtWidgets.QGroupBox()
-        group_box.setTitle(str(option))
+
+        if option_paths:
+            group_box.setTitle(str(option))
+        else:
+            option_paths = [option]
 
         vbox = QtWidgets.QVBoxLayout()
-
-        for child_option_path in api.get_option_tree().children(option):
+        for child_option_path in option_paths:
             if len(api.get_option_tree().children(child_option_path)) > 1:
                 fields_group_box = FieldsGroupBox(
                     statemodel,
