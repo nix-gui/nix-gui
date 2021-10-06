@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets, QtCore
 
 from nixui.options import api, types
 from nixui.options.attribute import Attribute
-from nixui.graphics import generic_widgets, navbar, navlist, field_widgets
+from nixui.graphics import generic_widgets, navbar, navlist, option_display
 from nixui.utils.logger import logger
 
 
@@ -80,7 +80,7 @@ class OptionNavigationInterface(QtWidgets.QWidget):
             )
             if num_children <= 1:
                 self.fields_view.replace_widget(
-                    field_widgets.GenericOptionDisplay(
+                    option_display.GenericOptionDisplay(
                         self.statemodel,
                         self.set_option_path,
                         option_path
@@ -127,7 +127,7 @@ class FieldsGroupBox(QtWidgets.QWidget):
                     is_base_viewer=False
                 ))
             else:
-                vbox.addWidget(field_widgets.GenericOptionDisplay(
+                vbox.addWidget(option_display.GenericOptionDisplay(
                     statemodel,
                     set_option_path_fn,
                     child_option_path

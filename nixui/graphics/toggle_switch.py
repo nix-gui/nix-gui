@@ -95,15 +95,21 @@ class ToggleSwitch(QtWidgets.QWidget):
             self.__ellipsemove.setStartValue(isize)
             self.__ellipsemove.setEndValue(bsize)
 
+            if self.__value:
+                self.__ellipsemove.finished.connect(self.__labelon.show)
+            else:
+                self.__ellipsemove.finished.connect(self.__labelon.hide)
+
             self.__circlemove.start()
             self.__ellipsemove.start()
         else:
             self.__circle.move(QtCore.QPoint(xf, y))
             self.__background.resize(bsize)
-        if self.__value:
-            self.__labelon.show()
-        else:
-            self.__labelon.hide()
+
+            if self.__value:
+                self.__labelon.show()
+            else:
+                self.__labelon.hide()
 
 
 
