@@ -128,10 +128,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         return entry_stack
 
     def _get_field_selection_widget(self, field_widgets):
-        # TODO: remove this when reference editor is done
-        #self.field_selector.btn_group.buttons()[-1].setEnabled(False)
-
-        return generic_widgets.ExclusiveButtonGroup(
+        btn_group =  generic_widgets.ExclusiveButtonGroup(
             choices=[
                 (
                     w.name,
@@ -141,6 +138,10 @@ class GenericOptionDisplay(QtWidgets.QWidget):
                 for w in field_widgets
             ]
         )
+        # TODO: remove this when reference editor is done
+        # disable reference editor button
+        btn_group.buttons()[-1].setEnabled(False)
+        return btn_group
 
     def _load_definition(self):
         option_definition = self.statemodel.get_definition(self.option)
