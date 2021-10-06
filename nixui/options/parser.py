@@ -79,8 +79,13 @@ def get_all_option_values(module_path, allow_errors=True):
         {'module_dir': os.path.dirname(module_path)}
     )
 
-    if imports_definition.obj == Unresolvable and allow_errors:
-        return option_expr_map
+    if imports_definition.obj == Unresolvable:
+        err_str = f'imports definition for {module_path} is unresolvable'
+        if allow_errors:
+            logger.error(err_str)
+            return option_expr_map
+        else:
+            raise ValueError(err_str)
 
     # for each valid parsable import, recurse
     for i, import_path in enumerate(imports_definition.obj):
