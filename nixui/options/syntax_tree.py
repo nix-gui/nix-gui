@@ -1,11 +1,12 @@
-import collections
 import dataclasses
+import collections
 import functools
 import subprocess
 import json
 import tempfile
 import uuid
 
+from nixui.utils import cache
 
 NumRange = collections.namedtuple('NumRange', ['start', 'end'])
 
@@ -94,11 +95,8 @@ class SyntaxTree:
         index = 0
         with open(module_path) as f:
             for i, line in enumerate(f.readlines()):
-                # remove carriage returns
-                if line[-1] == '\r':
-                    line = line[:-1]
                 line_index_map[i] = index
-                index += len(line.encode("utf8"))
+                index += len(line.encode())
 
         mapper = lambda line, col: line_index_map[line] + col
         return mapper

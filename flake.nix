@@ -92,12 +92,32 @@
                 python3 -c "import pstats; p = pstats.Stats('profile'); p.strip_dirs(); p.sort_stats('cumtime'); p.print_stats(50)"
               '');
             }) { };
+        packages.scrape-github = pkgs.callPackage
+          ({ stdenv, lib}:
+            pythonPackages.buildPythonPackage rec {
+              pname = "scrape-github";
+              version = "0.1.0";
+              src = ./.;
+              propagatedBuildInputs = [
+                pythonPackages.PyGithub
+              ];
+              makeWrapperArgs = [
+                "--prefix PATH : ${nix-dump-syntax-tree-json}/bin"
+              ];
+              doCheck = false;
+            }) { };
         checks.profile = self.packages.${system}.nix-gui.override { enable-profiling = true; };
         defaultPackage = self.packages.${system}.nix-gui;
         apps = {
           nix-gui = flake-utils.lib.mkApp {
             drv = self.packages."${system}".nix-gui;
           };
+          /*
+          # DONT ENABLE UNTIL VIRTUAL MACHINE IS SETUP
+          scrape-github = flake-utils.lib.mkApp {
+            drv = self.packages."${system}".scrape-github;
+          };
+          */
         };
         defaultApp = self.apps."${system}".nix-gui;
 

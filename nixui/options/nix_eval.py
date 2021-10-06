@@ -60,7 +60,7 @@ def nix_instantiate_eval(expr, strict=False, show_trace=False, retry_show_trace_
 
 @contextmanager
 def find_library(name):
-    with importlib.resources.path('nixui.nix', f'lib.nix') as f:
+    with importlib.resources.path('nixui.nix', 'lib.nix') as f:
         yield f'(import {f}).{name}'
 
 

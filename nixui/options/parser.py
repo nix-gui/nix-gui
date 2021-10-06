@@ -57,7 +57,7 @@ def apply_indentation(string, num_spaces):
 
 
 @cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
-def get_all_option_values(module_path):
+def get_all_option_values(module_path, allow_errors=True):
     logger.info(f'Retrieving option values for module "{module_path}"')
     # get option_expr_map for module_path
     option_expr_map = {}
@@ -78,6 +78,15 @@ def get_all_option_values(module_path):
         imports_value_node.to_string(),
         {'module_dir': os.path.dirname(module_path)}
     )
+
+    if imports_definition.obj == Unresolvable:
+        err_str = f'imports definition for {module_path} is unresolvable'
+        if allow_errors:
+            logger.error(err_str)
+            return option_expr_map
+        else:
+            raise ValueError(err_str)
+
     # for each valid parsable import, recurse
     for i, import_path in enumerate(imports_definition.obj):
         if import_path == Unresolvable:
@@ -87,9 +96,12 @@ def get_all_option_values(module_path):
         try:
             # TODO: this isn't the correct way to merge attributes between modules, it needs to be implemented
             option_expr_map.update(get_all_option_values(full_import_path))
-        except nix_eval.NixEvalError as e:
-            logger.error(e)  # TODO: ensure all legal import elements are resolved and don't `continue`
-            continue
+        except (nix_eval.NixEvalError, FileNotFoundError) as e:
+            if allow_errors:
+                logger.error(e)  # TODO: ensure all legal import elements are resolved and don't `continue`
+                continue
+            else:
+                raise e
 
     return option_expr_map
 
