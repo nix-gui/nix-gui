@@ -132,7 +132,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
             choices=[
                 (
                     w.name,
-                    self.set_type,
+                    self.load_selected_field_widget,
                     get_label_color_for_widget(w)
                 )
                 for w in field_widgets
@@ -163,7 +163,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
                 field.load_value(option_definition.obj)
                 break
 
-    def set_type(self, arg=None):
+    def load_selected_field_widget(self, arg=None):
         stack_idx = self.field_selector.checked_index()
         current_widget = self.entry_stack.widget(stack_idx)
         definition = self.statemodel.get_definition(self.option)
