@@ -73,7 +73,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
             self._get_option_details_layout(option, set_option_path_fn)
         )
         self.is_defined_toggle = toggle_switch.ToggleSwitch("Defined", "Undefined")
-        self.is_defined_toggle.stateChanged.connect(self.set_is_defined)
+        self.is_defined_toggle.stateChanged.connect(self.update_defined_field_visibility)
         description_layout.addWidget(self.is_defined_toggle)
         description_layout.addStretch()  # align widgets to top
 
@@ -147,7 +147,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         option_definition = self.statemodel.get_definition(self.option)
 
         self.is_defined_toggle.setChecked(not option_definition.is_undefined)
-        self.set_is_defined()
+        self.update_defined_field_visibility()
         if option_definition.is_undefined:
             return
 
@@ -178,7 +178,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.entry_stack.setCurrentIndex(stack_idx)
         self.handle_state_change()
 
-    def set_is_defined(self):
+    def update_defined_field_visibility(self):
         if self.is_defined_toggle.isChecked():
             self.field_selector.setVisible(True)
             self.entry_stack.setVisible(True)
