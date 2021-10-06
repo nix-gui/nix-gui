@@ -8,6 +8,7 @@ def get_default_font():
 
 # modified from https://github.com/roman-popenov/demo-code/blob/23806afac12db2ddd85a1e0b0e1ff4860da08216/ui/switch.py
 class ToggleSwitch(QtWidgets.QWidget):
+    # TODO: reimplement this entirely so its comprised of a rectangle and square
     stateChanged = QtCore.pyqtSignal(bool)
 
     def __init__(self, on_text="Yes", off_text="No", starting_value=False, font=None):
