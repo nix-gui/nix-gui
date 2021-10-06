@@ -112,9 +112,12 @@
           nix-gui = flake-utils.lib.mkApp {
             drv = self.packages."${system}".nix-gui;
           };
+          /*
+          # DONT ENABLE UNTIL VIRTUAL MACHINE IS SETUP
           scrape-github = flake-utils.lib.mkApp {
             drv = self.packages."${system}".scrape-github;
           };
+          */
         };
         defaultApp = self.apps."${system}".nix-gui;
 

@@ -55,7 +55,7 @@ def get_label_color_for_widget(field_widget):
         field_widgets.ReferenceField: QtGui.QColor(174, 250, 174),
     }
     return field_colors.get(
-        field_widget,
+        type(field_widget),
         QtGui.QColor(255, 255, 240),  # default
     )
 
@@ -73,7 +73,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
             self._get_option_details_layout(option, set_option_path_fn)
         )
         self.is_defined_toggle = toggle_switch.ToggleSwitch("Defined", "Undefined")
-        self.is_defined_toggle.stateChanged.connect(self.set_is_defined)
+        self.is_defined_toggle.stateChanged.connect(self.update_defined_field_visibility)
         description_layout.addWidget(self.is_defined_toggle)
         description_layout.addStretch()  # align widgets to top
 
@@ -128,41 +128,42 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         return entry_stack
 
     def _get_field_selection_widget(self, field_widgets):
-        # TODO: remove this when reference editor is done
-        #self.field_selector.btn_group.buttons()[-1].setEnabled(False)
-
-        return generic_widgets.ExclusiveButtonGroup(
+        exclusive_btn_group = generic_widgets.ExclusiveButtonGroup(
             choices=[
                 (
                     w.name,
-                    self.set_type,
+                    self.load_selected_field_widget,
                     get_label_color_for_widget(w)
                 )
                 for w in field_widgets
             ]
         )
+        # TODO: remove this when reference editor is done
+        # disable reference editor button
+        exclusive_btn_group.btn_group.buttons()[-1].setEnabled(False)
+        return exclusive_btn_group
 
     def _load_definition(self):
         option_definition = self.statemodel.get_definition(self.option)
 
         self.is_defined_toggle.setChecked(not option_definition.is_undefined)
-        self.set_is_defined()
+        self.update_defined_field_visibility()
         if option_definition.is_undefined:
             return
 
         for i, field in enumerate(self.stacked_widgets):
             if isinstance(field, field_widgets.Redirect):
                 continue
-            if field.validate_field(option_definition.obj):
+            elif isinstance(field, field_widgets.ExpressionField):
+                self.field_selector.select(i)
+                field.load_value(option_definition.expression_string)
+                break
+            elif field.validate_field(option_definition.obj):
                 self.field_selector.select(i)
                 field.load_value(option_definition.obj)
                 break
-        else:
-            self.field_selector.select(len(self.stacked_widgets) - 1)
-            expression_field = self.stacked_widgets[-2]
-            expression_field.load_value(option_definition.expression_string)
 
-    def set_type(self, arg=None):
+    def load_selected_field_widget(self, arg=None):
         stack_idx = self.field_selector.checked_index()
         current_widget = self.entry_stack.widget(stack_idx)
         definition = self.statemodel.get_definition(self.option)
@@ -177,7 +178,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.entry_stack.setCurrentIndex(stack_idx)
         self.handle_state_change()
 
-    def set_is_defined(self):
+    def update_defined_field_visibility(self):
         if self.is_defined_toggle.isChecked():
             self.field_selector.setVisible(True)
             self.entry_stack.setVisible(True)
