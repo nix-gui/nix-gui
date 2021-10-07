@@ -55,6 +55,7 @@
               src = ./.;
               propagatedBuildInputs = [
                 pythonPackages.pyqt5
+                pythonPackages.pypandoc
                 pylspclient
                 treelib
                 rnix-lsp.defaultPackage."${system}"
