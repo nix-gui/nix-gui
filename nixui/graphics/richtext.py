@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 from nixui.options import api
 
 
-class HTMLDelegate(QtWidgets.QStyledItemDelegate):
+class OptionListItemDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
         style = option.widget.style()
         doc = self._builddoc(option, index)
