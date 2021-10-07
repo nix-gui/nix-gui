@@ -123,8 +123,10 @@ class IntegerField(QtWidgets.QSpinBox):
 
         self.minimum = constraints.get('minimum', float('-inf'))
         self.maximum = constraints.get('maximum', float('inf'))
-        self.setMinimum(self.minimum)
-        self.setMaximum(self.maximum)
+        if constraints.get('minimum'):
+            self.setMinimum(self.minimum)
+        if constraints.get('maximum'):
+            self.setMaximum(self.maximum)
 
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
 
