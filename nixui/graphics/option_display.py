@@ -99,14 +99,12 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         # title and description
         text = generic_widgets.ClickableLabel(str(option))
         text.clicked.connect(lambda: set_option_path_fn(option))
+
+        type_text = f'Type: {api.get_option_tree().get_type(option)}'
         description_text = api.get_option_tree().get_description(option)
-        tooltip = generic_widgets.ToolTip(
-            richtext.get_option_html(
-                option,
-                type_label=api.get_option_tree().get_type(option),
-                description=description_text if description_text != option_definition.Undefined else None,
-            )
-        )
+        description_text = description_text if description_text != option_definition.Undefined else ''
+        tooltip = generic_widgets.ToolTip('\n'.join([option, type_text, description_text]))
+
         option_details_layout = QtWidgets.QHBoxLayout()
         option_details_layout.addWidget(tooltip)
         option_details_layout.addWidget(text)

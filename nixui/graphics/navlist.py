@@ -43,7 +43,7 @@ class OptionScrollListSelector(QtWidgets.QListWidget):
 
     def _setup_scroll_list_selector_theme(self):
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.MinimumExpanding)
-        self.setItemDelegate(richtext.HTMLDelegate())
+        self.setItemDelegate(richtext.OptionListItemDelegate())
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setMinimumWidth(self.sizeHintForColumn(0))
 
