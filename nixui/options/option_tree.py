@@ -6,6 +6,7 @@ from treelib import Tree, Node
 
 from nixui.options.attribute import Attribute
 from nixui.options.option_definition import OptionDefinition, Undefined
+from nixui.utils.logger import logger
 
 
 @dataclasses.dataclass
@@ -51,8 +52,11 @@ class OptionTree:
         for option_path, option_data_dict in sorted(system_option_data.items(), key=sort_key):
             self._upsert_node_data(option_path, option_data_dict)
         for option_path, option_definition in config_options.items():
-            self._upsert_node_data(option_path, {'configured_definition': option_definition})
-            self.configured_change_cache[option_path] = option_definition
+            if self.tree.get_node(option_path):
+                self._upsert_node_data(option_path, {'configured_definition': option_definition})
+                self.configured_change_cache[option_path] = option_definition
+            else:
+                logger.error(f'"{option_path}" not a valid option, ignored')
 
     def __hash__(self):
         return hash(self.change_marker)

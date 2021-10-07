@@ -78,22 +78,13 @@ class OptionNavigationInterface(QtWidgets.QWidget):
                     selected=option_path.get_end()
                 )
             )
-            if num_children <= 1:
-                self.fields_view.replace_widget(
-                    option_display.GenericOptionDisplay(
-                        self.statemodel,
-                        self.set_option_path,
-                        option_path
-                    )
+            self.fields_view.replace_widget(
+                FieldsGroupBox(
+                    self.statemodel,
+                    self.set_option_path,
+                    option_path,
                 )
-            else:
-                self.fields_view.replace_widget(
-                    FieldsGroupBox(
-                        self.statemodel,
-                        self.set_option_path,
-                        option_path,
-                    )
-                )
+            )
 
     def set_search_query(self, search_str):
         self.nav_bar.replace_widget(
@@ -113,27 +104,35 @@ class FieldsGroupBox(QtWidgets.QWidget):
     def __init__(self, statemodel, set_option_path_fn, option=None, is_base_viewer=True, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        option_paths = api.get_option_tree().children(option)
         group_box = QtWidgets.QGroupBox()
-        group_box.setTitle(str(option))
+
+        if option_paths:
+            group_box.setTitle(str(option))
+        else:
+            option_paths = [option]
 
         vbox = QtWidgets.QVBoxLayout()
-
-        for child_option_path in api.get_option_tree().children(option):
+        for child_option_path in option_paths:
             if len(api.get_option_tree().children(child_option_path)) > 1:
-                vbox.addWidget(FieldsGroupBox(
+                fields_group_box = FieldsGroupBox(
                     statemodel,
                     set_option_path_fn,
                     child_option_path,
                     is_base_viewer=False
-                ))
+                )
+                vbox.addWidget(fields_group_box)
             else:
-                vbox.addWidget(option_display.GenericOptionDisplay(
+                option_disp = option_display.GenericOptionDisplay(
                     statemodel,
                     set_option_path_fn,
                     child_option_path
-                ))
+                )
+                vbox.addWidget(option_disp)
             vbox.addWidget(generic_widgets.SeparatorLine())
 
+        if is_base_viewer:
+            vbox.addStretch()
         group_box.setLayout(vbox)
 
         lay = QtWidgets.QHBoxLayout()
@@ -149,5 +148,3 @@ class FieldsGroupBox(QtWidgets.QWidget):
         vbox.setContentsMargins(0, 0, 0, 0)
         vbox.setSpacing(0)
         self.setLayout(lay)
-
-        self.setSizePolicy(QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Maximum)

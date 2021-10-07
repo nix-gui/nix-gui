@@ -172,7 +172,7 @@ class ScrollListStackSelector(QtWidgets.QWidget):
         self.insert_items()
         self.item_list.currentItemChanged.connect(self.change_selected_item)
         self.item_list.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.MinimumExpanding)
-        self.item_list.setItemDelegate(richtext.HTMLDelegate())
+        self.item_list.setItemDelegate(richtext.OptionListItemDelegate())
 
         self.item_list.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.item_list.setMinimumWidth(self.item_list.sizeHintForColumn(0))
@@ -238,3 +238,12 @@ class ClickableLabel(QtWidgets.QLabel):
         f = self.font()
         f.setUnderline(False)
         self.setFont(f)
+
+
+class CenteredContainer(QtWidgets.QWidget):
+    def __init__(self, child_widget):
+        super().__init__()
+        layout = QtWidgets.QHBoxLayout()
+        layout.setAlignment(QtCore.Qt.AlignVCenter)
+        layout.addWidget(child_widget)
+        self.setLayout(layout)

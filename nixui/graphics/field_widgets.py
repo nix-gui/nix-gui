@@ -117,17 +117,21 @@ class IntegerField(QtWidgets.QSpinBox):
     def __init__(self, option, **constraints):
         super().__init__()
         self.option = option
-        self.constraints = constraints
         self.loaded_value = None
 
         self.valueChanged.connect(self.stateChanged)
 
+        self.minimum = constraints.get('minimum', float('-inf'))
+        self.maximum = constraints.get('maximum', float('inf'))
+        self.setMinimum(self.minimum)
+        self.setMaximum(self.maximum)
+
+        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
+
     def validate_field(self, value):
         if not isinstance(value, int):
             return False
-        minimum = self.constraints.get('minimum', float('-inf'))
-        maximum = self.constraints.get('maximum', float('inf'))
-        return minimum <= value <= maximum
+        return self.minimum <= value <= self.maximum
 
     def load_value(self, value):
         if not self.validate_field(value):

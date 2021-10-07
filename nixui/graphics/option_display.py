@@ -78,9 +78,9 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         description_layout.addStretch()  # align widgets to top
 
         # field widget selector and stacked widget containing field widgets for display
-        self.entry_stack = self._get_field_stack_widget(option)
-        self.stacked_widgets = list(map(self.entry_stack.widget, range(self.entry_stack.count())))
-        self.field_selector = self._get_field_selection_widget(self.stacked_widgets)
+        self.field_widgets = self._get_field_widgets(option)
+        self.entry_stack = self._get_entry_stack(self.field_widgets)
+        self.field_selector = self._get_field_selection_widget(self.field_widgets)
 
         # put together horizontally
         layout = QtWidgets.QHBoxLayout()
@@ -90,6 +90,8 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         layout.addWidget(self.entry_stack)
         self.setLayout(layout)
 
+        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
+
         self._load_definition()
 
     @staticmethod
@@ -97,11 +99,12 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         # title and description
         text = generic_widgets.ClickableLabel(str(option))
         text.clicked.connect(lambda: set_option_path_fn(option))
+        description_text = api.get_option_tree().get_description(option)
         tooltip = generic_widgets.ToolTip(
             richtext.get_option_html(
                 option,
                 type_label=api.get_option_tree().get_type(option),
-                description=api.get_option_tree().get_description(option),
+                description=description_text if description_text != option_definition.Undefined else None,
             )
         )
         option_details_layout = QtWidgets.QHBoxLayout()
@@ -110,21 +113,28 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         option_details_layout.addStretch()
         return option_details_layout
 
-    def _get_field_stack_widget(self, option):
+    def _get_field_widgets(self, option):
         field_widget_classes = get_field_widget_classes(
             types.from_nix_type_str(
                 api.get_option_tree().get_type(option)
             )
         )
-        entry_stack = QtWidgets.QStackedWidget()
+        fields = []
         for field_widget_class in field_widget_classes:
-            entry_widget = field_widget_class(option)
+            field = field_widget_class(option)
             # TODO: fix this hacky handling of `Redirect` (#109)
-            if not isinstance(entry_widget, field_widgets.Redirect):
-                entry_widget.stateChanged.connect(self.handle_state_change)
+            if not isinstance(field, field_widgets.Redirect):
+                field.stateChanged.connect(self.handle_state_change)
                 self.statemodel.slotmapper.add_slot(('update_field', option), self._load_definition)
-            entry_stack.addWidget(entry_widget)
+            fields.append(field)
+        return fields
 
+    def _get_entry_stack(self, field_widgets):
+        entry_stack = QtWidgets.QStackedWidget()
+        for w in field_widgets:
+            entry_stack.addWidget(
+                generic_widgets.CenteredContainer(w)
+            )
         return entry_stack
 
     def _get_field_selection_widget(self, field_widgets):
@@ -151,7 +161,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         if option_definition.is_undefined:
             return
 
-        for i, field in enumerate(self.stacked_widgets):
+        for i, field in enumerate(self.field_widgets):
             if isinstance(field, field_widgets.Redirect):
                 continue
             elif isinstance(field, field_widgets.ExpressionField):
@@ -165,7 +175,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
 
     def load_selected_field_widget(self, arg=None):
         stack_idx = self.field_selector.checked_index()
-        current_widget = self.entry_stack.widget(stack_idx)
+        current_widget = self.field_widgets[stack_idx]
         definition = self.statemodel.get_definition(self.option)
         # TODO: fix this hacky handling of `Redirect` (#109)
         if isinstance(current_widget, field_widgets.Redirect):
@@ -195,7 +205,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
     def definition(self):
         if not self.is_defined_toggle.isChecked():
             return option_definition.OptionDefinition.undefined()
-        current_widget = self.entry_stack.currentWidget()
+        current_widget = self.field_widgets[self.entry_stack.currentIndex()]
         if isinstance(current_widget, field_widgets.Redirect):
             #  TODO: implement getting definition based on value of descendents
             return option_definition.OptionDefinition.from_object('CHECK DESCENDENTS')
@@ -208,7 +218,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
     def contains_focus(self):
         return (
             self.hasFocus() or
-            any(w.hasFocus() for w in self.stacked_widgets) or
+            any(w.hasFocus() for w in self.field_widgets) or
             any(w.hasFocus() for w in self.field_selector.btn_group.buttons())
         )
 

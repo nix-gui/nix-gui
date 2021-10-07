@@ -43,7 +43,7 @@ class OptionScrollListSelector(QtWidgets.QListWidget):
 
     def _setup_scroll_list_selector_theme(self):
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.MinimumExpanding)
-        self.setItemDelegate(richtext.HTMLDelegate())
+        self.setItemDelegate(richtext.OptionListItemDelegate())
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setMinimumWidth(self.sizeHintForColumn(0))
 
@@ -66,10 +66,9 @@ class ChildCountOptionListItem(QtWidgets.QListWidgetItem):
         super().__init__(*args, **kwargs)
 
         self.option = option
+        self.option_tree = api.get_option_tree()
 
-        tree = api.get_option_tree()
-
-        child_count = len(tree.children(self.option)) if use_child_count else None
+        child_count = len(self.option_tree.children(self.option)) if use_child_count else None
         self.setText(
             richtext.get_option_html(
                 self.option,
@@ -79,15 +78,21 @@ class ChildCountOptionListItem(QtWidgets.QListWidgetItem):
             )
         )
 
-        bg_color = color_indicator.get_edit_state_color_indicator(
-            tree,
-            self.option
-        )
-        bg_brush = QtGui.QBrush(bg_color)
-        self.setForeground(bg_brush)
-
         if icon_path:
             self.setIcon(QtGui.QIcon(icon_path))
+
+    @property
+    def bg_color(self):
+        # get color based on whether it or a child has been edited
+        color = color_indicator.get_edit_state_color_indicator(
+            self.option_tree,
+            self.option
+        )
+        # darken if selected
+        if self.isSelected():
+            color = color.darker(120)
+        return color
+
 
 
 class EditableListItem(QtWidgets.QListWidgetItem):
