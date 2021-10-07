@@ -56,7 +56,7 @@ class OptionTree:
                 self._upsert_node_data(option_path, {'configured_definition': option_definition})
                 self.configured_change_cache[option_path] = option_definition
             else:
-                logger.warning(f'"{option_path}" not a valid option, ignored')
+                logger.error(f'"{option_path}" not a valid option, ignored')
 
     def __hash__(self):
         return hash(self.change_marker)
