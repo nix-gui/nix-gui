@@ -172,7 +172,7 @@ class ScrollListStackSelector(QtWidgets.QWidget):
         self.insert_items()
         self.item_list.currentItemChanged.connect(self.change_selected_item)
         self.item_list.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.MinimumExpanding)
-        self.item_list.setItemDelegate(richtext.HTMLDelegate())
+        self.item_list.setItemDelegate(richtext.OptionListItemDelegate())
 
         self.item_list.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.item_list.setMinimumWidth(self.item_list.sizeHintForColumn(0))

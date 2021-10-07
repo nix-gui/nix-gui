@@ -1,11 +1,12 @@
 import re
 
 from PyQt5 import QtWidgets, QtGui, QtCore
+import pypandoc
 
 from nixui.options import api
 
 
-class HTMLDelegate(QtWidgets.QStyledItemDelegate):
+class OptionListItemDelegate(QtWidgets.QStyledItemDelegate):
     def paint(self, painter, option, index):
         style = option.widget.style()
         doc = self._builddoc(option, index)
@@ -59,7 +60,11 @@ def get_option_html(option, use_fancy_name=True, child_count=None, type_label=No
     if type_label:
         s += f'<p style="{sub_style}">Type: {type_label}</p>'
     if description:
-        s += f'<p style="{sub_style}">Description: {description}</p>'
+        s += f'<p style="{sub_style}">Description: {docbook_to_html(description)}</p>'
     if extra_text:
         s += f'<p style="{sub_style}">{extra_text}</p>'
     return s
+
+
+def docbook_to_html(docbook_str):
+    return pypandoc.convert_text(docbook_str, 'html', format='docbook')
