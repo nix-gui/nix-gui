@@ -1,3 +1,5 @@
+https://discourse.nixos.org/t/announcing-nix-gui/15409
+
 Announcing Nix-Gui[link to repo] (v0.1 beta)
 
 A project with the ambitious goal of making NixOS the most user friendly GNU/Linux distro.
@@ -16,7 +18,7 @@ A project with the ambitious goal of making NixOS the most user friendly GNU/Lin
 
 [bold]Functionality
 
-[quoted]Nix-Gui at it's core is a tool which loads data including option paths, valid option types, default values, configured values, descriptions, etc. The option hierarchy is made explorable and the value of individual options are editable. Changes are committed by writing to modules within the configuration path.
+[quoted]Nix-Gui is a tool which loads data including option paths, valid option types, default values, configured values, descriptions, etc. The option hierarchy is made explorable and the value of individual options are editable. Changes are committed by writing to modules within the configuration path.
 
 This data is retrieved from =<nixos/nixpkgs>= and from the configuration path via =NIX_PATH= =nixos-configuration=.
 
@@ -28,7 +30,7 @@ Features:
   - "Diff" to show option changes not yet committed to disk
 - Explore the hierarchy of options
   - Utilize color indicators of which options have been set
-- Search options based on options path, type, and description,
+- Search options based on options path, type, and description
 - Undo changes to options
 
 
@@ -37,7 +39,7 @@ Features:
 [quoted]Currently there are a few major limitations to Nix-Gui, including
 - Nix-Gui requires that =configuration.nix= be a function module. It cannot handle set modules. (https://github.com/nix-gui/nix-gui/issues/54)
 - The interface for =ListOf= and =AttrsOf= is incomplete.
-- Nix-Gui has yet to be thoroughly vetted, therefore the configuration path is copied to =~./config/nixgui/configurations/=, in which all changes made by Nix-Gui are saved (unless you set =NIXGUI_CONFIGURATION_PATH_CAN_BE_CORRUPTED=1=, in which case changes are made directly to the configuration ).
+- Nix-Gui has yet to be thoroughly vetted, therefore the configuration path is copied to =~./config/nixgui/configurations/=, in which all changes made by Nix-Gui are saved.
 - Not all data structures used in this application are optimal, resulting in some configuration paths taking longer than I'd like to load (https://github.com/nix-gui/nix-gui/issues/128).
 - Some option types aren't handled yet (e.g. =float=, =package=, =lambda=, and specific types like =ncdns.conf configuration type=, =systemd option=). These options can only be edited as a nix expression, as they do not have a matching widget.
 - The UX hasn't yet received any comments from the community .
