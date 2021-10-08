@@ -41,6 +41,7 @@ This data is retrieved from =<nixos/nixpkgs>= and from the configuration path vi
 
 ** Major Shortcomings to be Fixed
 Currently there are a few major limitations to Nix-Gui, including
+- Documentation is incomplete.
 - Nix-Gui requires that =configuration.nix= be a function module. It cannot handle set modules. (https://github.com/nix-gui/nix-gui/issues/54)
 - The interface for =ListOf= and =AttrsOf= is incomplete (https://github.com/nix-gui/nix-gui/issues/72) (https://github.com/nix-gui/nix-gui/issues/30).
 - Nix-Gui has yet to be thoroughly vetted, therefore the configuration path is copied to =~./config/nixgui/configurations/=, in which all changes made by Nix-Gui are saved.
