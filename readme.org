@@ -1,5 +1,3 @@
-[[https://github.com/lapp0/nix-gui/milestones?direction=asc&sort=due_date&state=open][(Work in Progress)]]
-
 * Nix-Gui
 Make NixOS usable for non-technical users through a settings / package management GUI.
 
@@ -7,7 +5,7 @@ Make NixOS usable for non-technical users through a settings / package managemen
 
 
 ** Motives
-The declarative nature of NixOS provides it the capability of being *the most user friendly linux distro.* No more [[https://github.com/nix-community/home-manager][editing dotfiles]], =/etc= files, manually writing timers, services, running commands to manage and create users and groups, etc. NixOS integrates all of that into a declarative system, and this project integrates NixOS' declarative system into a GUI.
+The declarative nature of NixOS provides it the capability of being *the most user friendly GNU/Linux distribution.* No more [[https://github.com/nix-community/home-manager][editing dotfiles]], =/etc= files, manually writing timers, services, running commands to manage and create users and groups, etc. NixOS integrates all of that into a declarative system, and this project integrates NixOS' declarative system into a GUI.
 
 *** Serve Users Unfamiliar with or Learning Nix
 Nix-Gui is a configuration management tool designed for those who haven't mastered the (arguably difficult) nix language. It is also an attempt to replicate the ease of use of popular configuration systems including
@@ -22,6 +20,34 @@ At the most advanced level, and once feature parity has been achieved. Power use
 
 *** Serve Mobile Users
 An additional motive for this project is to enable system configuration for [[https://mobile.nixos.org/][mobile devices]] without having to type code on your phone.
+
+** Functionality
+
+Nix-Gui at it's core is a tool which loads data including option paths, valid option types, default values, configured values, descriptions, etc. The option hierarchy is made explorable and the value of individual options are editable. Changes are committed by writing to modules within the configuration path.
+
+This data is retrieved from =<nixos/nixpkgs>= and from the configuration path via =NIX_PATH= =nixos-configuration=.
+
+*** Features
+
+- View and edit the state of options using type-specific widgets (e.g. textbox for strings)
+  - View and edit the actual nix expression defining an option
+  - View metadata of an option including type and definition
+- Save changes to a relevant module in the configuration path
+  - "Diff" to show option changes not yet committed to disk
+- Explore the hierarchy of options
+  - Utilize color indicators of which options have been set
+- Search options based on options path, type, and description,
+- Undo changes to options
+
+** Major Shortcomings to be Fixed
+Currently there are a few major limitations to Nix-Gui, including
+- Nix-Gui requires that =configuration.nix= be a function module. It cannot handle set modules. (https://github.com/nix-gui/nix-gui/issues/54)
+- The interface for =ListOf= and =AttrsOf= is incomplete.
+- Nix-Gui has yet to be thoroughly vetted, therefore the configuration path is copied to =~./config/nixgui/configurations/=, in which all changes made by Nix-Gui are saved (unless you set =NIXGUI_CONFIGURATION_PATH_CAN_BE_CORRUPTED=1=).
+- The data structures used in this application aren't yet optimal, resulting in some configuration paths taking longer than I'd like to load (https://github.com/nix-gui/nix-gui/issues/128).
+- Some option types aren't handled yet (e.g. =float=, =package=, =lambda=, and specific types like =ncdns.conf configuration type=, =systemd option=). These options can only be edited as a nix expression, as they do not have a matching widget.
+- The UX hasn't yet received any comments from the community .
+
 
 ** Docs
 - [[docs/usage.org][Usage]]

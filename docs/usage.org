@@ -1,5 +1,3 @@
-This document describes the behavior of Nix-Gui [[https://github.com/lapp0/nix-gui/milestones][v1.0]].
-
 * Running
 Prerequisites:
 - Ensure nixos is installed
