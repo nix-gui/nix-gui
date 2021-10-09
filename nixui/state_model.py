@@ -49,18 +49,21 @@ class StateModel:
     def record_update(self, option, new_definition):
         old_definition = self.option_tree.get_definition(option)
         if old_definition != new_definition:
-            # replace old update if we're still working on the same option
             if self.update_history and option == self.update_history[-1].option:
+                # replace old update if we're still working on the same option
                 update = Update(option, self.update_history[-1].old_definition, new_definition)
                 self.update_history[-1] = update
-                self.slotmapper('update_recorded')(option, self.update_history[-1].old_definition, new_definition)
                 logger.debug(f'update: {update}')
             else:
                 update = Update(option, old_definition, new_definition)
                 self.update_history.append(update)
-                self.slotmapper('update_recorded')(option, old_definition, new_definition)
                 logger.info(f'update: {update}')
 
+            self.slotmapper('update_recorded')(
+                option,
+                update.old_definition.expression_string,
+                update.new_definition.expression_string,
+            )
             self.option_tree.set_definition(option, new_definition)
 
     def persist_updates(self):
