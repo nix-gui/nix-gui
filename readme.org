@@ -44,7 +44,7 @@ Currently there are a few major limitations to Nix-Gui, including
 - Documentation is incomplete.
 - Nix-Gui requires that =configuration.nix= be a function module. It cannot handle set modules. (https://github.com/nix-gui/nix-gui/issues/54)
 - The interface for =ListOf= and =AttrsOf= is incomplete (https://github.com/nix-gui/nix-gui/issues/72) (https://github.com/nix-gui/nix-gui/issues/30).
-- Nix-Gui has yet to be thoroughly vetted, therefore the configuration path is copied to =~./config/nixgui/configurations/=, in which all changes made by Nix-Gui are saved.
+- Nix-Gui has yet to be thoroughly vetted, therefore the configuration path is copied to =~/.config/nixgui/configurations/=, in which all changes made by Nix-Gui are saved.
 - The data structures used in this application aren't yet optimal, resulting in some configuration paths taking longer than I'd like to load (https://github.com/nix-gui/nix-gui/issues/128).
 - Some option types aren't handled yet (e.g. =float=, =package=, =lambda=, and specific types like =ncdns.conf configuration type=, =systemd option=). These options can only be edited as a nix expression, as they do not have a matching widget.
 - The UX hasn't yet received any comments from the community .
