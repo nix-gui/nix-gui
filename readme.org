@@ -3,6 +3,8 @@ Make NixOS usable for non-technical users through a settings / package managemen
 
 [[screenshots/historical_2021_10_06.png]]
 
+[[screenshots/historical_search_2021_10_10.png]]
+
 
 ** Motives
 The declarative nature of NixOS provides it the capability of being *the most user friendly GNU/Linux distribution.* No more [[https://github.com/nix-community/home-manager][editing dotfiles]], =/etc= files, manually writing timers, services, running commands to manage and create users and groups, etc. NixOS integrates all of that into a declarative system, and this project integrates NixOS' declarative system into a GUI.
