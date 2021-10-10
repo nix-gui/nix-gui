@@ -3,6 +3,9 @@ Make NixOS usable for non-technical users through a settings / package managemen
 
 [[screenshots/historical_2021_10_06.png]]
 
+[[screenshots/historical_search_2021_10_10.png]]
+
+
 ** Motives
 
 The declarative nature of NixOS provides it the capability of being *the most user friendly GNU/Linux distribution.* No more [[https://github.com/nix-community/home-manager][editing dotfiles]], =/etc= files, manually writing timers, services, running commands to manage and create users and groups, etc. NixOS integrates all of that into a declarative system, and this project integrates NixOS' declarative system into a GUI.
@@ -10,7 +13,7 @@ The declarative nature of NixOS provides it the capability of being *the most us
 *** Serve Users Unfamiliar with or Learning Nix
 
 Nix-Gui is a configuration management tool designed for those who haven't mastered the (arguably difficult) nix language. It is also an attempt to replicate the ease of use of popular configuration systems including
-- [[https://packages.ubuntu.com/search?keywords=unity-control-center][Unity Control Center (Ubuntu)]], not used anymore 
+- [[https://packages.ubuntu.com/search?keywords=unity-control-center][Unity Control Center (Ubuntu)]], not used anymore
 - [[https://github.com/linuxmint/cinnamon/tree/master/files/usr/share/cinnamon/cinnamon-settings][Cinnamon Settings (Linux Mint)]]
 - [[https://www.nongnu.org/synaptic/][Synaptic Package Manager]]
 
