@@ -3,22 +3,25 @@ Make NixOS usable for non-technical users through a settings / package managemen
 
 [[screenshots/historical_2021_10_06.png]]
 
-
 ** Motives
+
 The declarative nature of NixOS provides it the capability of being *the most user friendly GNU/Linux distribution.* No more [[https://github.com/nix-community/home-manager][editing dotfiles]], =/etc= files, manually writing timers, services, running commands to manage and create users and groups, etc. NixOS integrates all of that into a declarative system, and this project integrates NixOS' declarative system into a GUI.
 
 *** Serve Users Unfamiliar with or Learning Nix
+
 Nix-Gui is a configuration management tool designed for those who haven't mastered the (arguably difficult) nix language. It is also an attempt to replicate the ease of use of popular configuration systems including
-- Ubuntu's Unity System Settings
-- Mint's Cinnimon Settings
-- Synaptic Package Manager
+- [[https://packages.ubuntu.com/search?keywords=unity-control-center][Unity Control Center (Ubuntu)]], not used anymore 
+- [[https://github.com/linuxmint/cinnamon/tree/master/files/usr/share/cinnamon/cinnamon-settings][Cinnamon Settings (Linux Mint)]]
+- [[https://www.nongnu.org/synaptic/][Synaptic Package Manager]]
 
 Nix-Gui is designed to gradually and comfortably teach users about the mechanics of the nix language and nixpkgs.
 
 *** Serve as an Effective System Management Tool for Experienced Users
+
 At the most advanced level, and once feature parity has been achieved. Power users should be capable of changing system configuration, creating system ISOs, [[https://github.com/NixOS/nixops][deploying systems to the cloud]], etc in Nix-Gui more intelligibly and faster than through their traditional means of writing a nix module.
 
 *** Serve Mobile Users
+
 An additional motive for this project is to enable system configuration for [[https://mobile.nixos.org/][mobile devices]] without having to type code on your phone.
 
 ** Functionality
@@ -40,6 +43,7 @@ This data is retrieved from =<nixos/nixpkgs>= and from the configuration path vi
 - Undo changes to options
 
 ** Major Shortcomings to be Fixed
+
 Currently there are a few major limitations to Nix-Gui, including
 - Documentation is incomplete.
 - Nix-Gui requires that =configuration.nix= be a function module. It cannot handle set modules. (https://github.com/nix-gui/nix-gui/issues/54)
@@ -49,13 +53,14 @@ Currently there are a few major limitations to Nix-Gui, including
 - Some option types aren't handled yet (e.g. =float=, =package=, =lambda=, and specific types like =ncdns.conf configuration type=, =systemd option=). These options can only be edited as a nix expression, as they do not have a matching widget.
 - The UX hasn't yet received any comments from the community .
 
-
 ** Docs
+
 - [[docs/usage.org][Usage]]
 - [[docs/behavior.org][Behavior]]
 - [[docs/development.org][Development]]
 
 ** Contributing
+
 Non-developers (and interested developers), if you want to help, please
 - Run the application and submit bug report issues on GitHub.
 - Contact me on matrix (details below) to help more directly with UX testing.
@@ -67,4 +72,5 @@ Developers, if you're interested in contributing, you may
 - Contact me on matrix to discuss.
 
 ** Contact
+
 Contact me on Matrix (=andrew:mtx.rew.la=)
