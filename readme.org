@@ -1,6 +1,8 @@
 * Nix-Gui
 Make NixOS usable for non-technical users through a settings / package management GUI.
 
+(Work in progress: more features and refinement necessary to meet the above goal)
+
 [[screenshots/historical_2021_10_06.png]]
 
 [[screenshots/historical_search_2021_10_10.png]]
