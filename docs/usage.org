@@ -8,7 +8,7 @@ Run
 - =nix run github:nix-gui/nix-gui=
 
 Print help string
-- =nix run github:nix-gui/nix-gui --help=
+- =nix run github:nix-gui/nix-gui -- --help=
 
 
 * Interface
