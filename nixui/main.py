@@ -34,13 +34,13 @@ def handle_args():
     optional.add_argument(
         "-n",
         "--no-diskcache",
-        help="Cache function results to disk between sessions.",
+        help="Cache the return values of expensive funtions on disk for use in later sessions.",
         action='store_true',
     )
     optional.add_argument(
         "-p",
         "--profile",
-        help="Profile application.",
+        help="Run with profiler.",
         action='store_true',
     )
 

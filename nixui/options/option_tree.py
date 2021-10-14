@@ -64,7 +64,8 @@ class OptionTree:
     def _update_in_memory_change_cache(self, attribute, option_definition):
         in_memory_definition = self.tree.get_node(attribute).data.in_memory_definition
         if in_memory_definition == self.tree.get_node(attribute).data.configured_definition:
-            del self.in_memory_change_cache[attribute]
+            if attribute in self.in_memory_change_cache:
+                del self.in_memory_change_cache[attribute]
         else:
             self.in_memory_change_cache[attribute] = option_definition
         self.change_marker = uuid.uuid4()

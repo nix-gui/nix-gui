@@ -65,16 +65,13 @@ Currently there are a few major limitations to Nix-Gui, including
 - [[docs/development.org][Development]]
 
 ** Contributing
-
-Non-developers (and interested developers), if you want to help, please
-- Run the application and submit bug report issues on GitHub.
-- Contact me on matrix (details below) to help more directly with UX testing.
-
-Developers, if you're interested in contributing, you may
-- Review the code, run the application, and point out potential improvements, flaws, and bugs by submitting issues.
-- Review milestones and issues and create pull requests to address bugs and missing features.
+Developers and users, if you want to help please
+- Run the application and submit bug report and feature request issues on GitHub.
+- Contribute to the [[https://github.com/nix-gui/nix-gui/issues/129][UX Survey]].
+- See [[https://github.com/nix-gui/nix-gui/labels/good%20first%20issue][good first issues]].
+- Create issues to ask questions about code, documentation, etc (there are no dumb questions).
 - Contribute to important dependencies including [[https://github.com/nix-community/rnix-parser/][rnix-parser]] and [[https://github.com/nix-community/rnix-lsp][rnix-lsp]].
-- Contact me on matrix to discuss.
+- Or contact me on matrix to discuss.
 
 ** Contact
 

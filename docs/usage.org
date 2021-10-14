@@ -10,32 +10,53 @@ Run
 Print help string
 - =nix run github:nix-gui/nix-gui -- --help=
 
-
 * Interface
-TODO: screenshot of interface with boxes around different sections
+Nix-Gui allows for navigation and editing of Nixos options through a GUI.
 
-The options editor is used to make changes to system configuration.
+The main window may be divided into four sections, the *toolbar* (purple), the *navbar* (red), the *navlist* (green), and the *options editors* (black).
 
-The button bar provides tools to assist system configuration changes, apply changes, and change the preferences of the program.
+[[./main_window_sound_quartered.png]]
 
-** Options Editor
+** Toolbar
+The toolbar consists of three functioning tools:
+- Save: Save changes by writing to module(s) in =nixos-config= path.
+- Undo: Revert most recent change to an options value.
+- View Diff: Show a list of changes not yet saved.
 
-** Buttons
+** Navbar
+The navbar is used to manipulate the "URI" being shown in the navlist and options editor. It contains the following:
+- Back Button: Return to previous URI.
+- Up Button: Change URI from =config:option.path.foo.bar= to =config:option.path.foo=.
+- URI Field: Display the current URI. Can be edited if clicked. For option paths, the URI format is =config:option.path.here=, and for searches, the URI format is =search:search text here=.
+- Search Box: Change the URI to =search:entered text=.
 
-* Options Editor
-TODO: screenshot of options editor section of interface with option set navigation, widget type selection, and value setting in boxes
+** Navlist
+The navlist displays option paths available for selection. For example, given a URI of =config:i18n= (internationalization options) the navlist will display =i18n.defaultLocale=, =i18n.extraLocaleSettings=, =i18n.glibcLocales=, =i18n.inputMethods=, and =i18n.supportedLocales=. Clicking =i18n.defaultLocale= will change the URI to =config:i18n.defaultLocale=, and load *option editors* with =i18n.defaultLocal=.
 
-** Option Set Navigation
-- tab view or list view
-- blue: active, yellow: modified in this session, green: modified from default and changes saved
+The navlist provides metadata about option paths, including the number of direct children in the option heirarchy (the parenthesized number), and the state of the option and/or descendants. Green items indicate options whose value has been changed in this session, but not yet committed to disk, yellow items indicate options which are defined in your =nixos-config= path, and white indicates options which are all undefined in your =nixos-config= path.
 
-** Option Setting
-- select widget ( / type ) which will be used to set option value (string? null? int? nix expression?)
-- set value
+** Options Editors
+The option editors section contains widgets for each option available for editing given a URI. For example, in the image above =config:sound= is loaded and =sound.enable=, =sound.enableOSSEmulation=, =sound.extraConfig=, =sound.mediaKeys.enable=, and =sound.mediaKeys.volumeStep= option editors are shown.
 
-** Widget Types
-TODO: screenshots for all of these and their corresponding nix expression
-*** List of Packages
+Each option editor contains metadata about the field including its name, description, and type.
+
+If an option is =undefined=, the system default value is applied, just as would be the case for options which aren't defined in =configuration.nix=. If an option is =defined=, users can choose between different *field widgets* with which the option value will be set.
+
+*** Field Widgets
+Field widgets are used to specify the definition of an option. There are standard field widgets for most nixos option types: =Boolean=, =String=, =Int=, =OneOf=, etc.
+
+Nix-Gui evaluates option definitions expression to determine the /current value/ of an option and sets the field widget accordingly. Changing a field widget will result in the option definition having a new expression. E.g. setting =sound.enable= to true in a boolean field will result in =sound.enable = true;= in nix code.
+
+The literal expression may be edited as well by pressing the =expression= button, which loads the expression editor field widget.
+
+The =reference= editor (not yet implemented) allows you to define an option by referencing another attribute path.
+
+The option editor will automatically select an appropriate field widget based on the options current value.
+
+**** TODO: complete the sections below
+screenshots for all of these and the expression field which they evaluate to
+
+**** List of Packages
 Nixui package manager attempts to have a UI similar to synaptic package manager.
 - It controls the inclusion of packages using checkboxes in a list view.
 - It shows details surrounding each package in that same list view.
@@ -48,16 +69,12 @@ The nature of nix packages requires a few changes. E.g.
 - A packages attributes can be overridden.
 
 
-*** List of Strings
-*** Validated Integer
-*** Validated Text
-*** Boolean
-*** "One of"
-
-* Button Bar
-** Undo
-** Search
-** View Diff
-** Save
-** Build
-** Preferences
+**** List of Strings
+**** Validated Integer
+**** Validated Text
+**** Boolean
+**** OneOf
+**** Expression
+**** Reference
+** Search Interface
+TODO
