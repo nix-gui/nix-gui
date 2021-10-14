@@ -36,7 +36,7 @@ The navlist displays option paths available for selection. For example, given a 
 The navlist provides metadata about option paths, including the number of direct children in the option heirarchy (the parenthesized number), and the state of the option and/or descendants. Green items indicate options whose value has been changed in this session, but not yet committed to disk, yellow items indicate options which are defined in your =nixos-config= path, and white indicates options which are all undefined in your =nixos-config= path.
 
 ** Options Editors
-The option editor section contains widgets for each option available for editing given a URI. For example, in the image above =config:sound= is loaded and =sound.enable=, =sound.enableOSSEmulation=, =sound.extraConfig=, =sound.mediaKeys.enable=, and =sound.mediaKeys.volumeStep= option editors.
+The option editors section contains widgets for each option available for editing given a URI. For example, in the image above =config:sound= is loaded and =sound.enable=, =sound.enableOSSEmulation=, =sound.extraConfig=, =sound.mediaKeys.enable=, and =sound.mediaKeys.volumeStep= option editors are shown.
 
 Each option editor contains metadata about the field including its name, description, and type.
 
