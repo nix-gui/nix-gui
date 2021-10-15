@@ -38,7 +38,19 @@ class OptionNavigationInterface(QtWidgets.QWidget):
 
         self.set_lookup_key(starting_lookup_key)
 
-    def set_lookup_key(self, lookup_key):
+    def revert_to_previous_lookup_key(self):
+        current_uri = self.uri_stack.pop()
+        previous_uri = self.uri_stack.pop()
+        self.set_lookup_key(previous_uri)
+        logger.warning(
+            'Invalid lookup key, reverted from '
+            f'"{current_uri}" to previous URI: "{previous_uri}"'
+        )
+
+    def set_lookup_key(self, lookup_key=None):
+        if lookup_key is None:
+            return self.revert_to_previous_lookup_key()
+
         try:
             if lookup_key.startswith('options:'):
                 option_str = lookup_key.removeprefix('options:')
@@ -51,13 +63,7 @@ class OptionNavigationInterface(QtWidgets.QWidget):
             else:
                 raise ValueError
         except ValueError:
-            broken_uri = self.uri_stack.pop()
-            previous_uri = self.uri_stack.pop()
-            self.set_lookup_key(previous_uri)
-            logger.warning(
-                'Invalid lookup key, reverted from '
-                f'"{broken_uri}" to previous URI: "{previous_uri}"'
-            )
+            self.revert_to_previous_lookup_key()
 
     # TODO: remove option_type, or incorporate it into URI
     def set_option_path(self, option_path, option_type=None):
