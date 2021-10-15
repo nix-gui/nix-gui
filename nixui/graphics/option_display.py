@@ -28,6 +28,8 @@ def get_field_widget_classes_from_type(option_type):
         return [field_widgets.TextField]
     elif isinstance(option_type, types.IntType):
         return [field_widgets.IntegerField]
+   elif isinstance(option_type, types.FloatType):
+        return [field_widgets.FloatField]
     elif isinstance(option_type, types.OneOfType):
         return [field_widgets.OneOfField]
     elif isinstance(option_type, types.PathType):
