@@ -46,7 +46,7 @@ class NavBar(QtWidgets.QWidget):
 
         # create widgets and define behavior
         back_btn = QtWidgets.QPushButton('◀')
-        back_btn.clicked.connect(lambda: print('not implemented'))
+        back_btn.clicked.connect(lambda: set_lookup_key_fn(None))
 
         up_btn = QtWidgets.QPushButton('▲')
         if up_fn is not None:
