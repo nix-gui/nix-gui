@@ -29,7 +29,6 @@ def pytest_collection_modifyitems(config, items):
 @pytest.fixture
 def nix_gui_main_window(qtbot):
     os.environ['CONFIGURATION_PATH'] = os.path.abspath(os.path.join(SAMPLES_PATH, 'configuration.nix'))
-    os.environ['USE_DISKCACHE'] = json.dumps(False)
 
     statemodel = state_model.StateModel()
 
@@ -41,6 +40,5 @@ def nix_gui_main_window(qtbot):
 @pytest.fixture
 def option_tree():
     os.environ['CONFIGURATION_PATH'] = os.path.abspath(os.path.join(SAMPLES_PATH, 'configuration.nix'))
-    os.environ['USE_DISKCACHE'] = json.dumps(False)
     statemodel = state_model.StateModel()
     return statemodel.option_tree

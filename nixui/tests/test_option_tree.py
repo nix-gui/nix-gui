@@ -36,7 +36,6 @@ def test_option_tree_simple_attr_set():
 
 @pytest.mark.datafiles(SAMPLES_PATH)
 def test_set_configuration_loads():
-    os.environ['USE_DISKCACHE'] = json.dumps(False)
     option_tree = api.get_option_tree(
         os.path.abspath(os.path.join(SAMPLES_PATH, 'set_configuration.nix'))
     )
