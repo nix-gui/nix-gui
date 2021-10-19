@@ -225,11 +225,14 @@ class OptionTree:
         - "full": get all descendents
         - "leaves": get only descendents which have no children
         """
-        if mode == "direct":
-            children = self.tree.children(attribute)
-        elif mode == "leaves":
-            children = self.tree.leaves(attribute)
-        else:
+        try:
+            if mode == "direct":
+                children = self.tree.children(attribute)
+            elif mode == "leaves":
+                children = self.tree.leaves(attribute)
+            else:
+                raise ValueError()
+        except treelib.exceptions.NodeIDAbsentError:
             raise ValueError()
         return {
             node.tag: node.data

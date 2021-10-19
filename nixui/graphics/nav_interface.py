@@ -1,3 +1,5 @@
+import collections
+
 from PyQt5 import QtWidgets, QtCore
 
 from nixui.options import api, types
@@ -9,8 +11,10 @@ from nixui.utils.logger import logger
 class OptionNavigationInterface(QtWidgets.QWidget):
     def __init__(self, statemodel, starting_lookup_key='options:'):
         super().__init__()
-
         self.statemodel = statemodel
+
+        # history of lookup keys
+        self.uri_stack = collections.deque()
 
         # widgets
         self.nav_bar = generic_widgets.ReplacableWidget()
@@ -34,19 +38,37 @@ class OptionNavigationInterface(QtWidgets.QWidget):
 
         self.set_lookup_key(starting_lookup_key)
 
-    def set_lookup_key(self, lookup_key):
-        if lookup_key.startswith('options:'):
-            option_str = lookup_key.removeprefix('options:')
-            self.set_option_path(
-                Attribute.from_string(option_str)
-            )
-        elif lookup_key.startswith('search:'):
-            search_str = lookup_key.removeprefix('search:')
-            self.set_search_query(search_str)
-        else:
-            logger.warning('Invalid lookup key, doing nothing.')
+    def revert_to_previous_lookup_key(self):
+        current_uri = self.uri_stack.pop()
+        previous_uri = self.uri_stack.pop()
+        self.set_lookup_key(previous_uri)
+        logger.warning(
+            'Invalid lookup key, reverted from '
+            f'"{current_uri}" to previous URI: "{previous_uri}"'
+        )
 
+    def set_lookup_key(self, lookup_key=None):
+        if lookup_key is None:
+            return self.revert_to_previous_lookup_key()
+
+        try:
+            if lookup_key.startswith('options:'):
+                option_str = lookup_key.removeprefix('options:')
+                self.set_option_path(
+                    Attribute.from_string(option_str)
+                )
+            elif lookup_key.startswith('search:'):
+                search_str = lookup_key.removeprefix('search:')
+                self.set_search_query(search_str)
+            else:
+                raise ValueError
+        except ValueError:
+            self.revert_to_previous_lookup_key()
+
+    # TODO: remove option_type, or incorporate it into URI
     def set_option_path(self, option_path, option_type=None):
+        self.uri_stack.append(f'options:{option_path}')
+
         self.nav_bar.replace_widget(
             navbar.NavBar.as_option_tree(option_path, self.set_lookup_key)
         )
@@ -87,6 +109,8 @@ class OptionNavigationInterface(QtWidgets.QWidget):
             )
 
     def set_search_query(self, search_str):
+        self.uri_stack.append(f'search:{search_str}')
+
         self.nav_bar.replace_widget(
             navbar.NavBar.as_search_query(search_str, self.set_lookup_key)
         )
