@@ -9,14 +9,17 @@ from nixui.utils import store, remap_dict
 #############################
 # utility functions / caching
 ############################
+# TODO: fix - this is bad, it cached option trees even for cases where the configuration_paths contents have changed
 @functools.lru_cache()
-def get_option_tree():
+def get_option_tree(configuration_path=None):
+    if configuration_path is None:
+        configuration_path = os.environ['CONFIGURATION_PATH']
     return option_tree.OptionTree(
         remap_dict.key_remapper(
             nix_eval.get_all_nixos_options(),
             {'system_default': 'system_default_definition'}
         ),
-        parser.get_all_option_values(os.environ['CONFIGURATION_PATH'])
+        parser.get_all_option_values(configuration_path)
     )
 
 
