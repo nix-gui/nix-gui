@@ -42,7 +42,6 @@ def test_set_configuration_loads():
     for attr, old_d, new_d in option_tree.iter_changes(get_configured_changes=True):
         # evaluate expression strings
         (attr, old_d.expression_string, new_d.expression_string)
-    raise Exception
 
 
 def test_option_tree_attr_set_of_submodules():
