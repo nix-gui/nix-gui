@@ -106,14 +106,5 @@ def get_modules_defined_attrs(module_path):
 
 @cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
 def get_modules_import_position(module_path):
-    # TODO: should be part of lib.nix
-    expression = f"""
-    builtins.unsafeGetAttrPos "imports"
-    (import {module_path} {{
-      config = {{}};
-      pkgs = import <nixpkgs> {{}};
-      lib = {{}};
-      modulesPath = builtins.dirOf {module_path};
-    }})
-    """
-    return nix_instantiate_eval(expression, strict=True)
+    with find_library('evalModuleStub') as fn:
+        return nix_instantiate_eval(f'builtins.unsafeGetAttrPos "imports" ({fn} {module_path})', strict=True)
