@@ -94,7 +94,6 @@ def get_modules_defined_attrs(module_path):
     - "loc": [ String ]  # the path of the option e.g.: [ "services" "foo" "enable" ]
     - "position" :       # dict containing "column", "row" and "file" (path) of option (see `unsafeGetAttrPos`)
     """
-
     with find_library('get_modules_defined_attrs') as fn:
         leaves = nix_instantiate_eval(f'{fn} {module_path}', strict=True)
 
