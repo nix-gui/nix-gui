@@ -146,6 +146,41 @@ class IntegerField(QtWidgets.QSpinBox):
         return self.value()
 
 
+class FloatField(QtWidgets.QDoubleSpinBox):
+    name = "Float"
+    stateChanged = QtCore.pyqtSignal(float)
+
+    def __init__(self, option, **constraints):
+        super().__init__()
+        self.option = option
+        self.loaded_value = None
+
+        self.valueChanged.connect(self.stateChanged)
+
+        self.minimum = constraints.get('minimum', float('-inf'))
+        self.maximum = constraints.get('maximum', float('inf'))
+        if constraints.get('minimum'):
+            self.setMinimum(self.minimum)
+        if constraints.get('maximum'):
+            self.setMaximum(self.maximum)
+
+        self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Maximum)
+
+    def validate_field(self, value):
+        if not isinstance(value, float):
+            return False
+        return self.minimum <= value <= self.maximum
+
+    def load_value(self, value):
+        if not self.validate_field(value):
+            value = 0.0
+        self.setValue(value)
+        self.loaded_value = value
+
+    @property
+    def current_value(self):
+        return self.value()
+
 class OneOfRadioFrameField(QtWidgets.QFrame):
     name = "One of"
     stateChanged = QtCore.pyqtSignal(str)
