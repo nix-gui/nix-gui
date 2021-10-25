@@ -1,9 +1,8 @@
-import os
-import pytest
-from nixui.options import nix_eval
+import subprocess
 
-def test_nix_instantiate_eval():
-    assert nix_eval.nix_instantiate_eval("true")
 
-def test_nixpkgs_nixos_instantiate_eval():
-    assert nix_eval.nix_instantiate_eval("<nixpkgs/nixos>")
+def test_nix_info():
+    out = subprocess.check_output([
+        'nix', '--version'
+    ])
+    assert out.decode().startswith('nix (Nix) 2.4')
