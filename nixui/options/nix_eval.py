@@ -87,6 +87,13 @@ def get_all_nixos_options():
 
 @cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
 def get_modules_defined_attrs(module_path):
+    """
+    Get a JSON representation of the modules attributes and positions.
+    Schema is:
+    list of dicts containing
+    - "loc": [ String ]  # the path of the option e.g.: [ "services" "foo" "enable" ]
+    - "position" :       # dict containing "column", "row" and "file" (path) of option (see `unsafeGetAttrPos`)
+    """
     with find_library('get_modules_defined_attrs') as fn:
         leaves = nix_instantiate_eval(f'{fn} {module_path}', strict=True)
 
@@ -98,14 +105,5 @@ def get_modules_defined_attrs(module_path):
 
 @cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
 def get_modules_import_position(module_path):
-    # TODO: should be part of lib.nix
-    expression = f"""
-    builtins.unsafeGetAttrPos "imports"
-    (import {module_path} {{
-      config = {{}};
-      pkgs = import <nixpkgs> {{}};
-      lib = {{}};
-      modulesPath = builtins.dirOf {module_path};
-    }})
-    """
-    return nix_instantiate_eval(expression, strict=True)
+    with find_library('evalModuleStub') as fn:
+        return nix_instantiate_eval(f'builtins.unsafeGetAttrPos "imports" ({fn} {module_path})', strict=True)

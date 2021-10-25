@@ -1,6 +1,15 @@
+import os
+import json
+
+from nixui.options import api
 from nixui.options.option_tree import OptionTree, OptionData
 from nixui.options.attribute import Attribute
 from nixui.options.option_definition import OptionDefinition
+
+import pytest
+
+
+SAMPLES_PATH = 'tests/sample'
 
 
 def test_option_tree_simple():
@@ -23,6 +32,16 @@ def test_option_tree_simple_attr_set():
     t.set_definition(child_attr, OptionDefinition.from_object('val'))
     assert t.get_type(child_attr) == 'string'
     assert t.get_definition(child_attr).obj == 'val'
+
+
+@pytest.mark.datafiles(SAMPLES_PATH)
+def test_set_configuration_loads():
+    option_tree = api.get_option_tree(
+        os.path.abspath(os.path.join(SAMPLES_PATH, 'set_configuration.nix'))
+    )
+    for attr, old_d, new_d in option_tree.iter_changes(get_configured_changes=True):
+        # evaluate expression strings
+        (attr, old_d.expression_string, new_d.expression_string)
 
 
 def test_option_tree_attr_set_of_submodules():

@@ -72,8 +72,9 @@
                 pkgs.nixpkgs-fmt
                 nix-dump-syntax-tree-json
                 pythonPackages.pytest
-                pythonPackages.pytest-qt
+                pythonPackages.pytest-env
                 pythonPackages.pytest-datafiles
+                pythonPackages.pytest-qt
               ];
               checkPhase = let
                 sample = "${./nixui/tests/sample}";

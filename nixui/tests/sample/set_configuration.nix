@@ -1,6 +1,6 @@
 {
   imports = [
-    ./hardware_configuration.nix
+    ./hardware-configuration.nix
   ];
-  programs.emacs.enable = true;
+    system.stateVersion = "20.09";
 }

@@ -18,13 +18,19 @@ in lib.makeExtensible (self: {
 
   /* Extract the declarations of a module
   */
-  evalModuleStub = module_path: import module_path {
-    inherit lib;
-    name = "";
-    config = {};
-    pkgs = {};
-    modulesPath = builtins.dirOf module_path;
-  };
+  evalModuleStub = module_path:
+    let
+      m = import module_path;
+    in
+      if builtins.isFunction m then
+        m {
+          inherit lib;
+          name = "";
+          config = {};
+          pkgs = {};
+          modulesPath = builtins.dirOf module_path;
+        }
+      else m;
 
   /* Get all NixOS options as a list of options with the following schema:
     {
