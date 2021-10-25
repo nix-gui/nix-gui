@@ -68,7 +68,7 @@
               ];
 
               checkInputs = [
-                pkgs.nixUnstable
+                pkgs.nix
                 pkgs.nixpkgs-fmt
                 nix-dump-syntax-tree-json
                 pythonPackages.pytest
