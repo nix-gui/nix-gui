@@ -1,4 +1,5 @@
 import dataclasses
+import json
 import functools
 import os
 import subprocess
@@ -6,6 +7,7 @@ import subprocess
 from nixui.options import nix_eval, syntax_tree, types
 from nixui.utils.singleton import Singleton
 from nixui.utils import hash_by_json
+from nixui.utils.logger import logger
 
 
 Unresolvable = Singleton('Unresolvable')
@@ -249,7 +251,8 @@ def expression_node_to_python_object(value_node, context):
     else:
         try:
             return nix_eval.nix_instantiate_eval(value_node.to_string())
-        except nix_eval.NixEvalError:
+        except (nix_eval.NixEvalError, json.decoder.JSONDecodeError) as e:
+            logger.error(f'Error evaluating {value_node.to_string()}:\nerror={e}')
             return Unresolvable
 
     raise ValueError(value_node.to_string())
