@@ -67,4 +67,7 @@ def get_option_html(option, use_fancy_name=True, child_count=None, type_label=No
 
 
 def docbook_to_html(docbook_str):
-    return pypandoc.convert_text(docbook_str, 'html', format='docbook')
+    try:
+        return pypandoc.convert_text(docbook_str, 'html', format='docbook')
+    except RuntimeError:
+        return None  # handle case - pandoc errors due to invalid XML
