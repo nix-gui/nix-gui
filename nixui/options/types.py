@@ -110,6 +110,8 @@ def from_nix_type_str(nix_type_str, or_legal=True):
         )
     elif nix_type_str.startswith('string without spaces'):
         return StrType(legal_pattern=r'\S*')
+    elif nix_type_str in ('string, not containing newlines or colons'):
+        return StrType(legal_pattern=r'[^\r\n:]*')
     elif nix_type_str == 'unsigned integer, meaning >=0':
         return IntType(minimum=0)
     elif nix_type_str == 'positive integer, meaning >0':
@@ -165,6 +167,7 @@ def from_nix_type_str(nix_type_str, or_legal=True):
         nix_type_str.startswith('privoxy configuration type') or
         nix_type_str.startswith('unbound.conf configuration type.') or
         nix_type_str in (
+            'null or submodule or string convertible to it',
             'systemd option',
             'JSON value',
             'Json value',
