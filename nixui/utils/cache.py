@@ -5,6 +5,7 @@ import os
 import hashlib
 import pickle
 
+import nixui
 from nixui.utils import store
 
 
@@ -12,7 +13,7 @@ from nixui.utils import store
 def _get_cache_path(call_signature, key):
     module, function, args, kwargs = call_signature
     hashval = hashlib.md5(json.dumps([args, kwargs], sort_keys=True).encode('utf-8')).hexdigest()
-    filename = f'{module}/{function}/{hashval}.{key}'
+    filename = f'{_get_version()}/{module}/{function}/{hashval}.{key}'
     path = os.path.join(
         store.get_store_path(),
         'func_cache',
@@ -33,6 +34,10 @@ def _get_from_disk_cache(call_signature, key):
     filepath = _get_cache_path(call_signature, key)
     with open(filepath, 'rb') as f:
         return pickle.load(f)
+
+
+def _get_version():
+    return nixui.__version__
 
 
 def _is_in_disk_cache(call_signature, key):
