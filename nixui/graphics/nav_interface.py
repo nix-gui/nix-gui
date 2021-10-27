@@ -128,6 +128,8 @@ class FieldsGroupBox(QtWidgets.QWidget):
     def __init__(self, statemodel, set_option_path_fn, option=None, is_base_viewer=True, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.elements = []
+
         option_paths = api.get_option_tree().children(option)
         group_box = QtWidgets.QGroupBox()
 
@@ -145,6 +147,7 @@ class FieldsGroupBox(QtWidgets.QWidget):
                     child_option_path,
                     is_base_viewer=False
                 )
+                self.elements.append(fields_group_box)
                 vbox.addWidget(fields_group_box)
             else:
                 option_disp = option_display.GenericOptionDisplay(
@@ -152,6 +155,7 @@ class FieldsGroupBox(QtWidgets.QWidget):
                     set_option_path_fn,
                     child_option_path
                 )
+                self.elements.append(option_disp)
                 vbox.addWidget(option_disp)
             vbox.addWidget(generic_widgets.SeparatorLine())
 
