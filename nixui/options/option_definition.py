@@ -4,7 +4,7 @@ import functools
 import os
 import subprocess
 
-from nixui.options import nix_eval, syntax_tree, types
+from nixui.options import nix_eval, syntax_tree, types, environment
 from nixui.utils.singleton import Singleton
 from nixui.utils import hash_by_json
 from nixui.utils.logger import logger
@@ -18,10 +18,18 @@ Undefined = Singleton('Undefined')
 class Path:
     path: str = None
     cwd: str = None
+    is_nixpkgs_path: bool = False
 
     def eval_full_path(self):
+        if self.is_nixpkgs_path:
+            parent_dir = environment.get_nixpkgs_path()
+            # strip nixpkgs from path because self.path will start with it
+            if os.path.basename(os.path.normpath(parent_dir)) == 'nixpkgs':
+                parent_dir = os.path.dirname(os.path.normpath(parent_dir))
+        else:
+            parent_dir = self.cwd
         return os.path.join(
-            os.path.normpath(self.cwd),
+            os.path.normpath(parent_dir),
             os.path.normpath(self.path)
         )
 
@@ -233,10 +241,19 @@ def expression_node_to_python_object(value_node, context):
             if value_node.elems[0].name == 'NODE_PATH':
                 return Unresolvable  # TODO
             if value_node.elems[0].name == 'TOKEN_PATH':
-                return Path(
-                    value_node.elems[0].quoted,
-                    context['module_dir'],
-                )
+                path_string = value_node.elems[0].quoted
+                if path_string[0] == '<' and path_string[-1] == '>':
+                    print(path_string)
+                    return Path(
+                        path_string[1:-1],
+                        cwd=None,
+                        is_nixpkgs_path=True
+                    )
+                else:
+                    return Path(
+                        path_string,
+                        context['module_dir'],
+                    )
             elif value_node.elems[0].name == 'TOKEN_INTEGER':
                 return int(value_node.elems[0].quoted)
             elif value_node.elems[0].name == 'TOKEN_URI':

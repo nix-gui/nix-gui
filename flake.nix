@@ -74,6 +74,7 @@
                 pythonPackages.pytest
                 pythonPackages.pytest-env
                 pythonPackages.pytest-datafiles
+                pythonPackages.pytest-mock
                 pythonPackages.pytest-qt
               ];
               checkPhase = let
