@@ -12,8 +12,8 @@ from nixui.utils import store
 @functools.lru_cache()
 def _get_cache_path(call_signature, key):
     module, function, args, kwargs = call_signature
-    hashval = hashlib.md5(json.dumps([args, kwargs, _get_version()], sort_keys=True).encode('utf-8')).hexdigest()
-    filename = f'{module}/{function}/{hashval}.{key}'
+    hashval = hashlib.md5(json.dumps([args, kwargs], sort_keys=True).encode('utf-8')).hexdigest()
+    filename = f'{_get_version()}/{module}/{function}/{hashval}.{key}'
     path = os.path.join(
         store.get_store_path(),
         'func_cache',
