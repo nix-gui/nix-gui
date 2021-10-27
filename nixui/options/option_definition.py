@@ -243,7 +243,6 @@ def expression_node_to_python_object(value_node, context):
             if value_node.elems[0].name == 'TOKEN_PATH':
                 path_string = value_node.elems[0].quoted
                 if path_string[0] == '<' and path_string[-1] == '>':
-                    print(path_string)
                     return Path(
                         path_string[1:-1],
                         is_nixpkgs_path=True
