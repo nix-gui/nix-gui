@@ -6,6 +6,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from nixui.graphics import icon, richtext, color_indicator
 from nixui.options.attribute import Attribute
 from nixui.options import api, option_definition, types
+from nixui.utils.logger import logger
 
 
 class GenericNavListDisplay:
@@ -231,10 +232,20 @@ class DynamicListOf(QtWidgets.QWidget):
         self.list_widget.takeItem(self.list_widget.currentItem())
 
     def up_clicked(self):
-        print('up')
+        current_row = self.list_widget.currentRow()
+        if current_row == 0:
+            logger.info('Cannot move item up, current index is 0')
+        current_item = self.list_widget.takeItem(current_row)
+        self.list_widget.insertItem(current_row - 1, current_item)
 
     def down_clicked(self):
-        print('down')
+        last_item_idx = self.list_widget.count() - 1
+        current_row = self.list_widget.currentRow()
+        if current_row == last_item_idx:
+            logger.info('Cannot move item up, current index is end of list')
+        current_item = self.list_widget.takeItem(current_row)
+        self.list_widget.addItem(current_item)
+
 
     def insert_items(self):
         for option in api.get_option_tree().children(self.option_path):

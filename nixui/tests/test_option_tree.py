@@ -44,5 +44,19 @@ def test_set_configuration_loads():
         (attr, old_d.expression_string, new_d.expression_string)
 
 
+@pytest.mark.datafiles(SAMPLES_PATH)
+def test_list_children_simple():
+    option_tree = api.get_option_tree(
+        os.path.abspath(os.path.join(SAMPLES_PATH, 'configuration.nix'))
+    )
+    children = option_tree.children(
+        Attribute.from_string('networking.firewall.allowedTCPPorts')
+    )
+    assert children == [80, 443]
+
+
+# TODO: test unbound.settings.forward-zone
+
+
 def test_option_tree_attr_set_of_submodules():
     pass
