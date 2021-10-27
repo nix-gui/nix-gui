@@ -246,13 +246,12 @@ def expression_node_to_python_object(value_node, context):
                     print(path_string)
                     return Path(
                         path_string[1:-1],
-                        cwd=None,
                         is_nixpkgs_path=True
                     )
                 else:
                     return Path(
                         path_string,
-                        context['module_dir'],
+                        cwd=context['module_dir'],
                     )
             elif value_node.elems[0].name == 'TOKEN_INTEGER':
                 return int(value_node.elems[0].quoted)
