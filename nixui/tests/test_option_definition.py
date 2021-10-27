@@ -24,3 +24,16 @@ def test_import_path():
     )
     assert len(d.obj) == 1
     assert d.obj[0].eval_full_path() == '/foo/hardware-configuration.nix'
+
+
+def test_import_path_nixpkgs(mocker):
+    mocker.patch('nixui.options.environment.get_nixpkgs_path', return_value='/mocked/nixpkgs')
+
+    d = OptionDefinition.from_expression_string(
+        """[
+        <nixpkgs/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix>
+        ]""",
+        context={'module_dir': '/foo'},  # unused, but required arg
+    )
+    assert len(d.obj) == 1
+    assert d.obj[0].eval_full_path() == '/mocked/nixpkgs/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix'
