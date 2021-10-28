@@ -42,7 +42,7 @@ class OptionNavigationInterface(QtWidgets.QWidget):
         current_uri = self.uri_stack.pop()
         previous_uri = self.uri_stack.pop()
         self.set_lookup_key(previous_uri)
-        logger.info(f'reverted from "{current_uri}" to previous URI: "{previous_uri}"'
+        logger.info(f'reverted from "{current_uri}" to previous URI: "{previous_uri}"')
 
     def set_lookup_key(self, lookup_key=None):
         if lookup_key is None:
