@@ -16,7 +16,7 @@
 
         nix-dump-syntax-tree-json = with pkgs; rustPlatform.buildRustPackage rec {
            pname = "nix_dump_syntax_tree_json";
-           version = "0.1.1";
+           version = "0.1.0";
 
            src = ./nix_dump_syntax_tree_json;
            cargoHash = "sha256-8yRlG8Paza3sE5GqhB8f0yzF8Pl0CI7F0W8VRhEN6BE=";
@@ -51,7 +51,7 @@
           ({ stdenv, lib, rustPlatform, fetchFromGitHub, enable-profiling ? false }:
             pythonPackages.buildPythonPackage rec {
               pname = "nix-gui";
-              version = "0.1.0";
+              version = "0.1.2";
               src = ./.;
               propagatedBuildInputs = [
                 pythonPackages.pyqt5
