@@ -7,15 +7,11 @@ import sys
 
 from PyQt5 import QtWidgets
 
+from nixui.options import environment
 from nixui.graphics import main_window
 from nixui import state_model
 
 
-def get_nixos_config_path(nix_path=os.environ['NIX_PATH']):
-    nixos_configs = [elem for elem in nix_path.split(':') if elem.startswith('nixos-config=')]
-    assert len(nixos_configs) <= 1, 'more than one nixos-config defined in NIX_PATH'
-    assert len(nixos_configs) > 0, 'no nixos-config defined in NIX_PATH'
-    return nixos_configs[0].removeprefix('nixos-config=')
 
 def handle_args():
     parser = argparse.ArgumentParser()
@@ -23,7 +19,7 @@ def handle_args():
     required = parser.add_argument_group('required arguments')
     optional = parser.add_argument_group('optional arguments')
 
-    nixos_config = get_nixos_config_path()
+    nixos_config = environment.get_nixos_config_path()
     optional.add_argument(
         "-c",
         "--config-path",

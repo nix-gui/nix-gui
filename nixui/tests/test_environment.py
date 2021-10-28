@@ -1,4 +1,4 @@
-from nixui.main import get_nixos_config_path
+from nixui.options.environment import get_nixos_config_path
 
 
 def test_get_nixos_config():
