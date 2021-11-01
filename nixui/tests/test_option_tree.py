@@ -52,11 +52,4 @@ def test_list_children_simple():
     children = option_tree.children(
         Attribute.from_string('networking.firewall.allowedTCPPorts')
     )
-    assert children == [80, 443]
-
-
-# TODO: test unbound.settings.forward-zone
-
-
-def test_option_tree_attr_set_of_submodules():
-    pass
+    assert [c.configured_definition.obj for c in children.values()] == [80, 443]
