@@ -27,12 +27,12 @@
     };
 
   fileSystems."/home/sample/media" =
-    { device = "/dev/disk/by-uuid/03dbdfd1-9f2e-4755-8d29-32e9352ce043";
+    { device = "/dev/disk/by-uuid/7416be6f-2c6d-1fc9-852c-cf6c8227d38f";
       fsType = "xfs";
     };
 
   swapDevices =
-    [ { device = "/dev/disk/by-uuid/4f824f11-cd8e-46af-a5d8-47c6806d76ac"; }
+    [ { device = "/dev/disk/by-uuid/c7c1dcc0-c828-3a36-d44e-efeb602044a8"; }
     ];
 
 }
