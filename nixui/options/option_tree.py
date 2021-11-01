@@ -11,6 +11,7 @@ from nixui.utils.logger import logger
 
 @dataclasses.dataclass
 class OptionData:
+    is_system_option: bool = False  # the node is part of a declaraed option or part of Attrs/List defining one
     description: str = Undefined
     readOnly: bool = Undefined
     _type: str = Undefined
@@ -50,13 +51,16 @@ class OptionTree:
         # insert option data with parent option data inserted first via `sorted`
         sort_key = lambda s: str(s[0]).replace('"<name>"', '')  # todo, clean up this hack
         for option_path, option_data_dict in sorted(system_option_data.items(), key=sort_key):
-            self._upsert_node_data(option_path, option_data_dict)
+            self._upsert_node_data(
+                option_path,
+                {
+                    'is_system_option': True,
+                    **option_data_dict,
+                }
+            )
         for option_path, option_definition in config_options.items():
-            if self.tree.get_node(option_path):
-                self._upsert_node_data(option_path, {'configured_definition': option_definition})
-                self.configured_change_cache[option_path] = option_definition
-            else:
-                logger.error(f'"{option_path}" not a valid option, ignored')
+            self._upsert_node_data(option_path, {'configured_definition': option_definition})
+            self.configured_change_cache[option_path] = option_definition
 
     def __hash__(self):
         return hash(self.change_marker)
