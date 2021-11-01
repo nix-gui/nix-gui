@@ -46,7 +46,11 @@ def nix_instantiate_eval(expr, strict=False, show_trace=False, retry_show_trace_
     out, err = p.communicate()
 
     if out:
-        return json.loads(out)
+        try:
+            return json.loads(out)
+        except json.decoder.JSONDecodeError as e:
+            logger.error(f"Failed to decode output:\n{out}")
+            raise e
     else:
         if retry_show_trace_on_error and not show_trace:
             return nix_instantiate_eval(expr, strict, show_trace=True)
