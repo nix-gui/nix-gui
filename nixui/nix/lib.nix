@@ -73,6 +73,7 @@ in lib.makeExtensible (self: {
 
     config = builtins.removeAttrs (evalModuleStub module_path) ["imports"];
 
+    # TODO: find a better way of getting module path
     hacked_module_path = (builtins.unsafeGetAttrPos (builtins.elemAt (builtins.attrNames config) 0) config).file;
   in
     collectDeclarationPositions {module_path = hacked_module_path; declarations = config;};
