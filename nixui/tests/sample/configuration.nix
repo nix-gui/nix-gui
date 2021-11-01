@@ -93,11 +93,10 @@ in {
       '';
     };
 
-    redshift = {
-      enable = false;
-      temperature.day = 6500;
-      temperature.night = 4500;
-    };
+    # Test parser - multiple 'redshift'
+    redshift.enable = false;
+    redshift.temperature.day = 6500;
+    redshift.temperature.night = 4500;
 
   };
 
@@ -156,7 +155,9 @@ in {
 
   virtualisation.libvirtd.enable = true;
 
+  # test parser - multiple submodule attributes
   fileSystems."/".options = [ "noatime" "nodiratime" "discard" ];
+  fileSystems."/".label = "sampledrive";
 
   # The NixOS release to be compatible with for stateful data such as databases.
   # This doesn't need to be changed in new versions, however some programs will need

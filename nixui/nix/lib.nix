@@ -1,20 +1,37 @@
 let
   inherit (import <nixpkgs> {}) pkgs lib;
 in lib.makeExtensible (self: {
-  /* Recurse through the option tree and declaration tree of a module
-     in parallel, collecting the positions of the declarations in the
-     module
+  /* Recurse through the declaration tree of a module collecting
+     the positions of the declarations within the module
 
      Type:
        collectDeclarationPositions ::
          AttrSet -> AttrSet -> [{ loc = [String]; position = Position; }]
   */
-  collectDeclarationPositions = options: declarations:
+  collectDeclarationPositions = {module_path, declarations, option_path ? []}:
     lib.concatMap
-      (k: if ((options."${k}"._type or "") == "option")
-          then [{loc = options."${k}".loc; position = builtins.unsafeGetAttrPos k declarations;}]
-          else self.collectDeclarationPositions options."${k}" declarations."${k}")
+      # If we can get the children of declaration (isAttrs) and they're within the same module, recurse
+      (k:
+        let
+          pos = builtins.unsafeGetAttrPos k declarations;
+          sub_path = option_path ++ [k];
+        in
+          if (pos.file or "") == module_path
+          then (
+            [{loc = sub_path; position = pos;}] ++ (
+                if builtins.isAttrs declarations."${k}"
+                then self.collectDeclarationPositions {
+                  module_path = module_path;
+                  declarations = declarations."${k}";
+                  option_path = sub_path;
+                }
+                else []
+              )
+          )
+          else []
+      )
       (builtins.attrNames declarations);
+
 
   /* Extract the declarations of a module
   */
@@ -25,9 +42,9 @@ in lib.makeExtensible (self: {
       if builtins.isFunction m then
         m {
           inherit lib;
+          inherit pkgs;
           name = "";
           config = {};
-          pkgs = {};
           modulesPath = builtins.dirOf module_path;
         }
       else m;
@@ -54,10 +71,10 @@ in lib.makeExtensible (self: {
   get_modules_defined_attrs = module_path: let
     inherit (self) collectDeclarationPositions evalModuleStub;
 
-    nixos = import <nixpkgs/nixos> {configuration={};};
-
     config = builtins.removeAttrs (evalModuleStub module_path) ["imports"];
+
+    hacked_module_path = (builtins.unsafeGetAttrPos (builtins.elemAt (builtins.attrNames config) 0) config).file;
   in
-    collectDeclarationPositions nixos.options config;
+    collectDeclarationPositions {module_path = hacked_module_path; declarations = config;};
 
 })
