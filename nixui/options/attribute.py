@@ -23,6 +23,14 @@ class Attribute:
     def get_end(self):
         return self.loc[-1]
 
+    def startswith(self, attribute_set):
+        if len(attribute_set) > len(self):
+            return False
+        for i, key in enumerate(attribute_set):
+            if self[i] != key:
+                return False
+        return True
+
     def __bool__(self):
         return bool(self.loc)
 

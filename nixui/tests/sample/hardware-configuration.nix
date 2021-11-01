@@ -26,7 +26,7 @@
       fsType = "xfs";
     };
 
-  fileSystems."/home/geir/media" =
+  fileSystems."/home/sample/media" =
     { device = "/dev/disk/by-uuid/03dbdfd1-9f2e-4755-8d29-32e9352ce043";
       fsType = "xfs";
     };

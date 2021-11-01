@@ -92,15 +92,32 @@ def get_modules_defined_attrs(module_path):
     Schema is:
     list of dicts containing
     - "loc": [ String ]  # the path of the option e.g.: [ "services" "foo" "enable" ]
-    - "position" :       # dict containing "column", "row" and "file" (path) of option (see `unsafeGetAttrPos`)
+    - "position" :       # dict containing "column", "line" and "file" (path) of option (see `unsafeGetAttrPos`)
     """
     with find_library('get_modules_defined_attrs') as fn:
         leaves = nix_instantiate_eval(f'{fn} {module_path}', strict=True)
 
+    # if descendant and ancestor have same position (e.g. `boot.initrd` and `boot`) only keep the child
+    position_loc_map = {}
+    for leaf in leaves:
+        attr = Attribute(leaf['loc'])
+        position_tuple = (leaf['position']['column'], leaf['position']['line'], leaf['position']['file'])
+        if position_tuple in position_loc_map:
+            if position_loc_map[position_tuple].startswith(attr):
+                pass
+            elif attr.startswith(position_loc_map[position_tuple]):
+                position_loc_map[position_tuple] = attr
+            else:
+                raise ValueError(f'{position_loc_map[position_tuple]} and {attr} have same position, but incompatible paths')
+        else:
+            position_loc_map[position_tuple] = attr
+
     return {
         Attribute(v['loc']): {"position": v['position']}
         for v in leaves
+        if Attribute(v['loc']) in position_loc_map.values()
     }
+
 
 
 @cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
