@@ -25,7 +25,6 @@ def test_load_edit_save(option_loc, new_value):
     - extract options value from state_model and compare value to original value from configuration.nix
     """
     os.environ['CONFIGURATION_PATH'] = os.path.abspath(os.path.join(SAMPLES_PATH, 'configuration.nix'))
-    os.environ['NIXGUI_CONFIGURATION_PATH_CAN_BE_CORRUPTED'] = 'true'
     # open, update, save
     m0 = state_model.StateModel()
     v0 = m0.get_definition(option_loc)
