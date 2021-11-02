@@ -201,7 +201,9 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.handle_state_change()
 
     def handle_state_change(self):
-        self.statemodel.slotmapper('form_definition_changed')(self.option, self.definition)
+        current_widget = self.field_widgets[self.entry_stack.currentIndex()]
+        if not isinstance(current_widget, field_widgets.Redirect):
+            self.statemodel.slotmapper('form_definition_changed')(self.option, self.definition)
 
     @property
     def definition(self):
@@ -209,8 +211,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
             return option_definition.OptionDefinition.undefined()
         current_widget = self.field_widgets[self.entry_stack.currentIndex()]
         if isinstance(current_widget, field_widgets.Redirect):
-            #  TODO: implement getting definition based on value of descendents
-            return option_definition.OptionDefinition.from_object('CHECK DESCENDENTS')
+            return
         form_value = current_widget.current_value
         if isinstance(current_widget, field_widgets.ExpressionField):
             return option_definition.OptionDefinition.from_expression_string(form_value)
