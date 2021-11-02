@@ -24,12 +24,15 @@ Update = collections.namedtuple('Update', ['option', 'old_definition', 'new_defi
 class StateModel:
     def __init__(self):
         self.update_history = []
-        self.option_tree = api.get_option_tree()
 
         # TODO: is including the slotmapper overloading the StateModel? What are the alternatives?
         self.slotmapper = SlotMapper()
         self.slotmapper.add_slot('form_definition_changed', self.record_update)
         self.slotmapper.add_slot('undo', self.undo)
+
+    @property
+    def option_tree(self):
+        return api.get_option_tree()
 
     def get_definition(self, option):
         return self.option_tree.get_definition(option)
