@@ -96,4 +96,4 @@ def cache(retain_hash_fn=(lambda *args, **kwargs: 0), return_copy=True, diskcach
 
 
 configuration_path_hash_fn = lambda: hashlib.sha256(open(os.environ['CONFIGURATION_PATH'], 'rb').read()).hexdigest()
-first_arg_path_hash_fn = lambda path: hashlib.sha256(open(path, 'rb').read()).hexdigest()
+first_arg_path_hash_fn = lambda path=None: hashlib.sha256(open(path or os.environ['CONFIGURATION_PATH'], 'rb').read()).hexdigest()
