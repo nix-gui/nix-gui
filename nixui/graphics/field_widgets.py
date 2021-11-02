@@ -15,7 +15,6 @@ class Redirect(QtWidgets.QLabel):
     stateChanged = QtCore.pyqtSignal(str)
     def __init__(self, option, *args, **kwargs):
         super().__init__()
-        pass
 
 
 class SubmoduleRedirect(Redirect):
