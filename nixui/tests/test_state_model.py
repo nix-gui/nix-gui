@@ -43,3 +43,55 @@ def test_load_edit_save(option_loc, new_value):
     m2 = state_model.StateModel()
     v2 = m2.get_definition(option_loc)
     assert v0 == v2
+
+
+def test_get_update_set_simple(statemodel):
+    statemodel.record_update(
+        Attribute.from_string('sound.enable'),
+        OptionDefinition.from_object(False)
+    )
+    statemodel.persist_updates()
+    statemodel.record_update(
+        Attribute.from_string('sound.enable'),
+        OptionDefinition.from_object(True)
+    )
+    updates = statemodel.get_update_set()
+    assert len(updates) == 1
+    assert updates[0].old_definition.obj == False
+    assert updates[0].new_definition.obj == True
+
+
+def test_get_update_set_defined_by_descendent(statemodel):
+    # test depends on sample/configuration.nix
+    """
+      services = {
+
+        # test list of submodules
+        bookstack.nginx.listen = [
+          {
+            addr = "195.154.1.1";
+            port = 443;
+            ssl = true;
+          }
+          {
+            addr = "192.154.1.1";
+            port = 80;
+          }
+        ];
+        ...
+    """
+    statemodel.record_update(
+        Attribute.from_string('services.bookstack.nginx.listen."[0]".addr'),
+        OptionDefinition.from_object('10.0.0.1')
+    )
+    updates = statemodel.get_update_set()
+    assert len(updates) == 1
+    assert updates[0].option == Attribute.from_string('services.bookstack.nginx.listen')
+    assert updates[0].old_definition.obj == [
+        {'addr': "195.154.1.1", 'port': 443, 'ssl': True},
+        {'addr': "192.154.1.1", 'port': 80}
+    ]
+    assert updates[0].new_definition.obj == [
+        {'addr': "10.0.0.1", 'port': 443, 'ssl': True},
+        {'addr': "192.154.1.1", 'port': 80}
+    ]
