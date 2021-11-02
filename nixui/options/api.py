@@ -1,16 +1,13 @@
-import collections
-import functools
 import os
 
 from nixui.options import parser, nix_eval, option_tree
-from nixui.utils import store, remap_dict
+from nixui.utils import cache, store, remap_dict
 
 
 #############################
 # utility functions / caching
 ############################
-# TODO: fix - this is bad, it cached option trees even for cases where the configuration_paths contents have changed
-@functools.lru_cache()
+@cache.cache(cache.first_arg_path_hash_fn, diskcache=False)
 def get_option_tree(configuration_path=None):
     if configuration_path is None:
         configuration_path = os.environ['CONFIGURATION_PATH']
