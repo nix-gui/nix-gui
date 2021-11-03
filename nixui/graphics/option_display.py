@@ -178,14 +178,13 @@ class GenericOptionDisplay(QtWidgets.QWidget):
 
     def load_selected_field_widget(self, arg=None):
         stack_idx = self.field_selector.checked_index()
-        current_widget = self.field_widgets[stack_idx]
         definition = self.statemodel.get_definition(self.option)
-        if isinstance(current_widget, field_widgets.Redirect):
+        if isinstance(self.current_widget, field_widgets.Redirect):
             pass
-        elif isinstance(current_widget, field_widgets.ExpressionField):
-            current_widget.load_value(definition.expression_string)
+        elif isinstance(self.current_widget, field_widgets.ExpressionField):
+            self.current_widget.load_value(definition.expression_string)
         else:
-            current_widget.load_value(definition.obj)
+            self.current_widget.load_value(definition.obj)
         self.entry_stack.setCurrentIndex(stack_idx)
         self.handle_state_change()
 
@@ -200,19 +199,21 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.handle_state_change()
 
     def handle_state_change(self):
-        current_widget = self.field_widgets[self.entry_stack.currentIndex()]
-        if not isinstance(current_widget, field_widgets.Redirect):
+        if not isinstance(self.current_widget, field_widgets.Redirect):
             self.statemodel.slotmapper('form_definition_changed')(self.option, self.definition)
+
+    @property
+    def current_widget(self):
+        return self.field_widgets[self.entry_stack.currentIndex()]
 
     @property
     def definition(self):
         if not self.is_defined_toggle.isChecked():
             return option_definition.OptionDefinition.undefined()
-        current_widget = self.field_widgets[self.entry_stack.currentIndex()]
-        if isinstance(current_widget, field_widgets.Redirect):
+        if isinstance(self.current_widget, field_widgets.Redirect):
             raise ValueError("Attempted getting definition for redirect")  # should be an unreachable line
-        form_value = current_widget.current_value
-        if isinstance(current_widget, field_widgets.ExpressionField):
+        form_value = self.current_widget.current_value
+        if isinstance(self.current_widget, field_widgets.ExpressionField):
             return option_definition.OptionDefinition.from_expression_string(form_value)
         else:
             return option_definition.OptionDefinition.from_object(form_value)
