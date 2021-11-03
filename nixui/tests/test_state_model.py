@@ -96,5 +96,5 @@ def test_get_update_set_defined_by_descendent(statemodel):
     assert updates[0].new_definition.obj == "10.0.0.1"
 
     assert updates[1].option == Attribute.from_string('services.bookstack.nginx.listen."[1]".port')
-    assert updates[0].old_definition.obj == 80
-    assert updates[0].new_definition.obj == 101
+    assert updates[1].old_definition.obj == 80
+    assert updates[1].new_definition.obj == 101
