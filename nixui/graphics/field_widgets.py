@@ -7,14 +7,15 @@ from nixui.graphics import color_indicator, richtext, generic_widgets, toggle_sw
 
 
 # TODO: fix this hacky handling of `Redirect` (#109)
-class Redirect(QtWidgets.QLabel):
+class Redirect(QtWidgets.QPushButton):
     """
     not actual fields or widgets, but encode information to
     allow for redirection when its corresponding button is pressed
     """
     stateChanged = QtCore.pyqtSignal(str)
-    def __init__(self, option, *args, **kwargs):
-        super().__init__()
+    def __init__(self, option, set_option_path_fn):
+        super().__init__(f"Edit {self.name} for {option[-1]}...")
+        self.clicked.connect(lambda: set_option_path_fn(option))
 
 
 class SubmoduleRedirect(Redirect):
