@@ -123,11 +123,12 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         )
         fields = []
         for field_widget_class in field_widget_classes:
-            field = field_widget_class(option)
-            # TODO: fix this hacky handling of `Redirect` (#109)
-            if not isinstance(field, field_widgets.Redirect):
-                field.stateChanged.connect(self.handle_state_change)
-                self.statemodel.slotmapper.add_slot(('update_field', option), self._load_definition)
+            if issubclass(field_widget_class, field_widgets.Redirect):
+                field = field_widget_class(option, self.set_option_path_fn)
+            else:
+                field = field_widget_class(option)
+            field.stateChanged.connect(self.handle_state_change)
+            self.statemodel.slotmapper.add_slot(('update_field', option), self._load_definition)
             fields.append(field)
         return fields
 
@@ -165,24 +166,22 @@ class GenericOptionDisplay(QtWidgets.QWidget):
 
         for i, field in enumerate(self.field_widgets):
             if isinstance(field, field_widgets.Redirect):
-                continue
+                pass
             elif isinstance(field, field_widgets.ExpressionField):
-                self.field_selector.select(i)
                 field.load_value(option_definition.expression_string)
-                break
             elif field.validate_field(option_definition.obj):
-                self.field_selector.select(i)
                 field.load_value(option_definition.obj)
-                break
+            else:
+                continue
+            self.field_selector.select(i)
+
 
     def load_selected_field_widget(self, arg=None):
         stack_idx = self.field_selector.checked_index()
         current_widget = self.field_widgets[stack_idx]
         definition = self.statemodel.get_definition(self.option)
-        # TODO: fix this hacky handling of `Redirect` (#109)
         if isinstance(current_widget, field_widgets.Redirect):
-            self.set_option_path_fn(self.option, current_widget.option_type)
-            return
+            pass
         elif isinstance(current_widget, field_widgets.ExpressionField):
             current_widget.load_value(definition.expression_string)
         else:
@@ -211,7 +210,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
             return option_definition.OptionDefinition.undefined()
         current_widget = self.field_widgets[self.entry_stack.currentIndex()]
         if isinstance(current_widget, field_widgets.Redirect):
-            return
+            raise ValueError("Attempted getting definition for redirect")  # should be an unreachable line
         form_value = current_widget.current_value
         if isinstance(current_widget, field_widgets.ExpressionField):
             return option_definition.OptionDefinition.from_expression_string(form_value)
