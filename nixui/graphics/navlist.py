@@ -12,9 +12,9 @@ from nixui.utils.logger import logger
 class GenericNavListDisplay:
     def __new__(cls, statemodel, set_option_path_fn, option_path, option_type=None, selected=None):
         if option_type is None:
-            option_type = types.from_nix_type_str(
+            option_type = type(types.from_nix_type_str(
                 api.get_option_tree().get_type(option_path)
-            )
+            ))
         if option_type == types.AttrsOfType:
             return DynamicAttrsOf(statemodel, option_path, set_option_path_fn, selected)
         elif option_type == types.ListOfType:
