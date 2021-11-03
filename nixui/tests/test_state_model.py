@@ -84,14 +84,17 @@ def test_get_update_set_defined_by_descendent(statemodel):
         Attribute.from_string('services.bookstack.nginx.listen."[0]".addr'),
         OptionDefinition.from_object('10.0.0.1')
     )
+    statemodel.record_update(
+        Attribute.from_string('services.bookstack.nginx.listen."[1]".port'),
+        OptionDefinition.from_object(101)
+    )
     updates = statemodel.get_update_set()
-    assert len(updates) == 1
-    assert updates[0].option == Attribute.from_string('services.bookstack.nginx.listen')
-    assert updates[0].old_definition.obj == [
-        {'addr': "195.154.1.1", 'port': 443, 'ssl': True},
-        {'addr': "192.154.1.1", 'port': 80}
-    ]
-    assert updates[0].new_definition.obj == [
-        {'addr': "10.0.0.1", 'port': 443, 'ssl': True},
-        {'addr': "192.154.1.1", 'port': 80}
-    ]
+    assert len(updates) == 2
+
+    assert updates[0].option == Attribute.from_string('services.bookstack.nginx.listen."[0]".addr')
+    assert updates[0].old_definition.obj == "195.154.1.1"
+    assert updates[0].new_definition.obj == "10.0.0.1"
+
+    assert updates[1].option == Attribute.from_string('services.bookstack.nginx.listen."[1]".port')
+    assert updates[0].old_definition.obj == 80
+    assert updates[0].new_definition.obj == 101
