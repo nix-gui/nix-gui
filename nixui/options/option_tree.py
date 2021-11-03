@@ -12,7 +12,7 @@ from nixui.utils.logger import logger
 
 @dataclasses.dataclass
 class OptionData:
-    is_system_option: bool = False  # the node is part of a declaraed option or part of Attrs/List defining one
+    is_declared_option: bool = False  # the node is part of a declaraed option or part of Attrs/List defining one
     description: str = Undefined
     readOnly: bool = Undefined
     _type: str = Undefined
@@ -55,7 +55,7 @@ class OptionTree:
             self._upsert_node_data(
                 option_path,
                 {
-                    'is_system_option': True,
+                    'is_declared_option': True,
                     **option_data_dict,
                 }
             )
@@ -229,6 +229,9 @@ class OptionTree:
 
     def is_readonly(self, attribute):
         return self._get_data(attribute).readOnly
+
+    def is_declared_option(self, attribute):
+        return self._get_data(attribute).is_declared_option
 
     def children(self, attribute, mode="direct"):
         """
