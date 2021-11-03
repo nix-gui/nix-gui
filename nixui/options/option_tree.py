@@ -143,6 +143,14 @@ class OptionTree:
         return self.tree.get_node(attribute).data
 
     def iter_changes(self, get_configured_changes=False):
+        """
+        Iterate over each attribute which has been changed, their old definition and new definition.
+        If an options definition is distinct from the its old setting it is included.
+
+        get_configured_changes:
+            If true, iterate over differences between systems defaults and changes in memory / in `nixos-config`
+            If false, iterate over differences between in memory changes and system defaults / `nixos-config
+        """
         if get_configured_changes:
             change_cache = self.configured_change_cache
         else:
