@@ -1,8 +1,7 @@
 import os
-import json
 
 from nixui.options import api, types
-from nixui.options.option_tree import OptionTree, OptionData
+from nixui.options.option_tree import OptionTree
 from nixui.options.attribute import Attribute
 from nixui.options.option_definition import OptionDefinition
 

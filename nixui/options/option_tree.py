@@ -8,7 +8,6 @@ import treelib.exceptions
 from nixui.options import types
 from nixui.options.attribute import Attribute
 from nixui.options.option_definition import OptionDefinition, Undefined
-from nixui.utils.logger import logger
 
 
 @dataclasses.dataclass
