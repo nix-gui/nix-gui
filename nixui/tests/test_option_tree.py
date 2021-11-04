@@ -1,7 +1,7 @@
 import os
 import json
 
-from nixui.options import api
+from nixui.options import api, types
 from nixui.options.option_tree import OptionTree, OptionData
 from nixui.options.attribute import Attribute
 from nixui.options.option_definition import OptionDefinition
@@ -25,12 +25,12 @@ def test_option_tree_simple():
 def test_option_tree_simple_attr_set():
     attr = Attribute(['foo', 'bar'])
     t = OptionTree(
-        {attr: {'_type': 'attribute set of strings'}},
+        {attr: {'_type': types.AttrsOfType(types.StrType())}},
         {},
     )
     child_attr = Attribute(['foo', 'bar', 'baz'])
     t.set_definition(child_attr, OptionDefinition.from_object('val'))
-    assert t.get_type(child_attr) == 'string'
+    assert t.get_type(child_attr) == types.StrType()
     assert t.get_definition(child_attr).obj == 'val'
 
 

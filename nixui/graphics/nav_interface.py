@@ -71,10 +71,7 @@ class OptionNavigationInterface(QtWidgets.QWidget):
             navbar.NavBar.as_option_tree(option_path, self.set_lookup_key)
         )
         num_children = len(api.get_option_tree().children(option_path, mode="leaves"))
-        if option_type is None:
-            option_type = types.from_nix_type_str(
-                api.get_option_tree().get_type(option_path)
-            )
+        option_type = option_type or api.get_option_tree().get_type(option_path)
 
         # if 10 or fewer options, navlist with lowest level attribute selected and list of editable fields to the right
         # otherwise, show list of attributes within the clicked attribute and blank to the right

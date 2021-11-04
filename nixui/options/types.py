@@ -1,7 +1,7 @@
 """
 based on https://github.com/NixOS/nixpkgs/blob/master/lib/types.nix
 """
-
+import abc
 import dataclasses
 import typing
 import os
@@ -59,11 +59,11 @@ def from_nix_type_str(nix_type_str, or_legal=True):
 
     # types "containing" other types in their definitions
     elif nix_type_str.startswith('list of') and nix_type_str.endswith('s'):
-        return ListOf(
+        return ListOfType(
             from_nix_type_str(nix_type_str.removeprefix('list of ').removesuffix('s'))
         )
     elif nix_type_str.startswith('attribute set of'):
-        return AttrsOf(
+        return AttrsOfType(
             from_nix_type_str(nix_type_str.removeprefix('attribute set of ').removesuffix('s'))
         )
     elif nix_type_str.startswith('function that evaluates to a(n) '):
@@ -207,6 +207,8 @@ def from_nix_type_str(nix_type_str, or_legal=True):
             'Traffic Server records value',
             'package with provided sessions',
             'znc values (null, atoms (str, int, bool), list of atoms, or attrsets of znc values)',
+            'string containing all of the characters %Y, %m, %d, %H, %M, %S',
+            'Concatenated string',
         )
         ):
         return AnythingType()
@@ -215,88 +217,92 @@ def from_nix_type_str(nix_type_str, or_legal=True):
         raise ValueError(nix_type_str)
 
 
-@dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class UnspecifiedType:
+class NixType(abc.ABC):
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class AnythingType:
+class UnspecifiedType(NixType):
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class BoolType:
+class AnythingType(NixType):
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class IntType:
+class BoolType(NixType):
+    pass
+
+
+@dataclasses.dataclass(frozen=True, unsafe_hash=True)
+class IntType(NixType):
     minimum: int = None
     maximum: int = None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class FloatType:
+class FloatType(NixType):
     minimum: float = None
     maximum: float = None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class StrType:
+class StrType(NixType):
     concatenated_with: str = None
     check: str = None
     legal_pattern: str = None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class AttrsType:
+class AttrsType(NixType):
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class PathType:
+class PathType(NixType):
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class PackageType:
+class PackageType(NixType):
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class FunctionType:
+class FunctionType(NixType):
     return_type: typing.Any = None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class ListOfType:
+class ListOfType(NixType):
     subtype: typing.Any = None
     minimum: int = None
     maximum: int = None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class AttrsOfType:
+class AttrsOfType(NixType):
     subtype: typing.Any
     lazy: bool = False
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class NullType:
+class NullType(NixType):
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class SubmoduleType:
+class SubmoduleType(NixType):
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class EitherType:
+class EitherType(NixType):
     subtypes: tuple = tuple()
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class OneOfType:
+class OneOfType(NixType):
     choices: tuple = tuple()
