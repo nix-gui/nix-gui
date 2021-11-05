@@ -96,7 +96,9 @@ class OptionTree:
                             child_option_path,
                             child_option_path,
                             parent=parent_option_path,
-                            data=OptionData(_type=types.AttrsType())
+                            data=OptionData(
+                                _type=self.get_type(parent_option_path).child_type or types.AttrsType()
+                            )
                         )
                 parent_option_path = child_option_path
 
@@ -131,7 +133,7 @@ class OptionTree:
         else:
             option_data_spec = data.copy()
             # TODO https://github.com/nix-gui/nix-gui/issues/65
-            option_data_spec._type = data._type.subtype
+            option_data_spec._type = data._type.child_type
             tree = Tree()
             node = Node(attribute, attribute, data=option_data_spec)
             tree.add_node(node)

@@ -227,7 +227,9 @@ class UnspecifiedType(NixType):
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class AnythingType(NixType):
-    pass
+    @property
+    def child_type(self):
+        return AnythingType()
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
@@ -256,7 +258,9 @@ class StrType(NixType):
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class AttrsType(NixType):
-    pass
+    @property
+    def child_type(self):
+        return None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
@@ -271,19 +275,19 @@ class PackageType(NixType):
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class FunctionType(NixType):
-    return_type: typing.Any = None
+    return_type: NixType = None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class ListOfType(NixType):
-    subtype: typing.Any = None
+    child_type: NixType = None
     minimum: int = None
     maximum: int = None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class AttrsOfType(NixType):
-    subtype: typing.Any
+    child_type: NixType
     lazy: bool = False
 
 
@@ -294,12 +298,19 @@ class NullType(NixType):
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class SubmoduleType(NixType):
-    pass
+    @property
+    def child_type(self):
+        return None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class EitherType(NixType):
     subtypes: tuple = tuple()
+
+    @property
+    def child_type(self):
+        return None
+
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)

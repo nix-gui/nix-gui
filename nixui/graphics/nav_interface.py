@@ -76,7 +76,7 @@ class OptionNavigationInterface(QtWidgets.QWidget):
         # if 10 or fewer options, navlist with lowest level attribute selected and list of editable fields to the right
         # otherwise, show list of attributes within the clicked attribute and blank to the right
         # TODO: option type checking should probably take place in the same place where all type -> field resolving occurs
-        if option_type in (types.AttrsType, types.AttrsOfType, types.ListOfType) or num_children > 10:
+        if type(option_type) in (types.AttrsType, types.AttrsOfType, types.ListOfType) or num_children > 10:
             self.nav_list.replace_widget(
                 navlist.GenericNavListDisplay(
                     self.statemodel,
