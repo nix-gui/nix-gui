@@ -207,10 +207,7 @@ class OptionTree:
                 return configured_definition
 
         system_default_definition = self.get_system_default_definition(attribute)
-        if system_default_definition != OptionDefinition.undefined():
-            return system_default_definition
-
-        return OptionDefinition.undefined()
+        return system_default_definition
 
     def get_in_memory_definition(self, attribute):
         return self._get_data(attribute).in_memory_definition
