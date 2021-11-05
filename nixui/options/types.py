@@ -258,9 +258,7 @@ class StrType(NixType):
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class AttrsType(NixType):
-    @property
-    def child_type(self):
-        return None
+    child_type = None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
@@ -298,9 +296,7 @@ class NullType(NixType):
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class SubmoduleType(NixType):
-    @property
-    def child_type(self):
-        return None
+    child_type = AnythingType()
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
@@ -309,7 +305,16 @@ class EitherType(NixType):
 
     @property
     def child_type(self):
-        return None
+        possibilities = tuple(set([
+            t.child_type
+            for t in self.subtypes
+            if hasattr(t, 'child_type')  # fix hack, shouldn't have ambiguous attributes
+        ]))
+        if possibilities:
+            return EitherType(possibilities)
+        else:
+            raise TypeError("Attempted to get child types, but no Either.subtypes allow children.", self)
+
 
 
 
