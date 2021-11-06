@@ -39,6 +39,11 @@ def handle_args():
         help="Run with profiler.",
         action='store_true',
     )
+    optional.add_argument(
+        "--show-trace",
+        help="Show verbose trace of Nix errors.",
+        action='store_true',
+    )
 
     return parser.parse_args()
 
