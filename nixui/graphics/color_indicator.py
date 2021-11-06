@@ -10,11 +10,12 @@ def get_edit_state_color_indicator(tree, option_path):
     configured_definition exists: yellow
     system_default_definition: white
     """
+    # TODO use icons to diff memory/configuration definition change
     # in memory definition change
     if option_path in tree.get_change_set_with_ancestors():
-        return QtGui.QColor(214, 253, 221)  # light green
+        return QtGui.QPalette().color(QtGui.QPalette().Highlight)
     # in configuration definition change
     elif option_path in tree.get_change_set_with_ancestors(get_configured_changes=True):
-        return QtGui.QColor(245, 241, 197)  # yellow
+        return QtGui.QPalette().color(QtGui.QPalette().Highlight)
     else:
-        return QtGui.QColor(255, 255, 255)  # white
+        return QtGui.QPalette().color(QtGui.QPalette().Window)

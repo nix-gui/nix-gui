@@ -53,12 +53,12 @@ def get_field_widget_classes(option_type):
 
 def get_label_color_for_widget(field_widget):
     field_colors = {
-        field_widgets.ExpressionField: QtGui.QColor(193, 236, 245),
-        field_widgets.ReferenceField: QtGui.QColor(174, 250, 174),
+        field_widgets.ExpressionField: QtGui.QPalette().color(QtGui.QPalette().Window),
+        field_widgets.ReferenceField: QtGui.QPalette().color(QtGui.QPalette().Window),
     }
     return field_colors.get(
         type(field_widget),
-        QtGui.QColor(255, 255, 240),  # default
+        QtGui.QPalette().color(QtGui.QPalette().Window),
     )
 
 
@@ -234,7 +234,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         super().paintEvent(ev)
         if self.contains_focus():
             self.paint_background_color(
-                QtGui.QColor(233, 245, 248)
+                QtGui.QPalette().color(QtGui.QPalette().Window)
             )
         else:
             bg_color = color_indicator.get_edit_state_color_indicator(

@@ -43,7 +43,7 @@ class OptionScrollListSelector(QtWidgets.QListWidget):
 
     def _setup_scroll_list_selector_theme(self):
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.MinimumExpanding)
-        self.setItemDelegate(richtext.OptionListItemDelegate())
+        #self.setItemDelegate(richtext.OptionListItemDelegate())
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setMinimumWidth(self.sizeHintForColumn(0))
 
@@ -69,6 +69,10 @@ class ChildCountOptionListItem(QtWidgets.QListWidgetItem):
         self.option_tree = api.get_option_tree()
 
         child_count = len(self.option_tree.children(self.option)) if use_child_count else None
+
+        self.setText(str(self.option) + ("." if child_count > 0 else ""))
+
+        """
         self.setText(
             richtext.get_option_html(
                 self.option,
@@ -77,6 +81,7 @@ class ChildCountOptionListItem(QtWidgets.QListWidgetItem):
                 extra_text=extra_text
             )
         )
+        """
 
         if icon_path:
             self.setIcon(QtGui.QIcon(icon_path))
@@ -88,9 +93,8 @@ class ChildCountOptionListItem(QtWidgets.QListWidgetItem):
             self.option_tree,
             self.option
         )
-        # darken if selected
         if self.isSelected():
-            color = color.darker(120)
+            color = QtGui.QPalette().color(QtGui.QPalette().Highlight)
         return color
 
 
