@@ -86,7 +86,7 @@
 
                 export HOME=$NIX_BUILD_TOP
                 export NIX_STATE_DIR=$NIX_BUILD_TOP
-                export NIX_PATH=nixpkgs=${pkgs.path}:nixos-config=${sample}/configuration.nix
+                export NIX_PATH=${pkgs.path}:nixpkgs=${pkgs.path}:nixos-config=${sample}/configuration.nix
                 cd nixui
               '' + (if !enable-profiling then ''
                 python3 -m pytest -vv
