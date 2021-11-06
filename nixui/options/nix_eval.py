@@ -51,12 +51,13 @@ def nix_instantiate_eval(expr, strict=False, show_trace=False, retry_show_trace_
     )
     out, err = p.communicate()
 
-    if out:
+    if p.returncode == 0:
         return json.loads(out)
         # TODO wrap json.loads in try + except
         # on parse error, write the invalid json to a tempfile
         # and print the tempfile path
     else:
+        logger.debug(f"nix-instantiate -> returncode {p.returncode}, len(out) {len(out)}")
         if retry_show_trace_on_error and not show_trace:
             return nix_instantiate_eval(expr, strict, show_trace=True)
         else:
