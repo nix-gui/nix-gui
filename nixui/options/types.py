@@ -216,6 +216,23 @@ def from_nix_type_str(nix_type_str, or_legal=True):
         raise ValueError(nix_type_str)
 
 
+def type_of_to_type_obj(type_of_str):
+    """
+    convert builtins.typeOf result to NixType
+    """
+    return {
+        "int": IntType(),
+        "bool": BoolType(),
+        "string": StrType(),
+        "path": PathType(),
+        "null": NullType(),
+        "set": AttrsOfType(),
+        "list": ListOfType(),
+        "lambda": FunctionType(),
+        "float": FloatType(),
+    }[type_of_str]
+
+
 class NixType(abc.ABC):
     pass
 
@@ -285,7 +302,7 @@ class ListOfType(NixType):
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class AttrsOfType(NixType):
-    child_type: NixType
+    child_type: NixType = AnythingType()
     lazy: bool = False
 
 

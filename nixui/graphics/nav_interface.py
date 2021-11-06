@@ -71,12 +71,24 @@ class OptionNavigationInterface(QtWidgets.QWidget):
             navbar.NavBar.as_option_tree(option_path, self.set_lookup_key)
         )
         num_children = len(api.get_option_tree().children(option_path, mode="leaves"))
-        option_type = option_type or api.get_option_tree().get_type(option_path)
 
         # if 10 or fewer options, navlist with lowest level attribute selected and list of editable fields to the right
         # otherwise, show list of attributes within the clicked attribute and blank to the right
         # TODO: option type checking should probably take place in the same place where all type -> field resolving occurs
-        if type(option_type) in (types.AttrsType, types.AttrsOfType, types.ListOfType) or num_children > 10:
+        option_type = option_type or api.get_option_tree().get_type(option_path)
+        option_definition = api.get_option_tree().get_definition(option_path)
+        navlist_types = (types.AttrsType, types.AttrsOfType, types.ListOfType)
+        qualified_for_navlist = (
+            type(option_type) in navlist_types or
+            (
+                isinstance(option_type, types.AnythingType) and
+                type(option_definition._type) in navlist_types
+            ) or (
+                isinstance(option_type, types.EitherType) and
+                any([type(t) in navlist_types for t in option_definition._type])
+            )
+        )
+        if qualified_for_navlist or num_children > 10:
             self.nav_list.replace_widget(
                 navlist.GenericNavListDisplay(
                     self.statemodel,
