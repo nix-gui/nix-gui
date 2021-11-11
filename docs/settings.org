@@ -59,6 +59,7 @@ The file shall use the following format:
       }
   },
 
+  # second tab (not implemented in this example)
   "Groups": {}
 }
 #+end_src
