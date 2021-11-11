@@ -42,8 +42,21 @@ The file shall use the following format:
       "option": "users.defaultUserShell"
     },
     "Users": {
-      #TODO
-    }
+      # use table field to render multiple options
+      "field": "Table",
+
+      # passed parameters to contruct Table field
+      "params": {
+
+        # no option specified for Login, its value will be the path for the other columns
+        "Login": {"path": "users.extrausers.{value}"},
+
+        # modify the option path specified by Login
+        "Name": {"option": "{Login}.name"},
+
+        # by default UID is null or signed integer, we don't want null UID, so we use a type override
+        "UID": {"option": "{Login}.uid", "type": "IntType()"}
+      }
   },
 
   "Groups": {}
