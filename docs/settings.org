@@ -1,27 +1,27 @@
-Nix-Gui's Settings Views provide a more intuitive way of editing NixOS options. The Settings DSL provides a way of configuring a transformation of the options tree into a more helpful Settings View.
+Nix-Gui's Settings Views provide a more intuitive way of editing NixOS options. The Settings DSL provides a way of configuring a transformation of the options tree into a Settings View.
 
 * Transformations
 
 ** Regrouping
 
-Settings arent edited by navigating the options heirarchy. instead, Settings combine interrelated options together onto a single FieldView.
+Unlike the option tree view, Settings aren't grouped together based on the options heirarchy. Instead, the Settings DSL allows the combination of interrelated options onto a single display.
 
-For example, =services.bluemon= and =hardware.bluetooth= are related, but on different branches of the option hierarchy.
+For example, it may make sense to combine =services.blueman.enable= and =hardware.bluetooth.*= into a single settings view.
 
 ** Retyping
 
-The default FieldWidget for an option can be suboptimal for the following reasons
-- the option may be be an =Either= type with many choices when a specific single type makes the most sense
+The default =FieldWidget= for an option can be suboptimal for the following reasons
+- the associated option may be be an =Either= type with many choices when a specified single type makes the most sense
 - it may be a =String= type but the set of sane strings may be limited, meaning it should be recast as =OneOf= (e.g. keyboard layout)
-- the option may be something like "hashed password", in which case we want a custom type that allows the user to be able to type a censored password which is converted and saved as a hash.
+- the option may be something like "hashed password", in which case we want a custom type that lets the user type a censored password which is saved as its hash.
 
 ** Implicitly Deriving
 
-Some option values should be automatically set based on the value of a setting. For example it *may* be desirable that "enable bluetooth" impacts both =hardware.bluetooth.enable= and =services.bluemon.enable=
+Some option values should be automatically set based on the value of another setting. For example it *may* be desirable that "enable bluetooth" impacts both =hardware.bluetooth.enable= and =services.bluemon.enable=.
 
-* Spec
+* Specification
 
-=nix-gui/nixui/settings/= shall contain one HJSON file per Setting View. The HJSON file shall follow JSON standards with the exception of allowing legal HJSON comments.
+=nix-gui/nixui/settings/= shall contain one [[https://commentjson.readthedocs.io/en/latest/][commentjson]] file per Settings View.
 
 The file shall use the following format:
 #+begin_src
@@ -29,11 +29,14 @@ The file shall use the following format:
   # Title which is displayer in the navlist
   "title": "Users and Groups",
 
-  # All remaining keys are rendered as titles to tabs within the FieldsVkew
+  # Icon to display from https://github.com/darkomarko42/Luna-Icons/blob/master/Luna/symbolic/apps/system-users-symbolic.svg
+  "icon": "luna/symbolic/apps/system-users-symbolic.svg",
+
+  # All remaining keys are rendered as titles to tabs within the FieldsView
   # If there is only one addition key, tabbing isn't used.
 
   "Users": {
-    # Each key within a task maps a setting name to its definition
+    # Each key within a tab maps a setting name to its definition
     "Default Shell": {
       # The simplest setting only has the `option` key
       "option": "users.defaultUserShell"
@@ -43,10 +46,10 @@ The file shall use the following format:
     }
   },
 
-  "Groups": {...}
+  "Groups": {}
 }
 #+end_src
 
 
 * Nota bene
-This spec should be a generalized enough for the creation of a wide variety of Settings View. As such, the first version of this spec will not be considered complete until we it has been used to implement two Settings Views: "Users and Groups" and "Services"
+This spec should be a generalized enough for the creation of a wide variety of Settings Views. As such, the first version of this spec will not be considered complete until we it has been used to implement two Settings Views: "Users and Groups" and "Services".
