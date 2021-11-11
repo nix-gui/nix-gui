@@ -24,7 +24,7 @@ Some option values should be automatically set based on the value of a setting. 
 =nix-gui/nixui/settings/= shall contain one HJSON file per Setting View. The HJSON file shall follow JSON standards with the exception of allowing legal HJSON comments.
 
 The file shall use the following format:
-#+begin_json
+#+begin_src
 {
   # Title which is displayer in the navlist
   "title": "Users and Groups",
@@ -45,7 +45,7 @@ The file shall use the following format:
 
   "Groups": {...}
 }
-#+end_json
+#+end_src
 
 
 * Nota bene
