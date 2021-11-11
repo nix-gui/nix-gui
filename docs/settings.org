@@ -1,5 +1,3 @@
-#Purpose
-
 Nix-Gui's Settings Views provide a more intuitive way of editing NixOS options. The Settings DSL provides a way of configuring a transformation of the options tree into a more helpful Settings View.
 
 * Transformations
