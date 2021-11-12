@@ -75,20 +75,17 @@ class OptionNavigationInterface(QtWidgets.QWidget):
         # if 10 or fewer options, navlist with lowest level attribute selected and list of editable fields to the right
         # otherwise, show list of attributes within the clicked attribute and blank to the right
         # TODO: option type checking should probably take place in the same place where all type -> field resolving occurs
+        option_def = api.get_option_tree().get_definition(option_path)
+
+        # If the current option definition conforms to one of the valid navlist types then construct the navlist with said type
+        dynamic_navlist_types = (types.AttrsOfType, types.ListOfType)
         option_type = option_type or api.get_option_tree().get_type(option_path)
-        option_definition = api.get_option_tree().get_definition(option_path)
-        navlist_types = (types.AttrsType, types.AttrsOfType, types.ListOfType)
-        qualified_for_navlist = (
-            type(option_type) in navlist_types or
-            (
-                isinstance(option_type, types.AnythingType) and
-                type(option_definition._type) in navlist_types
-            ) or (
-                isinstance(option_type, types.EitherType) and
-                any([type(t) in navlist_types for t in option_definition._type])
-            )
-        )
-        if qualified_for_navlist or num_children > 10:
+        if isinstance(option_type, types.AnythingType) and isinstance(option_def._type, dynamic_navlist_types):
+            option_type = option_def._type
+        elif isinstance(option_type, types.EitherType) and any([isinstance(t, dynamic_navlist_types) for t in option_def._type]):
+            option_type = option_def._type
+
+        if isinstance(option_type, dynamic_navlist_types) or isinstance(option_type, types.AttrsType) and num_children > 10:
             self.nav_list.replace_widget(
                 navlist.GenericNavListDisplay(
                     self.statemodel,
