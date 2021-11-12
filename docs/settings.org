@@ -21,9 +21,31 @@ Some option values should be automatically set based on the value of another set
 
 * Specification
 
-=nix-gui/nixui/settings/= shall contain one [[https://commentjson.readthedocs.io/en/latest/][commentjson]] file per Settings View.
+=nix-gui/nixui/settings/= shall contain one Settings Specification File (in [[https://commentjson.readthedocs.io/en/latest/][commentjson]] format) per Settings View. Each file represents a single item within the navlist, and a corresponding FieldsView.
 
-The file shall use the following format:
+** Settings Specification File
+The Settings Specification File file shall contain the following keys:
+- =title=: Value is the title shown in the navlist
+- =icon= (optional): Value is the path of the icon to the left of the title. Retrieved from [[https://github.com/darkomarko42/Luna-Icons][=luna-icons=]].
+- One key for each tab name: Value is a mapping =Widget Title -> Settings Widget Definitino=
+
+** Settings Widget Definition
+Settings Definitions determine the behavior for an individual widget. They can follow multiple structures
+
+*** Simple Widget Definition
+Only contains one key-value pair, =option= maps to the name of the option whose =FieldWidget= will be rendered.
+
+*** Parameterizable Custom Widget Definition
+Contains two keys:
+- =widget=: The class of the widget to be used. Legal widgets specified in the subsections below.
+- =params=: The kwarg parameters passed to the widgets constructor.
+
+**** Table Widget
+TODO
+**** Other Widgets
+TODO
+
+* Example
 #+begin_src
 {
   # Title which is displayer in the navlist
@@ -42,8 +64,8 @@ The file shall use the following format:
       "option": "users.defaultUserShell"
     },
     "Users": {
-      # use table field to render multiple options
-      "field": "Table",
+      # use table widget to render multiple options
+      "widget": "Table",
 
       # passed parameters to contruct Table field
       "params": {
@@ -63,7 +85,6 @@ The file shall use the following format:
   "Groups": {}
 }
 #+end_src
-
 
 * Nota bene
 This spec should be a generalized enough for the creation of a wide variety of Settings Views. As such, the first version of this spec will not be considered complete until we it has been used to implement two Settings Views: "Users and Groups" and "Services".
