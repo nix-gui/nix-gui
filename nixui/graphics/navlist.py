@@ -59,6 +59,19 @@ class OptionScrollListSelector(QtWidgets.QListWidget):
             self.set_option_path_fn(attr)
 
 
+class ChangeTypeButton(QtWidgets.QPushButton):
+    def __init__(self, base_option_path, option_type, set_option_path_fn):
+        super().__init__()
+        self.setText(option_type)
+        self.clicked.connect(
+            lambda:
+            set_option_path_fn(
+                base_option_path,
+                display_as_single_field=True
+            )
+        )
+
+
 class ChildCountOptionListItem(QtWidgets.QListWidgetItem):
     def __init__(self, option, use_fancy_name=True, use_child_count=True, extra_text=None, icon_path=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -134,6 +147,7 @@ class DynamicAttrsOf(QtWidgets.QWidget):
         self.remove_btn.clicked.connect(self.remove_clicked)
 
         btn_hbox = QtWidgets.QHBoxLayout()
+        btn_hbox.addWidget(ChangeTypeButton(option_path, "AttrsOf", set_option_path_fn))
         btn_hbox.addWidget(QtWidgets.QLabel(option_path.get_end()))
         btn_hbox.addWidget(self.add_btn)
         btn_hbox.addWidget(self.remove_btn)
@@ -196,6 +210,7 @@ class DynamicListOf(QtWidgets.QWidget):
         self.down_btn.clicked.connect(self.down_clicked)
 
         btn_hbox = QtWidgets.QHBoxLayout()
+        btn_hbox.addWidget(ChangeTypeButton(option_path, "ListOf", set_option_path_fn))
         btn_hbox.addWidget(QtWidgets.QLabel(option_path.get_end()))
         btn_hbox.addWidget(self.add_btn)
         btn_hbox.addWidget(self.remove_btn)
