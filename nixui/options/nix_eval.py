@@ -16,8 +16,6 @@ env_nix_instantiate["NIXPKGS_ALLOW_UNFREE"] = "1"
 # note: we dont install unfree pkgs, just get the metadata
 # fix parse error when NIXPKGS_ALLOW_UNFREE=0
 
-show_trace = True if "--show-trace" in sys.argv else False
-
 cache_by_unique_installed_nixos_nixpkgs_version = cache.cache(
     lambda: nix_instantiate_eval("with import <nixpkgs/nixos> { configuration = {}; }; pkgs.lib.version")
 )
@@ -32,7 +30,7 @@ class NixEvalError(Exception):
         return f'NixEvalError("""\n{self.msg}\n""")'
 
 
-def nix_instantiate_eval(expr, strict=False):
+def nix_instantiate_eval(expr, strict=False, show_trace=False, retry_show_trace_on_error=True):
     logger.debug(expr)
     cmd = [
         "nix-instantiate",
@@ -43,8 +41,6 @@ def nix_instantiate_eval(expr, strict=False):
     ]
     if strict:
         cmd.append('--strict')
-    if show_trace:
-        cmd.append('--show-trace')
 
     p = subprocess.Popen(
         cmd,
@@ -60,12 +56,15 @@ def nix_instantiate_eval(expr, strict=False):
         # on parse error, write the invalid json to a tempfile
         # and print the tempfile path
     else:
-        logger.debug(f"nix-instantiate -> returncode {p.returncode}, len(out) {len(out)}")
-        try:
-            err_str = err.decode('utf-8')
-        except UnicodeDecodeError:
-            err_str = repr(err)
-        raise NixEvalError(err_str + ("\nmaybe run nix-gui --show-trace" if not show_trace else ""))
+        if retry_show_trace_on_error and not show_trace:
+            return nix_instantiate_eval(expr, strict, show_trace=True)
+        else:
+            logger.debug(f"nix-instantiate -> returncode {p.returncode}, len(out) {len(out)}")
+            try:
+                err_str = err.decode('utf-8')
+            except UnicodeDecodeError:
+                err_str = repr(err)
+                raise NixEvalError(err_str)
 
 
 @contextmanager
