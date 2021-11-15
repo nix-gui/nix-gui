@@ -14,15 +14,14 @@ def test_integration_load_all_field_widgets(nix_gui_main_window):
     nav_interface = nix_gui_main_window.centralWidget()
     statemodel = nix_gui_main_window.statemodel
 
-    def assert_legal_parent_type(t):
-        type_obj = types.from_nix_type_str(t)
+    def assert_legal_parent_type(type_obj):
         legal_types = (types.AnythingType, types.AttrsType, types.AttrsOfType, types.SubmoduleType, types.ListOfType)
         if type(type_obj) in legal_types:
             pass
         elif isinstance(type_obj, types.EitherType) and any([type(subtype) in legal_types for subtype in type_obj.subtypes]):
             pass
         else:
-            raise Exception(t, type_obj)
+            raise Exception(type_obj)
 
     for attr in statemodel.option_tree.iter_attributes():
         print(type(attr), attr)

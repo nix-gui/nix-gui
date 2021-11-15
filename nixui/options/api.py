@@ -1,23 +1,35 @@
-import collections
-import functools
+import copy
 import os
 
-from nixui.options import parser, nix_eval, option_tree
-from nixui.utils import store, remap_dict
+from nixui.options import parser, nix_eval, option_tree, types
+from nixui.utils import cache, store, remap_dict
 
 
 #############################
 # utility functions / caching
 ############################
-# TODO: fix - this is bad, it cached option trees even for cases where the configuration_paths contents have changed
-@functools.lru_cache()
+@cache.cache(cache.first_arg_path_hash_fn, diskcache=False)
 def get_option_tree(configuration_path=None):
     if configuration_path is None:
         configuration_path = os.environ['CONFIGURATION_PATH']
+
+    def convert_type_str_to_type_obj(option_data_dict, missing_default=None):
+        option_data_dict = copy.deepcopy(option_data_dict)
+        for key, value in option_data_dict.items():
+            option_data_dict[key]['type_string'] = option_data_dict[key]['type']
+            if 'type' in value:
+                option_data_dict[key]['type'] = types.from_nix_type_str(option_data_dict[key]['type'])
+            elif missing_default:
+                option_data_dict[key]['type'] = missing_default
+        return option_data_dict
+
     return option_tree.OptionTree(
-        remap_dict.key_remapper(
-            nix_eval.get_all_nixos_options(),
-            {'system_default': 'system_default_definition'}
+        convert_type_str_to_type_obj(
+            remap_dict.key_remapper(
+                nix_eval.get_all_nixos_options(),
+                {'system_default': 'system_default_definition'}
+            ),
+            missing_default=types.AttrsType()
         ),
         parser.get_all_option_values(configuration_path)
     )
@@ -28,7 +40,7 @@ def get_option_tree(configuration_path=None):
 ###############
 def apply_updates(option_definition_map):
     """
-    option_value_obj_map: map between option string and python object form of value
+    option_definition_map: map between option string and python object form of value
     """
     option_expr_str_map = {
         option: option_definition.expression_string

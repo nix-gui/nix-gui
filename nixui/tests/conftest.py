@@ -1,5 +1,5 @@
 import os
-import json
+from distutils.dir_util import copy_tree
 
 import pytest
 
@@ -27,11 +27,19 @@ def pytest_collection_modifyitems(config, items):
 
 
 @pytest.fixture
-def nix_gui_main_window(qtbot):
-    os.environ['CONFIGURATION_PATH'] = os.path.abspath(os.path.join(SAMPLES_PATH, 'configuration.nix'))
+def samples_path(tmpdir):
+    copy_tree(SAMPLES_PATH, str(tmpdir))
+    return tmpdir
 
-    statemodel = state_model.StateModel()
 
+@pytest.fixture
+def statemodel(samples_path):
+    os.environ['CONFIGURATION_PATH'] = os.path.abspath(os.path.join(samples_path, 'configuration.nix'))
+    return state_model.StateModel()
+
+
+@pytest.fixture
+def nix_gui_main_window(statemodel, qtbot):
     nix_gui_mw = main_window.NixGuiMainWindow(statemodel)
     yield nix_gui_mw
     nix_gui_mw.close()

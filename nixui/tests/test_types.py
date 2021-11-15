@@ -12,7 +12,7 @@ def test_convert_complex_typestring():
             types.OneOfType(choices=['auto']),
             types.SubmoduleType(),
             types.ListOfType(
-                subtype=types.EitherType(
+                child_type=types.EitherType(
                     subtypes=[
                         types.IntType(minimum=0, maximum=65535),
                         types.OneOfType(choices=['auto']),

@@ -133,7 +133,7 @@ class SyntaxTree:
             return node
         for elem in node.elems:
             if isinstance(elem, Node):
-                if elem.position.start <= pos <= elem.position.end:
+                if elem.position.start <= pos < elem.position.end:
                     new_node = self.get_node_at_position(pos=pos, legal_type=legal_type, node=elem)  # none or list
                     if new_node:
                         if legal_type is None or new_node.name == legal_type:
