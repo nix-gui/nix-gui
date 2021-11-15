@@ -11,13 +11,10 @@ from nixui.utils.logger import logger
 
 class GenericNavListDisplay:
     def __new__(cls, statemodel, set_option_path_fn, option_path, option_type=None, selected=None):
-        if option_type is None:
-            option_type = type(types.from_nix_type_str(
-                api.get_option_tree().get_type(option_path)
-            ))
-        if option_type == types.AttrsOfType:
+        option_type = option_type or api.get_option_tree().get_type(option_path)
+        if isinstance(option_type, types.AttrsOfType):
             return DynamicAttrsOf(statemodel, option_path, set_option_path_fn, selected)
-        elif option_type == types.ListOfType:
+        elif isinstance(option_type, types.ListOfType):
             return DynamicListOf(statemodel, option_path, set_option_path_fn, selected)
         else:
             return StaticAttrsOf(option_path, set_option_path_fn, selected)
@@ -60,6 +57,19 @@ class OptionScrollListSelector(QtWidgets.QListWidget):
                 self.currentItem().option.get_end()
             )
             self.set_option_path_fn(attr)
+
+
+class ChangeTypeButton(QtWidgets.QPushButton):
+    def __init__(self, base_option_path, option_type, set_option_path_fn):
+        super().__init__()
+        self.setText(option_type)
+        self.clicked.connect(
+            lambda:
+            set_option_path_fn(
+                base_option_path,
+                display_as_single_field=True
+            )
+        )
 
 
 class ChildCountOptionListItem(QtWidgets.QListWidgetItem):
@@ -137,6 +147,7 @@ class DynamicAttrsOf(QtWidgets.QWidget):
         self.remove_btn.clicked.connect(self.remove_clicked)
 
         btn_hbox = QtWidgets.QHBoxLayout()
+        btn_hbox.addWidget(ChangeTypeButton(option_path, "AttrsOf", set_option_path_fn))
         btn_hbox.addWidget(QtWidgets.QLabel(option_path.get_end()))
         btn_hbox.addWidget(self.add_btn)
         btn_hbox.addWidget(self.remove_btn)
@@ -199,6 +210,7 @@ class DynamicListOf(QtWidgets.QWidget):
         self.down_btn.clicked.connect(self.down_clicked)
 
         btn_hbox = QtWidgets.QHBoxLayout()
+        btn_hbox.addWidget(ChangeTypeButton(option_path, "ListOf", set_option_path_fn))
         btn_hbox.addWidget(QtWidgets.QLabel(option_path.get_end()))
         btn_hbox.addWidget(self.add_btn)
         btn_hbox.addWidget(self.remove_btn)
@@ -312,7 +324,7 @@ class SearchResultListDisplay(QtWidgets.QListWidget):
                     matched_tokens.add(token)
                     matched_operations['Attribute Path'] += 1
                 if data is not None:
-                    if data._type != option_definition.Undefined and token in data._type.lower():
+                    if data._type_string != option_definition.Undefined and token in data._type_string.lower():
                         matched_tokens.add(token)
                         matched_operations['Type'] += 1
                     if data.description != option_definition.Undefined and token in data.description.lower():

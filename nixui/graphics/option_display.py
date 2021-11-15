@@ -117,9 +117,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
 
     def _get_field_widgets(self, option):
         field_widget_classes = get_field_widget_classes(
-            types.from_nix_type_str(
-                api.get_option_tree().get_type(option)
-            )
+            api.get_option_tree().get_type(option)
         )
         fields = []
         for field_widget_class in field_widget_classes:

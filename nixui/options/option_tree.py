@@ -5,9 +5,9 @@ import uuid
 from treelib import Tree, Node
 import treelib.exceptions
 
+from nixui.options import types
 from nixui.options.attribute import Attribute
 from nixui.options.option_definition import OptionDefinition, Undefined
-from nixui.utils.logger import logger
 
 
 @dataclasses.dataclass
@@ -15,7 +15,8 @@ class OptionData:
     is_declared_option: bool = False  # the node is part of a declaraed option or part of Attrs/List defining one
     description: str = Undefined
     readOnly: bool = Undefined
-    _type: str = Undefined
+    _type_string: str = Undefined
+    _type: types.NixType = types.AnythingType()
     system_default_definition: OptionDefinition = OptionDefinition.undefined()
     configured_definition: OptionDefinition = OptionDefinition.undefined()
     in_memory_definition: OptionDefinition = OptionDefinition.undefined()
@@ -42,7 +43,7 @@ class OptionTree:
     def __init__(self, system_option_data, config_options):
         # load data into Tree with OptionData leaves
         self.tree = Tree()
-        self.tree.create_node(identifier=Attribute([]), data=OptionData(_type='attribute set'))
+        self.tree.create_node(identifier=Attribute([]), data=OptionData(_type=types.AttrsType()))
 
         # cache for faster lookup of changed nodes
         self.in_memory_change_cache = {}
@@ -96,7 +97,9 @@ class OptionTree:
                             child_option_path,
                             child_option_path,
                             parent=parent_option_path,
-                            data=OptionData(_type='attribute set')
+                            data=OptionData(
+                                _type=self.get_type(parent_option_path).child_type or types.AttrsType()
+                            )
                         )
                 parent_option_path = child_option_path
 
@@ -107,7 +110,7 @@ class OptionTree:
     def _is_attribute_set(self, attribute):
         data = self.tree.get_node(attribute).data
         if data:
-            return 'attribute set of' in data._type  # TODO https://github.com/nix-gui/nix-gui/issues/65
+            return isinstance(data._type, types.AttrsOfType)
         return False
 
     def _get_attribute_set_template_branch(self, attribute):
@@ -117,7 +120,7 @@ class OptionTree:
         """
         parent_attribute = attribute.get_set()
         data = self.tree.get_node(parent_attribute).data  # get spec of parent attribute
-        if data._type == 'attribute set of submodules':
+        if data._type == types.AttrsOfType(types.SubmoduleType()):
             submodule_spec_attribute = Attribute.from_insertion(parent_attribute, '<name>')
             tree = Tree(self.tree.subtree(submodule_spec_attribute), deep=True)
             # <name> -> actual attribute
@@ -131,7 +134,7 @@ class OptionTree:
         else:
             option_data_spec = data.copy()
             # TODO https://github.com/nix-gui/nix-gui/issues/65
-            option_data_spec._type = data._type.removeprefix('attribute set of ').removesuffix('s')
+            option_data_spec._type = data._type.child_type
             tree = Tree()
             node = Node(attribute, attribute, data=option_data_spec)
             tree.add_node(node)
@@ -207,10 +210,7 @@ class OptionTree:
                 return configured_definition
 
         system_default_definition = self.get_system_default_definition(attribute)
-        if system_default_definition != OptionDefinition.undefined():
-            return system_default_definition
-
-        return OptionDefinition.undefined()
+        return system_default_definition
 
     def get_in_memory_definition(self, attribute):
         return self._get_data(attribute).in_memory_definition
