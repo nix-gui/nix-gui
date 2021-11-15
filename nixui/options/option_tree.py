@@ -15,6 +15,7 @@ class OptionData:
     is_declared_option: bool = False  # the node is part of a declaraed option or part of Attrs/List defining one
     description: str = Undefined
     readOnly: bool = Undefined
+    _type_string: str = Undefined
     _type: types.NixType = types.AnythingType()
     system_default_definition: OptionDefinition = OptionDefinition.undefined()
     configured_definition: OptionDefinition = OptionDefinition.undefined()

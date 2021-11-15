@@ -324,7 +324,7 @@ class SearchResultListDisplay(QtWidgets.QListWidget):
                     matched_tokens.add(token)
                     matched_operations['Attribute Path'] += 1
                 if data is not None:
-                    if data._type != option_definition.Undefined and token in data._type.lower():
+                    if data._type_string != option_definition.Undefined and token in data._type_string.lower():
                         matched_tokens.add(token)
                         matched_operations['Type'] += 1
                     if data.description != option_definition.Undefined and token in data.description.lower():
