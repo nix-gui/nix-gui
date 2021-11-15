@@ -19,7 +19,7 @@
            version = "0.1.0";
 
            src = ./nix_dump_syntax_tree_json;
-           cargoHash = "sha256-8yRlG8Paza3sE5GqhB8f0yzF8Pl0CI7F0W8VRhEN6BE=";
+           cargoHash = "sha256-msKFtspM7PhjhIE5HrApXh2HnEW4KolJayyoY44qbgA=";
         };
 
         pylspclient = pythonPackages.buildPythonPackage rec {
@@ -86,7 +86,7 @@
 
                 export HOME=$NIX_BUILD_TOP
                 export NIX_STATE_DIR=$NIX_BUILD_TOP
-                export NIX_PATH=nixpkgs=${pkgs.path}:nixos-config=${sample}/configuration.nix
+                export NIX_PATH=${pkgs.path}:nixpkgs=${pkgs.path}:nixos-config=${sample}/configuration.nix
                 cd nixui
               '' + (if !enable-profiling then ''
                 python3 -m pytest -vv

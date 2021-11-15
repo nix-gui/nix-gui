@@ -4,11 +4,17 @@ import functools
 import importlib.resources
 from contextlib import contextmanager
 from string import Template
+import os
+import sys
 
 from nixui.utils.logger import logger
 from nixui.utils import cache
 from nixui.options.attribute import Attribute
 
+env_nix_instantiate = os.environ.copy()
+env_nix_instantiate["NIXPKGS_ALLOW_UNFREE"] = "1"
+# note: we dont install unfree pkgs, just get the metadata
+# fix parse error when NIXPKGS_ALLOW_UNFREE=0
 
 cache_by_unique_installed_nixos_nixpkgs_version = cache.cache(
     lambda: nix_instantiate_eval("with import <nixpkgs/nixos> { configuration = {}; }; pkgs.lib.version")
@@ -35,17 +41,16 @@ def nix_instantiate_eval(expr, strict=False, show_trace=False, retry_show_trace_
     ]
     if strict:
         cmd.append('--strict')
-    if show_trace:
-        cmd.append('--show-trace')
 
     p = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
+        env=env_nix_instantiate,
     )
     out, err = p.communicate()
 
-    if out:
+    if p.returncode == 0:
         try:
             return json.loads(out)
         except json.decoder.JSONDecodeError as e:
@@ -55,10 +60,11 @@ def nix_instantiate_eval(expr, strict=False, show_trace=False, retry_show_trace_
         if retry_show_trace_on_error and not show_trace:
             return nix_instantiate_eval(expr, strict, show_trace=True)
         else:
+            logger.debug(f"nix-instantiate -> returncode {p.returncode}, len(out) {len(out)}")
             try:
                 err_str = err.decode('utf-8')
-            except:  # TODO: appropriate decode error
-                err_str = err.decode('ISO-8859-1')
+            except UnicodeDecodeError:
+                err_str = repr(err)
             raise NixEvalError(err_str)
 
 
