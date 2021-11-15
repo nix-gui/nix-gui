@@ -19,7 +19,7 @@
            version = "0.1.0";
 
            src = ./nix_dump_syntax_tree_json;
-           cargoHash = "sha256-msKFtspM7PhjhIE5HrApXh2HnEW4KolJayyoY44qbgA=";
+           cargoHash = "sha256-a99Bcm2rlgHHJXHWc1M6M59XNUrfmMuLSOc48u78hyY=";
         };
 
         pylspclient = pythonPackages.buildPythonPackage rec {
