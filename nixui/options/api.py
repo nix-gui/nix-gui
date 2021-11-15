@@ -1,3 +1,4 @@
+import copy
 import os
 
 from nixui.options import parser, nix_eval, option_tree, types
@@ -13,9 +14,9 @@ def get_option_tree(configuration_path=None):
         configuration_path = os.environ['CONFIGURATION_PATH']
 
     def convert_type_str_to_type_obj(option_data_dict, missing_default=None):
-        import copy
         option_data_dict = copy.deepcopy(option_data_dict)
         for key, value in option_data_dict.items():
+            option_data_dict[key]['type_string'] = option_data_dict[key]['type']
             if 'type' in value:
                 option_data_dict[key]['type'] = types.from_nix_type_str(option_data_dict[key]['type'])
             elif missing_default:
