@@ -64,7 +64,7 @@ def nix_instantiate_eval(expr, strict=False, show_trace=False, retry_show_trace_
                 err_str = err.decode('utf-8')
             except UnicodeDecodeError:
                 err_str = repr(err)
-                raise NixEvalError(err_str)
+            raise NixEvalError(err_str)
 
 
 @contextmanager
