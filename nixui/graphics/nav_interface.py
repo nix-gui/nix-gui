@@ -63,23 +63,50 @@ class OptionNavigationInterface(QtWidgets.QWidget):
             self.revert_to_previous_lookup_key()
             logger.warning(f'Invalid lookup key: {lookup_key}, reverting')
 
-    # TODO: remove option_type, or incorporate it into URI
-    def set_option_path(self, option_path, option_type=None):
+    # TODO: incorporate display_as_single_field and option_type into URI
+    # TODO: max_renderable_field_widgets should be part of Preferences
+    def set_option_path(self, option_path, option_type=None, display_as_single_field=False, max_renderable_field_widgets=10):
+        """
+        Update the navlist and option display to show the option path
+
+        If the passed option_path is a container type (AttrsOf, ListOf), render the children in the navlist
+        Otherwise render the parent option_path in the navlist with the option_path selected, and
+            render the options FieldWidget in the option display
+
+        option_path: The path of the option to be displayed
+        option_type: Force the option to be rendered as option_type
+        display_as_single_field: Regardless of whether it's a container type, force the option to be displayed as a FieldWidget
+        max_renderable_field_widgets: We can display multiple widgets in the option display. If there are fewer descendent
+                                      options than this number, render a navlist with option_path selected and all descendents
+                                      shown in the option display.
+        """
         self.uri_stack.append(f'options:{option_path}')
 
         self.nav_bar.replace_widget(
             navbar.NavBar.as_option_tree(option_path, self.set_lookup_key)
         )
         num_children = len(api.get_option_tree().children(option_path, mode="leaves"))
-        if option_type is None:
-            option_type = types.from_nix_type_str(
-                api.get_option_tree().get_type(option_path)
-            )
 
         # if 10 or fewer options, navlist with lowest level attribute selected and list of editable fields to the right
         # otherwise, show list of attributes within the clicked attribute and blank to the right
         # TODO: option type checking should probably take place in the same place where all type -> field resolving occurs
-        if option_type in (types.AttrsType, types.AttrsOfType, types.ListOfType) or num_children > 10:
+
+        # If the current option definition conforms to one of the valid navlist types then construct the navlist with said type
+        option_def = api.get_option_tree().get_definition(option_path)
+        dynamic_navlist_types = (types.AttrsOfType, types.ListOfType)
+        option_type = option_type or api.get_option_tree().get_type(option_path)
+        if isinstance(option_type, types.AnythingType) and isinstance(option_def._type, dynamic_navlist_types):
+            option_type = option_def._type
+        elif isinstance(option_type, types.EitherType) and any([isinstance(t, dynamic_navlist_types) for t in option_def._type.subtypes]):
+            option_type = option_def._type
+
+        show_path_in_navlist = (
+            not display_as_single_field and (
+                isinstance(option_type, dynamic_navlist_types) or
+                (isinstance(option_type, types.AttrsType) and num_children > max_renderable_field_widgets)
+            )
+        )
+        if show_path_in_navlist:
             self.nav_list.replace_widget(
                 navlist.GenericNavListDisplay(
                     self.statemodel,
@@ -103,6 +130,7 @@ class OptionNavigationInterface(QtWidgets.QWidget):
                     self.statemodel,
                     self.set_option_path,
                     option_path,
+                    only_display_parent=display_as_single_field
                 )
             )
 
@@ -123,13 +151,17 @@ class OptionNavigationInterface(QtWidgets.QWidget):
 
 
 class FieldsGroupBox(QtWidgets.QWidget):
-    def __init__(self, statemodel, set_option_path_fn, option=None, is_base_viewer=True, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, statemodel, set_option_path_fn, option=None, is_base_viewer=True, only_display_parent=False):
+        super().__init__()
 
         self.elements = []
 
-        option_paths = api.get_option_tree().children(option)
         group_box = QtWidgets.QGroupBox()
+
+        if only_display_parent:
+            option_paths = [option]
+        else:
+            option_paths = api.get_option_tree().children(option)
 
         if option_paths:
             group_box.setTitle(str(option))
@@ -138,7 +170,7 @@ class FieldsGroupBox(QtWidgets.QWidget):
 
         vbox = QtWidgets.QVBoxLayout()
         for child_option_path in option_paths:
-            if len(api.get_option_tree().children(child_option_path)) > 1:
+            if not only_display_parent and len(api.get_option_tree().children(child_option_path)) > 1:
                 fields_group_box = FieldsGroupBox(
                     statemodel,
                     set_option_path_fn,

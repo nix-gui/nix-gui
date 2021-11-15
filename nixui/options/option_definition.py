@@ -89,12 +89,25 @@ class OptionDefinition:
 
     @property
     @functools.lru_cache()
-    def obj_type(self):
-        return self.get_object_type(self.obj)
+    def _type(self):
+        try:
+            return self.get_object_type(self.obj)
+        except ValueError:
+            return self.get_expression_type(self.expression_string)
+
+    @staticmethod
+    def get_expression_type(expression_string):
+        return types.type_of_to_type_obj(
+            nix_eval.nix_instantiate_eval(
+                f"builtins.typeOf ({expression_string})"
+            )
+        )
 
     @classmethod
     def get_object_type(cls, obj):
-        if isinstance(obj, list):
+        if obj == Unresolvable:
+            raise ValueError
+        elif isinstance(obj, list):
             subtypes = set([cls.get_object_type(elem) for elem in obj])
             if len(subtypes) == 0:
                 return types.ListOfType()
@@ -102,6 +115,14 @@ class OptionDefinition:
                 return types.ListOfType(subtypes.pop())
             else:
                 return types.ListOfType(types.EitherType(subtypes))
+        elif isinstance(obj, dict):
+            subtypes = set([cls.get_object_type(v) for v in obj.values()])
+            if len(subtypes) == 0:
+                return types.AttrsOfType()
+            if len(subtypes) == 1:
+                return types.AttrsOfType(subtypes.pop())
+            else:
+                return types.AttrsOfType(types.EitherType(subtypes))
         elif isinstance(obj, bool):
             return types.BoolType()
         elif isinstance(obj, int):
@@ -114,8 +135,10 @@ class OptionDefinition:
             return types.PathType()
         elif obj is None:
             return types.NullType()
+        elif obj == Undefined:
+            return types.AnythingType()
         else:
-            raise NotImplementedError
+            raise NotImplementedError(obj)
 
     @property
     def expression_string(self):

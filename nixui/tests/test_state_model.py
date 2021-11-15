@@ -25,7 +25,6 @@ def test_load_edit_save(option_loc, new_value):
     - extract options value from state_model and compare value to original value from configuration.nix
     """
     os.environ['CONFIGURATION_PATH'] = os.path.abspath(os.path.join(SAMPLES_PATH, 'configuration.nix'))
-    os.environ['NIXGUI_CONFIGURATION_PATH_CAN_BE_CORRUPTED'] = 'true'
     # open, update, save
     m0 = state_model.StateModel()
     v0 = m0.get_definition(option_loc)
@@ -44,3 +43,58 @@ def test_load_edit_save(option_loc, new_value):
     m2 = state_model.StateModel()
     v2 = m2.get_definition(option_loc)
     assert v0 == v2
+
+
+def test_get_update_set_simple(statemodel):
+    statemodel.record_update(
+        Attribute.from_string('sound.enable'),
+        OptionDefinition.from_object(False)
+    )
+    statemodel.persist_updates()
+    statemodel.record_update(
+        Attribute.from_string('sound.enable'),
+        OptionDefinition.from_object(True)
+    )
+    updates = statemodel.get_update_set()
+    assert len(updates) == 1
+    assert updates[0].old_definition.obj == False
+    assert updates[0].new_definition.obj == True
+
+
+def test_get_update_set_defined_by_descendent(statemodel):
+    # test depends on sample/configuration.nix
+    """
+      services = {
+
+        # test list of submodules
+        bookstack.nginx.listen = [
+          {
+            addr = "195.154.1.1";
+            port = 443;
+            ssl = true;
+          }
+          {
+            addr = "192.154.1.1";
+            port = 80;
+          }
+        ];
+        ...
+    """
+    statemodel.record_update(
+        Attribute.from_string('services.bookstack.nginx.listen."[0]".addr'),
+        OptionDefinition.from_object('10.0.0.1')
+    )
+    statemodel.record_update(
+        Attribute.from_string('services.bookstack.nginx.listen."[1]".port'),
+        OptionDefinition.from_object(101)
+    )
+    updates = statemodel.get_update_set()
+    assert len(updates) == 2
+
+    assert updates[0].option == Attribute.from_string('services.bookstack.nginx.listen."[0]".addr')
+    assert updates[0].old_definition.obj == "195.154.1.1"
+    assert updates[0].new_definition.obj == "10.0.0.1"
+
+    assert updates[1].option == Attribute.from_string('services.bookstack.nginx.listen."[1]".port')
+    assert updates[1].old_definition.obj == 80
+    assert updates[1].new_definition.obj == 101

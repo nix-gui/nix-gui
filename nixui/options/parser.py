@@ -3,7 +3,7 @@ import uuid
 
 from nixui.utils.logger import logger
 from nixui.utils import cache
-from nixui.options import syntax_tree, nix_eval
+from nixui.options import syntax_tree, nix_eval, attribute
 from nixui.options.option_definition import OptionDefinition, Unresolvable
 
 
@@ -22,7 +22,7 @@ def inject_expressions(module_path, option_expr_map):
     for option, expression in option_expr_map.items():
         # update option expressions where they exist
         if option in option_expr_nodes_map:
-            key_node, value_node = option_expr_nodes_map[option]
+            value_node = option_expr_nodes_map[option]
             token = syntax_tree.Token(id=uuid.uuid4(), name='INJECTION', position=None, quoted=expression)
             tree.replace(value_node, token)
             node_to_prefix_comment = tree.get_parent(
@@ -62,7 +62,7 @@ def get_all_option_values(module_path, allow_errors=True):
     # get option_expr_map for module_path
     option_expr_map = {}
     tree = syntax_tree.SyntaxTree(module_path)
-    for attr_loc, (key_node, value_node) in get_key_value_nodes(module_path, tree).items():
+    for attr_loc, value_node in get_key_value_nodes(module_path, tree).items():
         option_expr_map[attr_loc] = OptionDefinition.from_expression_string(
             value_node.to_string()
         )
@@ -130,16 +130,49 @@ def get_returned_attr_set_node(module_path, tree):
     return returned_attr_set_node
 
 
+def recursively_get_node_list_data(parent_attribute, node):
+    for i, elem_node in enumerate([elem for elem in node.elems if isinstance(elem, syntax_tree.Node)]):
+        full_attribute_path = attribute.Attribute.from_insertion(parent_attribute, f"[{i}]")
+        yield full_attribute_path, elem_node
+
+        if elem_node.name == 'NODE_ATTR_SET':
+            yield from recursively_get_node_attr_set_data(full_attribute_path, elem_node)
+        elif elem_node.name == 'NODE_LIST':
+            yield from recursively_get_node_list_data(full_attribute_path, elem_node)
+
+
+def recursively_get_node_attr_set_data(parent_attribute, node):
+    for key_value_node in [elem for elem in node.elems if elem.name == 'NODE_KEY_VALUE']:
+        key_node, value_node = [e for e in key_value_node.elems if isinstance(e, syntax_tree.Node)]
+        full_attribute_path = attribute.Attribute(
+            parent_attribute.loc +
+            attribute.Attribute.from_string(key_node.to_string()).loc
+        )
+        yield full_attribute_path, value_node
+        if value_node.name == 'NODE_ATTR_SET':
+            yield from recursively_get_node_attr_set_data(full_attribute_path, value_node)
+        elif value_node.name == 'NODE_LIST':
+            yield from recursively_get_node_list_data(full_attribute_path, value_node)
+
+
 def get_key_value_nodes(module_path, tree):
     mapping = {}
-    for attribute, attr_data in nix_eval.get_modules_defined_attrs(module_path).items():
+    for attr, attr_data in nix_eval.get_modules_defined_attrs(module_path).items():
         definition_node = tree.get_node_at_line_column(
             attr_data['position']['line'],
             attr_data['position']['column'],
             legal_type='NODE_KEY_VALUE'
         )
+
         # TODO: rework Node as well so it's more obvious what's going on here:
-        # `key_node, value_node = definition_node.get_children(t=Node)`
+        # `key_node, value_node = definition_node.get_children(_type=Node)`
         key_node, value_node = [e for e in definition_node.elems if isinstance(e, syntax_tree.Node)]
-        mapping[attribute] = (key_node, value_node)
+
+        if value_node.name == 'NODE_ATTR_SET':
+            for sub_attr, sub_value_node in recursively_get_node_attr_set_data(attr, value_node):
+                mapping[sub_attr] = sub_value_node
+        elif value_node.name == 'NODE_LIST':
+            for sub_attr, sub_value_node in recursively_get_node_list_data(attr, value_node):
+                mapping[sub_attr] = sub_value_node
+        mapping[attr] = value_node
     return mapping

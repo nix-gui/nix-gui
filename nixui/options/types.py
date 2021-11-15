@@ -1,10 +1,9 @@
 """
 based on https://github.com/NixOS/nixpkgs/blob/master/lib/types.nix
 """
-
+import abc
 import dataclasses
 import typing
-import os
 
 
 def from_nix_type_str(nix_type_str, or_legal=True):
@@ -59,11 +58,11 @@ def from_nix_type_str(nix_type_str, or_legal=True):
 
     # types "containing" other types in their definitions
     elif nix_type_str.startswith('list of') and nix_type_str.endswith('s'):
-        return ListOf(
+        return ListOfType(
             from_nix_type_str(nix_type_str.removeprefix('list of ').removesuffix('s'))
         )
     elif nix_type_str.startswith('attribute set of'):
-        return AttrsOf(
+        return AttrsOfType(
             from_nix_type_str(nix_type_str.removeprefix('attribute set of ').removesuffix('s'))
         )
     elif nix_type_str.startswith('function that evaluates to a(n) '):
@@ -207,6 +206,8 @@ def from_nix_type_str(nix_type_str, or_legal=True):
             'Traffic Server records value',
             'package with provided sessions',
             'znc values (null, atoms (str, int, bool), list of atoms, or attrsets of znc values)',
+            'string containing all of the characters %Y, %m, %d, %H, %M, %S',
+            'Concatenated string',
         )
         ):
         return AnythingType()
@@ -215,88 +216,125 @@ def from_nix_type_str(nix_type_str, or_legal=True):
         raise ValueError(nix_type_str)
 
 
-@dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class UnspecifiedType:
+def type_of_to_type_obj(type_of_str):
+    """
+    convert builtins.typeOf result to NixType
+    """
+    return {
+        "int": IntType(),
+        "bool": BoolType(),
+        "string": StrType(),
+        "path": PathType(),
+        "null": NullType(),
+        "set": AttrsOfType(),
+        "list": ListOfType(),
+        "lambda": FunctionType(),
+        "float": FloatType(),
+    }[type_of_str]
+
+
+class NixType(abc.ABC):
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class AnythingType:
+class UnspecifiedType(NixType):
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class BoolType:
+class AnythingType(NixType):
+    @property
+    def child_type(self):
+        return AnythingType()
+
+
+@dataclasses.dataclass(frozen=True, unsafe_hash=True)
+class BoolType(NixType):
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class IntType:
+class IntType(NixType):
     minimum: int = None
     maximum: int = None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class FloatType:
+class FloatType(NixType):
     minimum: float = None
     maximum: float = None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class StrType:
+class StrType(NixType):
     concatenated_with: str = None
     check: str = None
     legal_pattern: str = None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class AttrsType:
+class AttrsType(NixType):
+    child_type = None
+
+
+@dataclasses.dataclass(frozen=True, unsafe_hash=True)
+class PathType(NixType):
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class PathType:
+class PackageType(NixType):
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class PackageType:
-    pass
+class FunctionType(NixType):
+    return_type: NixType = None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class FunctionType:
-    return_type: typing.Any = None
-
-
-@dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class ListOfType:
-    subtype: typing.Any = None
+class ListOfType(NixType):
+    child_type: NixType = None
     minimum: int = None
     maximum: int = None
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class AttrsOfType:
-    subtype: typing.Any
+class AttrsOfType(NixType):
+    child_type: NixType = AnythingType()
     lazy: bool = False
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class NullType:
+class NullType(NixType):
     pass
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class SubmoduleType:
-    pass
+class SubmoduleType(NixType):
+    child_type = AnythingType()
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class EitherType:
+class EitherType(NixType):
     subtypes: tuple = tuple()
 
+    @property
+    def child_type(self):
+        possibilities = tuple(set([
+            t.child_type
+            for t in self.subtypes
+            if hasattr(t, 'child_type')  # fix hack, shouldn't have ambiguous attributes
+        ]))
+        if possibilities:
+            return EitherType(possibilities)
+        else:
+            raise TypeError("Attempted to get child types, but no Either.subtypes allow children.", self)
+
+
+
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
-class OneOfType:
+class OneOfType(NixType):
     choices: tuple = tuple()
