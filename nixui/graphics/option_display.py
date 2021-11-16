@@ -173,7 +173,6 @@ class GenericOptionDisplay(QtWidgets.QWidget):
                 continue
             self.field_selector.select(i)
 
-
     def load_selected_field_widget(self, arg=None):
         stack_idx = self.field_selector.checked_index()
         definition = self.statemodel.get_definition(self.option)
@@ -233,7 +232,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         super().paintEvent(ev)
         if self.contains_focus():
             self.paint_background_color(
-                QtGui.QPalette().color(QtGui.QPalette().Window)
+                QtGui.QPalette().color(QtGui.QPalette().Window).darker(120)
             )
         else:
             bg_color = color_indicator.get_edit_state_color_indicator(
