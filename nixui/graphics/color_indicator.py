@@ -1,7 +1,5 @@
 from PyQt5 import QtGui
 
-from nixui.options.option_definition import OptionDefinition
-
 
 def get_edit_state_color_indicator(tree, option_path):
     """
@@ -13,9 +11,9 @@ def get_edit_state_color_indicator(tree, option_path):
     # TODO use icons to diff memory/configuration definition change
     # in memory definition change
     if option_path in tree.get_change_set_with_ancestors():
-        return QtGui.QPalette().color(QtGui.QPalette().Highlight)
+        return QtGui.QColor(214, 253, 221)  # light green
     # in configuration definition change
     elif option_path in tree.get_change_set_with_ancestors(get_configured_changes=True):
-        return QtGui.QPalette().color(QtGui.QPalette().Highlight)
+        return QtGui.QColor(245, 241, 197)  # yellow
     else:
-        return QtGui.QPalette().color(QtGui.QPalette().Window)
+        return None
