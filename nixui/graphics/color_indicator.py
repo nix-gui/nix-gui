@@ -8,8 +8,6 @@ def get_edit_state_color_indicator(tree, option_path):
     configured_definition exists: yellow
     system_default_definition: white
     """
-    # TODO use icons to diff memory/configuration definition change
-    # in memory definition change
     if option_path in tree.get_change_set_with_ancestors():
         return QtGui.QColor(214, 253, 221)  # light green
     # in configuration definition change
