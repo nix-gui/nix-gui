@@ -51,17 +51,6 @@ def get_field_widget_classes(option_type):
     )
 
 
-def get_label_color_for_widget(field_widget):
-    field_colors = {
-        field_widgets.ExpressionField: QtGui.QPalette().color(QtGui.QPalette().Window),
-        field_widgets.ReferenceField: QtGui.QPalette().color(QtGui.QPalette().Window),
-    }
-    return field_colors.get(
-        type(field_widget),
-        QtGui.QPalette().color(QtGui.QPalette().Window),
-    )
-
-
 class GenericOptionDisplay(QtWidgets.QWidget):
     def __init__(self, statemodel, set_option_path_fn, option, *args, **kwargs):
         super().__init__(*args, **kwargs)
