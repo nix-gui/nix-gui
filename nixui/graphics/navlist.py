@@ -127,8 +127,6 @@ class OptionListItem(QtWidgets.QListWidgetItem):
             self.option_tree,
             self.option
         )
-        if self.isSelected():
-            color = QtGui.QPalette().color(QtGui.QPalette().Highlight)
         return color
 
 
