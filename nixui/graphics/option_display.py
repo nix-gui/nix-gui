@@ -144,7 +144,6 @@ class GenericOptionDisplay(QtWidgets.QWidget):
                 (
                     w.name,
                     self.load_selected_field_widget,
-                    get_label_color_for_widget(w)
                 )
                 for w in field_widgets
             ]
