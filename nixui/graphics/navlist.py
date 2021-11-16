@@ -115,7 +115,7 @@ class OptionListItem(QtWidgets.QListWidgetItem):
             'text': str(self.option) if self.use_full_option_path else str(self.option[-1]),
             'child_count': self.child_count,
             'extra_text': self.extra_text,
-            'icon_path': 'build.png',
+            'icon_path': self.icon_path,
             'status_circle_color': self.status_color
         }
         super().setData(role, value)
