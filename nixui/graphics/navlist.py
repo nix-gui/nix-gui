@@ -147,6 +147,8 @@ class OptionScrollListSelector(QtWidgets.QListWidget):
     def __init__(self, base_option_path, set_option_path_fn=None):
         super().__init__()
 
+        self.setAlternatingRowColors(True)
+
         # change selected callback
         self.base_option_path = base_option_path
         self.set_option_path_fn = set_option_path_fn
