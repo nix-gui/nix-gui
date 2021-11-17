@@ -220,12 +220,6 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         super().paintEvent(ev)
         if self.contains_focus():
             self.paint_background_color(
-                QtGui.QPalette().color(QtGui.QPalette().Window).darker(110)
+                QtGui.QPalette().color(QtGui.QPalette().Window).darker(20)
             )
-        else:
-            bg_color = color_indicator.get_edit_state_color_indicator(
-                api.get_option_tree(),
-                self.option
-            )
-            self.paint_background_color(bg_color)
         self.update()
