@@ -142,8 +142,6 @@ class OptionScrollListSelector(QtWidgets.QListWidget):
     def __init__(self, base_option_path, set_option_path_fn=None):
         super().__init__()
 
-        self.setAlternatingRowColors(True)
-
         # change selected callback
         self.base_option_path = base_option_path
         self.set_option_path_fn = set_option_path_fn
@@ -160,6 +158,7 @@ class OptionScrollListSelector(QtWidgets.QListWidget):
         self._setup_scroll_list_selector_theme()  # form look and feel
 
     def _setup_scroll_list_selector_theme(self):
+        self.setAlternatingRowColors(True)
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.MinimumExpanding)
         self.setItemDelegate(OptionListItemDelegate())
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
