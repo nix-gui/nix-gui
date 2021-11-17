@@ -55,7 +55,7 @@ class OptionListItemDelegate(QtWidgets.QStyledItemDelegate):
             painter.drawEllipse(status_circle_rect)
 
         # get text ready to draw
-        text_left_offset = option.rect.height() + self.padding * 2  # padding for space from icon
+        text_left_offset = option.rect.height() + self.padding * 2 if data.get('icon_path') else self.padding * 2
         text_right_offset = option.rect.height() + self.padding * 2  # padding for space from status circle
         text_rect = QtCore.QRect(
             option.rect.left() + text_left_offset + self.padding,
@@ -71,25 +71,33 @@ class OptionListItemDelegate(QtWidgets.QStyledItemDelegate):
             extra_text_rect = QtCore.QRect(text_rect)
             extra_text_rect.setY(text_rect.y() + option.rect.height() / 3)
             text_rect.setY(text_rect.y() - option.rect.height() / 3)  # adjust the base text upwards
-            font = QtGui.QFont()
-            font.setItalic(True)
-            font.setPointSize(font.pointSize() - 2)
-            font.setWeight(QtGui.QFont.Light)
-            painter.setFont(font)
+            extra_text_font = QtGui.QFont()
+            extra_text_font.setItalic(True)
+            extra_text_font.setPointSize(extra_text_font.pointSize() - 2)
+            extra_text_font.setWeight(QtGui.QFont.Light)
+            painter.setFont(extra_text_font)
             painter.drawText(extra_text_rect, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, '\t' + data['extra_text'])
             painter.restore()
 
         # draw text
+        painter.save()
+        text_font = QtGui.QFont()
+        text_font.setWeight(QtGui.QFont.DemiBold)
+        painter.setFont(text_font)
         painter.drawText(text_rect, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, text)
+        painter.restore()
 
     def sizeHint(self, option, index):
         """
         Double height of each item
         """
         size = super().sizeHint(option, index)
-        return QtCore.QSize(
-            size.width(), size.height() * 3
-        )
+        data = index.data(QtCore.Qt.DisplayRole)
+        if data.get('extra_text'):
+            new_height = size.height() * 3
+        else:
+            new_height = size.height() * 2
+        return QtCore.QSize(size.width(), new_height)
 
 
 class OptionListItem(QtWidgets.QListWidgetItem):
