@@ -80,12 +80,7 @@ class OptionListItemDelegate(QtWidgets.QStyledItemDelegate):
             painter.restore()
 
         # draw text
-        painter.save()
-        text_font = QtGui.QFont()
-        text_font.setWeight(QtGui.QFont.DemiBold)
-        painter.setFont(text_font)
         painter.drawText(text_rect, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, text)
-        painter.restore()
 
     def sizeHint(self, option, index):
         """
