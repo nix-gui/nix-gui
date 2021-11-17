@@ -21,7 +21,7 @@ class GenericNavListDisplay:
 
 
 class OptionListItemDelegate(QtWidgets.QStyledItemDelegate):
-    padding = 3
+    padding = 5
 
     def paint(self, painter, option, index):
         # ensure different background colors are applied for selected rows
