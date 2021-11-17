@@ -24,6 +24,11 @@ class OptionListItemDelegate(QtWidgets.QStyledItemDelegate):
     padding = 3
 
     def paint(self, painter, option, index):
+        # ensure different background colors are applied for selected rows
+        viewOption = QtWidgets.QStyleOptionViewItem(option)
+        self.initStyleOption(viewOption, index)
+        QtWidgets.QStyledItemDelegate.paint(self, painter, viewOption, index)
+
         data = index.data(QtCore.Qt.DisplayRole)
 
         # draw left side icon if exists
