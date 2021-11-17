@@ -262,8 +262,8 @@ class AnythingType(NixType):
             AttrsOfType(),
             NullType(),
             SubmoduleType(),
-            OneOfType(),
-            UnspecifiedType(),
+            # OneOfType(), excluded, redundant with StrType
+            # UnspecifiedType(), excluded for now, should later be integrated
         )
 
 
