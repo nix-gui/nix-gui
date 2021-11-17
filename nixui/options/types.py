@@ -263,7 +263,7 @@ class AnythingType(NixType):
             NullType(),
             SubmoduleType(),
             # OneOfType(), excluded, redundant with StrType
-            # UnspecifiedType(), excluded for now, should later be integrated
+            # UnspecifiedType(), excluded, it must be specified
         )
 
 
