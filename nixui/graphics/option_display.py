@@ -13,7 +13,7 @@ def get_field_widget_classes_from_type(option_type):
         return [field_widgets.AttrsRedirect]
     elif isinstance(option_type, types.SubmoduleType):
         return [field_widgets.SubmoduleRedirect]
-    elif isinstance(option_type, types.EitherType):
+    elif isinstance(option_type, (types.EitherType, types.AnythingType)):
         widgets = set()
         for subtype in option_type.subtypes:
             widgets |= set(get_field_widget_classes_from_type(subtype))
@@ -37,8 +37,6 @@ def get_field_widget_classes_from_type(option_type):
     elif isinstance(option_type, types.PackageType):
         return [field_widgets.NotImplementedField]
     elif isinstance(option_type, types.FunctionType):
-        return [field_widgets.NotImplementedField]
-    elif isinstance(option_type, types.AnythingType):
         return [field_widgets.NotImplementedField]
     else:
         raise NotImplementedError(option_type)
