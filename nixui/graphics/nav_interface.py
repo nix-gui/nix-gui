@@ -95,10 +95,13 @@ class OptionNavigationInterface(QtWidgets.QWidget):
         option_def = api.get_option_tree().get_definition(option_path)
         dynamic_navlist_types = (types.AttrsOfType, types.ListOfType)
         option_type = option_type or api.get_option_tree().get_type(option_path)
-        if isinstance(option_type, types.AnythingType) and isinstance(option_def._type, dynamic_navlist_types):
-            option_type = option_def._type
-        elif isinstance(option_type, types.EitherType) and any([isinstance(t, dynamic_navlist_types) for t in option_def._type.subtypes]):
-            option_type = option_def._type
+
+        # if the option can legally be a dynamic navlist and its current value is a dynamic navlist, use that type
+        if isinstance(option_type, (types.AnythingType, types.EitherType)):
+            if any([isinstance(t, dynamic_navlist_types) for t in option_type.subtypes]):
+                if any([isinstance(t, dynamic_navlist_types) for t in option_def._type.subtypes]):
+                    option_type = option_def._type
+        # else if it has a strict type (not Anything or Either), let that type determine whether it qualifies
 
         show_path_in_navlist = (
             not display_as_single_field and (
