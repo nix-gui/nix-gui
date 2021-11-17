@@ -96,7 +96,7 @@ class OptionListItemDelegate(QtWidgets.QStyledItemDelegate):
 
 
 class OptionListItem(QtWidgets.QListWidgetItem):
-    def __init__(self, option, use_full_option_path=True, use_child_count=True, extra_text=None, icon_path=None, editable=False):
+    def __init__(self, option, use_full_option_path=False, use_child_count=True, extra_text=None, icon_path=None, editable=False):
         super().__init__()
         self.option_tree = api.get_option_tree()
 
@@ -338,7 +338,7 @@ class SearchResultListDisplay(QtWidgets.QListWidget):
         for option_path, matched_operations in self.search_tree_for_options(tree, search_str):
             item = OptionListItem(
                 option_path,
-                use_full_option_path=False,
+                use_full_option_path=True,
                 use_child_count=False,
                 extra_text='Matched ' + ', '.join(matched_operations)
             )
