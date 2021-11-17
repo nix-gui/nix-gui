@@ -25,7 +25,7 @@ def from_nix_type_str(nix_type_str, or_legal=True):
         return ListOfType(
             from_nix_type_str(nix_type_str.removeprefix('list of ').removesuffix('s'))
         )
-    elif nix_type_str.startswith('attribute set of'):
+    elif nix_type_str.startswith('attribute set of') and nix_type_str.endswith('s'):
         return AttrsOfType(
             from_nix_type_str(nix_type_str.removeprefix('attribute set of ').removesuffix('s'))
         )
@@ -35,24 +35,33 @@ def from_nix_type_str(nix_type_str, or_legal=True):
     # - (list of int) or (bools or package) - illegal because no "s" at end of "list of ints"
     # - (list of int or bools) or (package) - legal
     # then we reconstruct the result `Either(Either(a, b), c)` into `Either(a, b, c)`
+    # additionally, if the or has two choices, and the second choice ends with "convertible to it", it is a CoercedToType
     elif ' or ' in nix_type_str and or_legal:
         chunks = nix_type_str.split(' or ')
         for i in range(1, len(chunks)):
             try:
                 left = from_nix_type_str(' or '.join(chunks[:i]))
-                right = from_nix_type_str(' or '.join(chunks[i:]))
+                right_text = ' or '.join(chunks[i:])
+                if right_text.endswith(' convertible to it'):
+                    right = from_nix_type_str(right_text.removesuffix(' convertible to it'))
+                    is_coerced = True
+                else:
+                    right = from_nix_type_str(right_text)
+                    is_coerced = False
             except ValueError:
                 continue
-            else:
-                if isinstance(left, EitherType):
-                    if isinstance(right, EitherType):
-                        return EitherType(left.subtypes + right.subtypes)
-                    else:
-                        return EitherType(left.subtypes + [right])
-                elif isinstance(right, EitherType):
-                    return EitherType([left] + right.subtypes)
+
+            if is_coerced:
+                return CoercedToType(final_type=left, coerced_type=right)
+            elif isinstance(left, EitherType):
+                if isinstance(right, EitherType):
+                    return EitherType(list(left.subtypes) + list(right.subtypes))
                 else:
-                    return EitherType([left, right])
+                    return EitherType(list(left.subtypes) + [right])
+            elif isinstance(right, EitherType):
+                return EitherType([left] + list(right.subtypes))
+            else:
+                return EitherType([left, right])
         else:
             return from_nix_type_str(nix_type_str, or_legal=False)
 
@@ -166,7 +175,6 @@ def from_nix_type_str(nix_type_str, or_legal=True):
         nix_type_str.startswith('privoxy configuration type') or
         nix_type_str.startswith('unbound.conf configuration type.') or
         nix_type_str in (
-            'null or submodule or string convertible to it',
             'systemd option',
             'JSON value',
             'Json value',
@@ -182,26 +190,17 @@ def from_nix_type_str(nix_type_str, or_legal=True):
             'sysctl option value',
             'Toplevel NixOS config',
             'INI atom (null, bool, int, float or string)',
-            'path convertible to it',
-            'string convertible to it',
             'nixpkgs config',
             'nixpkgs overlay',
             'An evaluation of Nixpkgs; the top level attribute set of packages',
-            'submodule or signed integer convertible to it',
-            'submodules or list of attribute sets convertible to it',
-            'submodules or list of attribute sets convertible to it',
-            'submodule or boolean convertible to it',
             'davmail config type (str, int, bool or attribute set thereof)',
-            'submodules or list of unspecifieds convertible to it',
             'freeciv-server params',
-            'list of string or signed integer convertible to it or boolean convertible to its or string or signed integer convertible to it or boolean convertible to it convertible to it',
             'limesurvey config type (str, int, bool or attribute set thereof)',
             'Minecraft UUID',
             'LDAP value',
             'tmpfiles.d(5) age format',
             'INI atom (null, bool, int, float or string) or a non-empty list of them',
             'dataset/template options',
-            'signed integer or boolean convertible to it',
             'tuple of (unsigned integer, meaning >=0 or one of "level auto", "level full-speed", "level disengage") (unsigned integer, meaning >=0) (unsigned integer, meaning >=0)',
             'Traffic Server records value',
             'package with provided sessions',
@@ -333,8 +332,18 @@ class EitherType(NixType):
             raise TypeError("Attempted to get child types, but no Either.subtypes allow children.", self)
 
 
-
-
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class OneOfType(NixType):
     choices: tuple = tuple()
+
+
+@dataclasses.dataclass(frozen=True, unsafe_hash=True)
+class CoercedToType(EitherType):
+    # "final_type or coerced_type convertible to it"
+    final_type: NixType = AnythingType()
+    coerced_type: NixType = AnythingType()
+
+    subtypes: tuple = None
+
+    def __post_init__(self):
+        object.__setattr__(self, 'subtypes', (self.final_type, self.coerced_type))
