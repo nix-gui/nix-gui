@@ -83,7 +83,7 @@ class OptionNavigationInterface(QtWidgets.QWidget):
         self.uri_stack.append(f'options:{option_path}')
 
         self.nav_bar.replace_widget(
-            navbar.NavBar.as_option_tree(option_path, self.set_lookup_key)
+            navbar.NavBar.as_option_tree(option_path, self.set_lookup_key, back_enabled=len(self.uri_stack) > 1)
         )
         num_children = len(api.get_option_tree().children(option_path, mode="leaves"))
 
@@ -141,7 +141,7 @@ class OptionNavigationInterface(QtWidgets.QWidget):
         self.uri_stack.append(f'search:{search_str}')
 
         self.nav_bar.replace_widget(
-            navbar.NavBar.as_search_query(search_str, self.set_lookup_key)
+            navbar.NavBar.as_search_query(search_str, self.set_lookup_key, back_enabled=len(self.uri_stack) > 1)
         )
 
         self.nav_list.replace_widget(

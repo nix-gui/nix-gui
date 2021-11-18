@@ -41,12 +41,15 @@ class NavBar(QtWidgets.QWidget):
     - move undo toolbar item here
     - delete search toolbar item
     """
-    def __init__(self, set_lookup_key_fn, unfocused_text, focused_text, up_fn=None, search_str=None):
+    def __init__(self, set_lookup_key_fn, unfocused_text, focused_text, search_str=None, up_fn=None, back_enabled=True):
         super().__init__()
 
         # create widgets and define behavior
         back_btn = QtWidgets.QPushButton('◀')
-        back_btn.clicked.connect(lambda: set_lookup_key_fn(None))
+        if back_enabled:
+            back_btn.clicked.connect(lambda: set_lookup_key_fn(None))
+        else:
+            back_btn.setEnabled(False)
 
         up_btn = QtWidgets.QPushButton('▲')
         if up_fn is not None:
@@ -87,21 +90,23 @@ class NavBar(QtWidgets.QWidget):
         self.setLayout(hbox)
 
     @classmethod
-    def as_option_tree(cls, option_path, set_lookup_key_fn):
+    def as_option_tree(cls, option_path, set_lookup_key_fn, back_enabled=True):
         kwargs = dict(
             set_lookup_key_fn=set_lookup_key_fn,
             unfocused_text=' » '.join([TREE_UNICODE] + list(option_path)),
-            focused_text=f'options:{str(option_path)}'
+            focused_text=f'options:{str(option_path)}',
+            back_enabled=back_enabled,
         )
         if option_path:
             kwargs['up_fn'] = lambda: set_lookup_key_fn(f'options:{option_path.get_set()}')
         return cls(**kwargs)
 
     @classmethod
-    def as_search_query(cls, search_str, set_lookup_key_fn):
+    def as_search_query(cls, search_str, set_lookup_key_fn, back_enabled=True):
         return cls(
             set_lookup_key_fn=set_lookup_key_fn,
             unfocused_text=f'{MAGNIFYING_GLASS_UNICODE} » {search_str}',
             focused_text=f'search:{search_str}',
             search_str=search_str,
+            back_enabled=back_enabled,
         )
