@@ -21,12 +21,14 @@ class OptionData:
     configured_definition: OptionDefinition = OptionDefinition.undefined()
     in_memory_definition: OptionDefinition = OptionDefinition.undefined()
 
-    def __post_init__(self):
+    def get_type(self):
         if self._type == Undefined:
             if self._type_string == Undefined:
-                self._type = types.AttrsType()
+                return types.AttrsType()
             else:
-                self._type = types.from_nix_type_str(self._type_string)
+                return types.from_nix_type_str(self._type_string)
+        else:
+            return self._type
 
     # based on https://stackoverflow.com/a/61426351
     def update(self, new):
@@ -109,7 +111,7 @@ class OptionTree:
                             child_option_path,
                             parent=parent_option_path,
                             data=OptionData(
-                                _type=self.get_type(parent_option_path).child_type or types.AttrsType()
+                                _type=self.get_type(parent_option_path).child_type or Undefined
                             )
                         )
                 parent_option_path = child_option_path
@@ -121,7 +123,7 @@ class OptionTree:
     def _is_attribute_set(self, attribute):
         data = self.tree.get_node(attribute).data
         if data:
-            return isinstance(data._type, types.AttrsOfType)
+            return isinstance(data.get_type(), types.AttrsOfType)
         return False
 
     def _get_attribute_set_template_branch(self, attribute):
@@ -131,7 +133,7 @@ class OptionTree:
         """
         parent_attribute = attribute.get_set()
         data = self.tree.get_node(parent_attribute).data  # get spec of parent attribute
-        if data._type == types.AttrsOfType(types.SubmoduleType()):
+        if data.get_type() == types.AttrsOfType(types.SubmoduleType()):
             submodule_spec_attribute = Attribute.from_insertion(parent_attribute, '<name>')
             tree = Tree(self.tree.subtree(submodule_spec_attribute), deep=True)
             # <name> -> actual attribute
@@ -145,7 +147,7 @@ class OptionTree:
         else:
             option_data_spec = data.copy()
             # TODO https://github.com/nix-gui/nix-gui/issues/65
-            option_data_spec._type = data._type.child_type
+            option_data_spec._type = data.get_type().child_type
             tree = Tree()
             node = Node(attribute, attribute, data=option_data_spec)
             tree.add_node(node)
@@ -233,7 +235,10 @@ class OptionTree:
         return self._get_data(attribute).system_default_definition
 
     def get_type(self, attribute):
-        return self._get_data(attribute)._type
+        return self._get_data(attribute).get_type()
+
+    def get_type_string(self, attribute):
+        return self._get_data(attribute)._type_string
 
     def get_description(self, attribute):
         return self._get_data(attribute).description
