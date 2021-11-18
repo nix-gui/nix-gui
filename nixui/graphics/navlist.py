@@ -104,9 +104,15 @@ class OptionListItem(QtWidgets.QListWidgetItem):
         self.previous_option = self.option  # stored to record edits
 
         self.use_full_option_path = use_full_option_path
-        self.child_count = len(self.option_tree.children(self.option)) if use_child_count else None
         self.extra_text = extra_text
         self.icon_path = icon_path
+
+        if use_child_count:
+            num_direct_children = len(self.option_tree.children(self.option))
+            num_descendants = len(self.option_tree.children(self.option, mode='leaves'))
+            self.child_count = f'{num_direct_children}/{num_descendants}'
+        else:
+            self.child_count = None
 
         if editable:
             self.setFlags(self.flags() | QtCore.Qt.ItemIsEditable)
