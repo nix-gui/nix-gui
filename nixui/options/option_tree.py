@@ -272,6 +272,13 @@ class OptionTree:
             if '"<name>"' not in node.tag
         }
 
+    @functools.lru_cache(100000)  # this breaks when nixos has 100,000 attributes
+    def count_leaves(self, attribute):
+        child_ids = self.tree.is_branch(attribute)
+        if child_ids:
+            return sum(map(self.count_leaves, child_ids))
+        return 1
+
     def get_next_branching_option(self, attribute):
         while len(self.children(attribute)) == 1:
             attribute = self.children(attribute)[0]

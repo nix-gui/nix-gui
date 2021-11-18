@@ -109,7 +109,7 @@ class OptionListItem(QtWidgets.QListWidgetItem):
 
         if use_child_count:
             num_direct_children = len(self.option_tree.children(self.option))
-            num_descendants = len(self.option_tree.children(self.option, mode='leaves'))
+            num_descendants = self.option_tree.count_leaves(self.option)
             self.child_count = f'{num_direct_children}/{num_descendants}'
         else:
             self.child_count = None
