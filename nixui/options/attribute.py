@@ -1,17 +1,10 @@
-import csv
 from dataclasses import dataclass, field
-import re
 from typing import List
 
 
 @dataclass(frozen=True)
 class Attribute:
     loc: List[str] = field(default_factory=list)
-
-    @classmethod
-    def from_string(cls, attribute_string):
-        loc = next(csv.reader([attribute_string], delimiter='.', quotechar='"'))
-        return cls(loc)
 
     @classmethod
     def from_insertion(cls, attribute_set, attribute):
