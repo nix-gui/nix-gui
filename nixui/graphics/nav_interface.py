@@ -1,4 +1,5 @@
 import collections
+import csv
 
 from PyQt5 import QtWidgets, QtCore
 
@@ -52,7 +53,7 @@ class OptionNavigationInterface(QtWidgets.QWidget):
             if lookup_key.startswith('options:'):
                 option_str = lookup_key.removeprefix('options:')
                 self.set_option_path(
-                    Attribute.from_string(option_str)
+                    Attribute(next(csv.reader([option_str], delimiter='.', quotechar='"')))
                 )
             elif lookup_key.startswith('search:'):
                 search_str = lookup_key.removeprefix('search:')
