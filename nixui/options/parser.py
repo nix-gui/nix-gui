@@ -146,7 +146,7 @@ def recursively_get_node_attr_set_data(parent_attribute, node):
         key_node, value_node = [e for e in key_value_node.elems if isinstance(e, syntax_tree.Node)]
         full_attribute_path = attribute.Attribute(
             parent_attribute.loc +
-            attribute.Attribute.from_string(key_node.to_string()).loc
+            attribute.Attribute(key_node.loc).loc
         )
         yield full_attribute_path, value_node
         if value_node.name == 'NODE_ATTR_SET':
