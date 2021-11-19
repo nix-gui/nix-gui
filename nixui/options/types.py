@@ -3,9 +3,10 @@ based on https://github.com/NixOS/nixpkgs/blob/master/lib/types.nix
 """
 import abc
 import dataclasses
-import typing
+import functools
 
 
+@functools.lru_cache()
 def from_nix_type_str(nix_type_str, or_legal=True):
     """
     TODO: eval nested types, e.g.

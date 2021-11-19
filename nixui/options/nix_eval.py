@@ -41,6 +41,8 @@ def nix_instantiate_eval(expr, strict=False, show_trace=False, retry_show_trace_
     ]
     if strict:
         cmd.append('--strict')
+    if show_trace:
+        cmd.append('--show-trace')
 
     p = subprocess.Popen(
         cmd,

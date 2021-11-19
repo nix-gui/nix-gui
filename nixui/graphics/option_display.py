@@ -92,7 +92,7 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         tooltip = generic_widgets.ToolTip(
             richtext.get_option_html(
                 option,
-                type_label=api.get_option_tree().get_type(option),
+                type_label=api.get_option_tree().get_type_string(option),
                 description=description_text if description_text != option_definition.Undefined else None,
             )
         )
