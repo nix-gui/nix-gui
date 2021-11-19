@@ -34,11 +34,8 @@ class ExclusiveButtonGroup(QtWidgets.QFrame):
         self.btn_group = QtWidgets.QButtonGroup()
         self.btn_group.setExclusive(True)
 
-        for i, (choice, handler, color) in enumerate(choices):
+        for i, (choice, handler) in enumerate(choices):
             btn = QtWidgets.QPushButton(choice)
-            p = btn.palette()
-            p.setColor(btn.backgroundRole(), color)
-            btn.setPalette(p)
             btn.setCheckable(True)
             btn.clicked.connect(handler)
             layout.addWidget(btn)

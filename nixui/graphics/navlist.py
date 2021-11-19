@@ -20,6 +20,125 @@ class GenericNavListDisplay:
             return StaticAttrsOf(option_path, set_option_path_fn, selected)
 
 
+class OptionListItemDelegate(QtWidgets.QStyledItemDelegate):
+    padding = 5
+
+    def paint(self, painter, option, index):
+        # ensure different background colors are applied for selected rows
+        viewOption = QtWidgets.QStyleOptionViewItem(option)
+        self.initStyleOption(viewOption, index)
+        QtWidgets.QStyledItemDelegate.paint(self, painter, viewOption, index)
+
+        data = index.data(QtCore.Qt.DisplayRole)
+
+        # draw left side icon if exists
+        if data.get('icon_path'):
+            icon_rect = QtCore.QRect(
+                option.rect.left() + self.padding,
+                option.rect.top() + self.padding,
+                option.rect.height() - self.padding * 2,
+                option.rect.height() - self.padding * 2,
+            )
+            icon_pixmap = icon.get_pixmap(data['icon_path'])
+            painter.drawPixmap(icon_rect, icon_pixmap)
+
+        if data.get('status_circle_color'):
+            status_circle_rect = QtCore.QRectF(
+                option.rect.right() - option.rect.height() * 0.5 - self.padding,
+                option.rect.top() + option.rect.height() * 0.5 - self.padding,
+                option.rect.height() * 0.25,
+                option.rect.height() * 0.25,
+            )
+            circle_outline_width = 2
+            painter.setPen(QtGui.QPen(QtCore.Qt.black, circle_outline_width, QtCore.Qt.SolidLine))
+            painter.setBrush(QtGui.QBrush(data['status_circle_color'], QtCore.Qt.SolidPattern))
+            painter.drawEllipse(status_circle_rect)
+
+        # get text ready to draw
+        text_left_offset = option.rect.height() + self.padding * 2 if data.get('icon_path') else self.padding * 2
+        text_right_offset = option.rect.height() + self.padding * 2  # padding for space from status circle
+        text_rect = QtCore.QRect(
+            option.rect.left() + text_left_offset + self.padding,
+            option.rect.top() + self.padding,
+            option.rect.width() - text_left_offset - text_right_offset - self.padding * 2,
+            option.rect.height() - self.padding * 2,
+        )
+        text = data['text'] + (f" ({data['child_count']})" if data.get('child_count') else "")
+
+        # draw subtext
+        if data.get('extra_text'):
+            painter.save()
+
+            # If there's extra text, set the extra text 1/3rd of the item height below the base text
+            # and move the base text 1/3rd of the item height upwards
+            extra_text_rect = QtCore.QRect(text_rect)
+            extra_text_rect.setY(text_rect.y() + option.rect.height() / 3)
+            text_rect.setY(text_rect.y() - option.rect.height() / 3)
+
+            extra_text_font = QtGui.QFont(italic=True, pointSize=-2, weight=QtGui.QFont.Light)
+            painter.setFont(extra_text_font)
+            painter.drawText(extra_text_rect, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, '\t' + data['extra_text'])
+            painter.restore()
+
+        # draw text
+        painter.drawText(text_rect, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, text)
+
+    def sizeHint(self, option, index):
+        """
+        Double height of each item
+        """
+        size = super().sizeHint(option, index)
+        data = index.data(QtCore.Qt.DisplayRole)
+        if data.get('extra_text'):
+            new_height = size.height() * 3
+        else:
+            new_height = size.height() * 2
+        return QtCore.QSize(size.width(), new_height)
+
+
+class OptionListItem(QtWidgets.QListWidgetItem):
+    def __init__(self, option, use_full_option_path=False, use_child_count=True, extra_text=None, icon_path=None, editable=False):
+        super().__init__()
+        self.option_tree = api.get_option_tree()
+
+        self.option = option
+        self.previous_option = self.option  # stored to record edits
+
+        self.use_full_option_path = use_full_option_path
+        self.child_count = len(self.option_tree.children(self.option)) if use_child_count else None
+        self.extra_text = extra_text
+        self.icon_path = icon_path
+
+        if editable:
+            self.setFlags(self.flags() | QtCore.Qt.ItemIsEditable)
+
+        self.setData(QtCore.Qt.DisplayRole, str(self.option))
+
+    def setData(self, role, value_str):
+        if role == QtCore.Qt.EditRole:
+            self.previous_option = self.option
+            self.option = Attribute.from_insertion(self.option.get_set(), value_str)
+
+        # Delegate takes a dict, convert
+        value = {
+            'text': str(self.option) if self.use_full_option_path else str(self.option[-1]),
+            'child_count': self.child_count,
+            'extra_text': self.extra_text,
+            'icon_path': self.icon_path,
+            'status_circle_color': self.status_color
+        }
+        super().setData(role, value)
+
+    @property
+    def status_color(self):
+        # get color based on whether it or a child has been edited
+        color = color_indicator.get_edit_state_color_indicator(
+            self.option_tree,
+            self.option
+        )
+        return color
+
+
 class OptionScrollListSelector(QtWidgets.QListWidget):
     def __init__(self, base_option_path, set_option_path_fn=None):
         super().__init__()
@@ -33,15 +152,16 @@ class OptionScrollListSelector(QtWidgets.QListWidget):
         options = api.get_option_tree().children(base_option_path)
         self.option_item_map = {}
         for option in options:
-            item = ChildCountOptionListItem(option)
+            item = OptionListItem(option)
             self.addItem(item)
             self.option_item_map[option.get_end()] = item
 
         self._setup_scroll_list_selector_theme()  # form look and feel
 
     def _setup_scroll_list_selector_theme(self):
+        self.setAlternatingRowColors(True)
         self.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.MinimumExpanding)
-        self.setItemDelegate(richtext.OptionListItemDelegate())
+        self.setItemDelegate(OptionListItemDelegate())
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setMinimumWidth(self.sizeHintForColumn(0))
 
@@ -57,67 +177,6 @@ class OptionScrollListSelector(QtWidgets.QListWidget):
                 self.currentItem().option.get_end()
             )
             self.set_option_path_fn(attr)
-
-
-class ChangeTypeButton(QtWidgets.QPushButton):
-    def __init__(self, base_option_path, option_type, set_option_path_fn):
-        super().__init__()
-        self.setText(option_type)
-        self.clicked.connect(
-            lambda:
-            set_option_path_fn(
-                base_option_path,
-                display_as_single_field=True
-            )
-        )
-
-
-class ChildCountOptionListItem(QtWidgets.QListWidgetItem):
-    def __init__(self, option, use_fancy_name=True, use_child_count=True, extra_text=None, icon_path=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.option = option
-        self.option_tree = api.get_option_tree()
-
-        child_count = len(self.option_tree.children(self.option)) if use_child_count else None
-        self.setText(
-            richtext.get_option_html(
-                self.option,
-                use_fancy_name,
-                child_count,
-                extra_text=extra_text
-            )
-        )
-
-        if icon_path:
-            self.setIcon(QtGui.QIcon(icon_path))
-
-    @property
-    def bg_color(self):
-        # get color based on whether it or a child has been edited
-        color = color_indicator.get_edit_state_color_indicator(
-            self.option_tree,
-            self.option
-        )
-        # darken if selected
-        if self.isSelected():
-            color = color.darker(120)
-        return color
-
-
-
-class EditableListItem(QtWidgets.QListWidgetItem):
-    def __init__(self, option, icon_path=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.option = option
-        self.previous_option = option
-        self.setFlags(self.flags() | QtCore.Qt.ItemIsEditable)
-        self.setText(self.option.get_end())
-
-    def setData(self, index, value):
-        self.previous_option = self.option
-        self.option = Attribute.from_insertion(self.option.get_set(), value)
-        super().setData(index, value)
 
 
 class StaticAttrsOf(OptionScrollListSelector):
@@ -168,8 +227,9 @@ class DynamicAttrsOf(QtWidgets.QWidget):
         self.statemodel.rename_option(item.previous_option, item.option)
 
     def add_clicked(self):
-        item = EditableListItem(
-            Attribute.from_insertion(self.option_path, 'newAttribute')
+        item = OptionListItem(
+            Attribute.from_insertion(self.option_path, 'newAttribute'),
+            editable=True
         )
         self.list_widget.addItem(item)
         self.statemodel.add_new_option(item.option)
@@ -233,8 +293,9 @@ class DynamicListOf(QtWidgets.QWidget):
         self.statemodel.rename_option(item.previous_option, item.option)
 
     def add_clicked(self):
-        item = EditableListItem(
-            Attribute.from_insertion(self.option_path, 'newAttribute')
+        item = OptionListItem(
+            Attribute.from_insertion(self.option_path, 'newAttribute'),  # TODO: fix this
+            editable=True
         )
         self.list_widget.addItem(item)
         self.statemodel.add_new_option(item.option)
@@ -258,7 +319,6 @@ class DynamicListOf(QtWidgets.QWidget):
         current_item = self.list_widget.takeItem(current_row)
         self.list_widget.addItem(current_item)
 
-
     def insert_items(self):
         for option in api.get_option_tree().children(self.option_path):
             it = self.ItemCls(option)
@@ -277,9 +337,9 @@ class SearchResultListDisplay(QtWidgets.QListWidget):
         # load options
         tree = api.get_option_tree()
         for option_path, matched_operations in self.search_tree_for_options(tree, search_str):
-            item = ChildCountOptionListItem(
+            item = OptionListItem(
                 option_path,
-                use_fancy_name=False,
+                use_full_option_path=True,
                 use_child_count=False,
                 extra_text='Matched ' + ', '.join(matched_operations)
             )
@@ -352,3 +412,16 @@ class SearchResultListDisplay(QtWidgets.QListWidget):
             self.set_option_path_fn(
                 self.currentItem().option
             )
+
+
+class ChangeTypeButton(QtWidgets.QPushButton):
+    def __init__(self, base_option_path, option_type, set_option_path_fn):
+        super().__init__()
+        self.setText(option_type)
+        self.clicked.connect(
+            lambda:
+            set_option_path_fn(
+                base_option_path,
+                display_as_single_field=True
+            )
+        )

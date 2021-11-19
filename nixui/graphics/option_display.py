@@ -51,17 +51,6 @@ def get_field_widget_classes(option_type):
     )
 
 
-def get_label_color_for_widget(field_widget):
-    field_colors = {
-        field_widgets.ExpressionField: QtGui.QColor(193, 236, 245),
-        field_widgets.ReferenceField: QtGui.QColor(174, 250, 174),
-    }
-    return field_colors.get(
-        type(field_widget),
-        QtGui.QColor(255, 255, 240),  # default
-    )
-
-
 class GenericOptionDisplay(QtWidgets.QWidget):
     def __init__(self, statemodel, set_option_path_fn, option, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -144,7 +133,6 @@ class GenericOptionDisplay(QtWidgets.QWidget):
                 (
                     w.name,
                     self.load_selected_field_widget,
-                    get_label_color_for_widget(w)
                 )
                 for w in field_widgets
             ]
@@ -172,7 +160,6 @@ class GenericOptionDisplay(QtWidgets.QWidget):
             else:
                 continue
             self.field_selector.select(i)
-
 
     def load_selected_field_widget(self, arg=None):
         stack_idx = self.field_selector.checked_index()
@@ -233,12 +220,6 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         super().paintEvent(ev)
         if self.contains_focus():
             self.paint_background_color(
-                QtGui.QColor(233, 245, 248)
+                QtGui.QPalette().color(QtGui.QPalette().Window).darker(20)
             )
-        else:
-            bg_color = color_indicator.get_edit_state_color_indicator(
-                api.get_option_tree(),
-                self.option
-            )
-            self.paint_background_color(bg_color)
         self.update()
