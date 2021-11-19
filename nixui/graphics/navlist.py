@@ -43,6 +43,7 @@ class OptionListItemDelegate(QtWidgets.QStyledItemDelegate):
             painter.drawPixmap(icon_rect, icon_pixmap)
 
         if data.get('status_circle_color'):
+            painter.save()
             status_circle_rect = QtCore.QRectF(
                 option.rect.right() - option.rect.height() * 0.5 - self.padding,
                 option.rect.top() + option.rect.height() * 0.5 - self.padding,
@@ -53,6 +54,7 @@ class OptionListItemDelegate(QtWidgets.QStyledItemDelegate):
             painter.setPen(QtGui.QPen(QtCore.Qt.black, circle_outline_width, QtCore.Qt.SolidLine))
             painter.setBrush(QtGui.QBrush(data['status_circle_color'], QtCore.Qt.SolidPattern))
             painter.drawEllipse(status_circle_rect)
+            painter.restore()
 
         # get text ready to draw
         text_left_offset = option.rect.height() + self.padding * 2 if data.get('icon_path') else self.padding * 2
