@@ -67,6 +67,10 @@ class OptionTree:
     def __hash__(self):
         return hash(self.change_marker)
 
+    def __eq__(self, other):
+        # hack, only should be used to enable lru_cache for OptionTree methods
+        return hash(self) == hash(other)
+
     def _update_in_memory_change_cache(self, attribute, option_definition):
         in_memory_definition = self.tree.get_node(attribute).data.in_memory_definition
         if in_memory_definition == self.tree.get_node(attribute).data.configured_definition:
