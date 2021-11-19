@@ -1,7 +1,6 @@
-import copy
 import os
 
-from nixui.options import parser, nix_eval, option_tree, types
+from nixui.options import parser, nix_eval, option_tree
 from nixui.utils import cache, store, remap_dict
 
 
@@ -13,24 +12,15 @@ def get_option_tree(configuration_path=None):
     if configuration_path is None:
         configuration_path = os.environ['CONFIGURATION_PATH']
 
-    def convert_type_str_to_type_obj(option_data_dict, missing_default=None):
-        option_data_dict = copy.deepcopy(option_data_dict)
-        for key, value in option_data_dict.items():
-            option_data_dict[key]['type_string'] = option_data_dict[key]['type']
-            if 'type' in value:
-                option_data_dict[key]['type'] = types.from_nix_type_str(option_data_dict[key]['type'])
-            elif missing_default:
-                option_data_dict[key]['type'] = missing_default
-        return option_data_dict
-
+    system_option_data_dict = {
+        option_path: remap_dict.key_remapper(
+            option_data_dict,
+            {'system_default': 'system_default_definition', 'type': 'type_string'}
+        )
+        for option_path, option_data_dict in nix_eval.get_all_nixos_options().items()
+    }
     return option_tree.OptionTree(
-        convert_type_str_to_type_obj(
-            remap_dict.key_remapper(
-                nix_eval.get_all_nixos_options(),
-                {'system_default': 'system_default_definition'}
-            ),
-            missing_default=types.AttrsType()
-        ),
+        system_option_data_dict,
         parser.get_all_option_values(configuration_path)
     )
 

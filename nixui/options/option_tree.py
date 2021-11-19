@@ -16,10 +16,17 @@ class OptionData:
     description: str = Undefined
     readOnly: bool = Undefined
     _type_string: str = Undefined
-    _type: types.NixType = types.AnythingType()
+    _type: types.NixType = Undefined
     system_default_definition: OptionDefinition = OptionDefinition.undefined()
     configured_definition: OptionDefinition = OptionDefinition.undefined()
     in_memory_definition: OptionDefinition = OptionDefinition.undefined()
+
+    def __post_init__(self):
+        if self._type == Undefined:
+            if self._type_string == Undefined:
+                self._type = types.AttrsType()
+            else:
+                self._type = types.from_nix_type_str(self._type_string)
 
     # based on https://stackoverflow.com/a/61426351
     def update(self, new):
