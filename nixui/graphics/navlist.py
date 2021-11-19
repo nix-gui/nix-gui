@@ -68,13 +68,14 @@ class OptionListItemDelegate(QtWidgets.QStyledItemDelegate):
         # draw subtext
         if data.get('extra_text'):
             painter.save()
+
+            # If there's extra text, set the extra text 1/3rd of the item height below the base text
+            # and move the base text 1/3rd of the item height upwards
             extra_text_rect = QtCore.QRect(text_rect)
             extra_text_rect.setY(text_rect.y() + option.rect.height() / 3)
-            text_rect.setY(text_rect.y() - option.rect.height() / 3)  # adjust the base text upwards
-            extra_text_font = QtGui.QFont()
-            extra_text_font.setItalic(True)
-            extra_text_font.setPointSize(extra_text_font.pointSize() - 2)
-            extra_text_font.setWeight(QtGui.QFont.Light)
+            text_rect.setY(text_rect.y() - option.rect.height() / 3)
+
+            extra_text_font = QtGui.QFont(italic=True, pointSize=-2, weight=QtGui.QFont.Light)
             painter.setFont(extra_text_font)
             painter.drawText(extra_text_rect, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, '\t' + data['extra_text'])
             painter.restore()
