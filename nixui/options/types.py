@@ -248,6 +248,24 @@ class AnythingType(NixType):
     def child_type(self):
         return AnythingType()
 
+    @property
+    def subtypes(self):
+        return (
+            BoolType(),
+            IntType(),
+            FloatType(),
+            StrType(),
+            PathType(),
+            PackageType(),
+            FunctionType(),
+            ListOfType(),
+            AttrsOfType(),
+            NullType(),
+            SubmoduleType(),
+            # OneOfType(), excluded, redundant with StrType
+            # UnspecifiedType(), excluded, it must be specified
+        )
+
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class BoolType(NixType):
@@ -331,7 +349,6 @@ class EitherType(NixType):
             return EitherType(possibilities)
         else:
             raise TypeError("Attempted to get child types, but no Either.subtypes allow children.", self)
-
 
 
 
