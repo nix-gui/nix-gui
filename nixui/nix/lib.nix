@@ -1,5 +1,6 @@
 let
   inherit (import <nixpkgs> {}) pkgs lib;
+  inherit (import <nixpkgs/nixos> {}) config;
 in lib.makeExtensible (self: {
   /* Recurse through the declaration tree of a module collecting
      the positions of the declarations within the module
@@ -44,7 +45,7 @@ in lib.makeExtensible (self: {
           inherit lib;
           inherit pkgs;
           name = "";
-          config = {};
+          config = config;
           modulesPath = builtins.dirOf module_path;
         }
       else m;
@@ -71,11 +72,11 @@ in lib.makeExtensible (self: {
   get_modules_defined_attrs = module_path: let
     inherit (self) collectDeclarationPositions evalModuleStub;
 
-    config = builtins.removeAttrs (evalModuleStub module_path) ["imports"];
+    module_config = builtins.removeAttrs (evalModuleStub module_path) ["imports"];
 
     # TODO: find a better way of getting module path
-    hacked_module_path = (builtins.unsafeGetAttrPos (builtins.elemAt (builtins.attrNames config) 0) config).file;
+    hacked_module_path = (builtins.unsafeGetAttrPos (builtins.elemAt (builtins.attrNames module_config) 0) module_config).file;
   in
-    collectDeclarationPositions {module_path = hacked_module_path; declarations = config;};
+    collectDeclarationPositions {module_path = hacked_module_path; declarations = module_config;};
 
 })

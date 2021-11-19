@@ -90,6 +90,9 @@ in {
         ${pkgs.xorg.xmodmap}/bin/xmodmap ~/.Xmodmap
 
         ${pkgs.networkmanagerapplet}/bin/nm-applet &
+
+        # test getting config
+        echo ${toString config.services.nix-serve.port}
       '';
     };
 
