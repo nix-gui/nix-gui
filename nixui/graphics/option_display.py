@@ -56,6 +56,9 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         self.set_option_path_fn = set_option_path_fn
         self.option = option
 
+        # make selectable for focus
+        self.setFocusPolicy(QtCore.Qt.ClickFocus)
+
         # vbox containing read-only option details and "is-defined" toggle switch
         description_layout = QtWidgets.QVBoxLayout()
         description_layout.addLayout(
@@ -218,6 +221,6 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         super().paintEvent(ev)
         if self.contains_focus():
             self.paint_background_color(
-                QtGui.QPalette().color(QtGui.QPalette().Window).darker(20)
+                QtGui.QPalette().color(QtGui.QPalette().Highlight)
             )
         self.update()
