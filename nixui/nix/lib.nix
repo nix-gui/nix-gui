@@ -1,6 +1,7 @@
 let
   inherit (import <nixpkgs> {}) pkgs lib;
   inherit (import <nixpkgs/nixos> {}) config;
+  modulesPath = <nixpkgs/nixos/modules>;
 in lib.makeExtensible (self: {
   /* Recurse through the declaration tree of a module collecting
      the positions of the declarations within the module
@@ -46,7 +47,7 @@ in lib.makeExtensible (self: {
           inherit pkgs;
           name = "";
           config = config;
-          modulesPath = builtins.dirOf module_path;
+          modulesPath = modulesPath;
         }
       else m;
 
