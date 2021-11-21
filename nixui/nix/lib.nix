@@ -51,6 +51,17 @@ in lib.makeExtensible (self: {
         }
       else m;
 
+  /*Evaluate the imports of a given module*/
+  get_modules_evaluated_imports = module_path:
+    let
+      inherit (self) evalModuleStub;
+      module_config = evalModuleStub module_path;
+    in
+      if builtins.hasAttr "imports" module_config
+      then module_config.imports
+      else [];
+
+
   /* Get all NixOS options as a list of options with the following schema:
     {
       "option.name": {

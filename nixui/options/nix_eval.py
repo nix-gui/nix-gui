@@ -98,6 +98,16 @@ def get_all_nixos_options():
 
 
 @cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
+def get_modules_evaluated_imports(module_path):
+    """
+    Get the evaluated `imports` attribute of a module
+    returns a list of paths
+    """
+    with find_library('get_modules_evaluated_imports') as fn:
+        return nix_instantiate_eval(f'{fn} {module_path}', strict=True)
+
+
+@cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
 def get_modules_defined_attrs(module_path):
     """
     Get a JSON representation of the modules attributes and positions.

@@ -21,3 +21,12 @@ def test_get_modules_defined_attrs_set_configuration():
     result = nix_eval.get_modules_defined_attrs(module_path)
     assert result[attribute.Attribute.from_string('system.stateVersion')]['position']['column'] == 5
     assert result[attribute.Attribute.from_string('system.stateVersion')]['position']['line'] == 5
+
+
+@pytest.mark.datafiles(SAMPLES_PATH)
+def test_get_modules_evaluated_imports():
+    module_path = os.path.abspath(os.path.join(SAMPLES_PATH, 'hardware-configuration.nix'))
+    result = nix_eval.get_modules_evaluated_imports(module_path)
+
+    base_modules_path = nix_eval.nix_instantiate_eval("<nixpkgs/nixos/modules>")
+    assert result == [base_modules_path + "/installer/scan/not-detected.nix"]
