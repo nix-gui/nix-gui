@@ -101,12 +101,12 @@ def get_all_nixos_options():
 
 
 @cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
-def get_modules_evaluated_imports(module_path):
+def get_modules_evaluated_import_paths(module_path):
     """
     Get the evaluated `imports` attribute of a module
     returns a list of paths
     """
-    with find_library('get_modules_evaluated_imports') as fn:
+    with find_library('get_modules_evaluated_import_paths') as fn:
         return nix_instantiate_eval(f'{fn} {module_path}', strict=True)
 
 

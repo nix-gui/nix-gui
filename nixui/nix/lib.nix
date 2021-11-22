@@ -52,7 +52,7 @@ in lib.makeExtensible (self: {
       else m;
 
   /*Evaluate the imports of a given module*/
-  get_modules_evaluated_imports = module_path:
+  get_modules_evaluated_import_paths = module_path:
     let
       inherit (self) evalModuleStub;
       module_config = evalModuleStub module_path;

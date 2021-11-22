@@ -26,6 +26,6 @@ def test_get_modules_defined_attrs_set_configuration():
 @pytest.mark.datafiles(SAMPLES_PATH)
 def test_get_modules_evaluated_imports():
     module_path = os.path.abspath(os.path.join(SAMPLES_PATH, 'hardware-configuration.nix'))
-    result = nix_eval.get_modules_evaluated_imports(module_path)
+    result = nix_eval.get_modules_evaluated_import_paths(module_path)
     base_modules_path = nix_eval.resolve_nix_search_path('<nixpkgs/nixos/modules>')
     assert result == [base_modules_path.strip() + "/installer/scan/not-detected.nix"]
