@@ -51,7 +51,7 @@
           ({ stdenv, lib, rustPlatform, fetchFromGitHub, enable-profiling ? false }:
             pythonPackages.buildPythonPackage rec {
               pname = "nix-gui";
-              version = "0.1.4";
+              version = "0.1.5";
               src = ./.;
               propagatedBuildInputs = [
                 pythonPackages.pyqt5
