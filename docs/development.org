@@ -1,5 +1,6 @@
-* Development
-  In order to obtain a development environment, one can run:
+* Commands
+
+** Create a Development Environment
 #+BEGIN_src bash
 $ nix develop
 $ CONFIGURATION_PATH=$(realpath nixui/tests/sample/configuration.nix) python -m nixui.main
