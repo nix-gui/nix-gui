@@ -67,13 +67,8 @@ def get_all_option_values(module_path, allow_errors=True):
             value_node.to_string()
         )
 
-    # get imports and recurse
-    import_paths = nix_eval.get_modules_evaluated_import_paths(module_path)
-    if not import_paths:
-        return option_expr_map
-
-    # for each valid parsable import, recurse
-    for import_path in import_paths:
+    # for each import, recurse
+    for import_path in nix_eval.get_modules_evaluated_import_paths(module_path):
         try:
             # TODO: this isn't the correct way to merge attributes between module imports, it needs to be implemented correctly
             option_expr_map.update(get_all_option_values(import_path))
