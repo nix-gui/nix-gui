@@ -104,7 +104,7 @@ def get_all_nixos_options():
 def get_modules_evaluated_import_paths(module_path):
     """
     Get the evaluated `imports` attribute of a module
-    returns a list of paths
+    returns a list of full-path strings
     """
     with find_library('get_modules_evaluated_import_paths') as fn:
         return nix_instantiate_eval(f'{fn} {module_path}', strict=True)
