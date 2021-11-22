@@ -57,9 +57,12 @@ in lib.makeExtensible (self: {
       inherit (self) evalModuleStub;
       module_config = evalModuleStub module_path;
     in
-      if builtins.hasAttr "imports" module_config
-      then module_config.imports
-      else [];
+      /* Converting paths to strings is a hack required by https://github.com/NixOS/nix/issues/5612 */
+      map builtins.toString (
+        if builtins.hasAttr "imports" module_config
+        then module_config.imports
+        else []
+      );
 
 
   /* Get all NixOS options as a list of options with the following schema:
