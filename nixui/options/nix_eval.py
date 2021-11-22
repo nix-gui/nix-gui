@@ -17,7 +17,7 @@ env_nix_instantiate["NIXPKGS_ALLOW_UNFREE"] = "1"
 # fix parse error when NIXPKGS_ALLOW_UNFREE=0
 
 cache_by_unique_installed_nixos_nixpkgs_version = cache.cache(
-    lambda: nix_instantiate_eval("with import <nixpkgs/nixos> { configuration = {}; }; pkgs.lib.version")
+    lambda *a, **k: nix_instantiate_eval("with import <nixpkgs/nixos> { configuration = {}; }; pkgs.lib.version")
 )
 
 
@@ -30,44 +30,47 @@ class NixEvalError(Exception):
         return f'NixEvalError("""\n{self.msg}\n""")'
 
 
+def nix_instantiate(*args):
+    p = subprocess.run(
+        ['nix-instantiate'] + list(args),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env_nix_instantiate,
+    )
+    p.check_returncode()
+    return p.stdout.decode('utf-8')
+
+
 def nix_instantiate_eval(expr, strict=False, show_trace=False, retry_show_trace_on_error=True):
     logger.debug(expr)
-    cmd = [
-        "nix-instantiate",
+    command_args = [
         '--eval',
         '-E',
         expr,
         '--json'
     ]
     if strict:
-        cmd.append('--strict')
+        command_args.append('--strict')
     if show_trace:
-        cmd.append('--show-trace')
+        command_args.append('--show-trace')
 
-    p = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        env=env_nix_instantiate,
-    )
-    out, err = p.communicate()
-
-    if p.returncode == 0:
-        try:
-            return json.loads(out)
-        except json.decoder.JSONDecodeError as e:
-            logger.error(f"Failed to decode output:\n{out}")
-            raise e
-    else:
+    try:
+        out = nix_instantiate(*command_args)
+    except subprocess.CalledProcessError as e:
         if retry_show_trace_on_error and not show_trace:
             return nix_instantiate_eval(expr, strict, show_trace=True)
         else:
-            logger.debug(f"nix-instantiate -> returncode {p.returncode}, len(out) {len(out)}")
             try:
-                err_str = err.decode('utf-8')
+                err_str = e.stdout.decode('utf-8')
             except UnicodeDecodeError:
-                err_str = repr(err)
+                err_str = repr(e.stdout)
             raise NixEvalError(err_str)
+
+    try:
+        return json.loads(out)
+    except json.decoder.JSONDecodeError as e:
+        logger.error(f"Failed to decode output:\n{out}")
+        raise e
 
 
 @contextmanager
@@ -146,3 +149,12 @@ def get_modules_defined_attrs(module_path):
 def get_modules_import_position(module_path):
     with find_library('evalModuleStub') as fn:
         return nix_instantiate_eval(f'builtins.unsafeGetAttrPos "imports" ({fn} {module_path})', strict=True)
+
+
+@cache_by_unique_installed_nixos_nixpkgs_version
+def resolve_nix_search_path(search_path):
+    """
+    resolve the source directory of <nix/search/paths>
+    """
+    assert search_path[0] == '<' and search_path[-1] == '>'
+    return nix_instantiate('--find-file', search_path[1:-1], '--json').strip()

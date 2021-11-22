@@ -22,16 +22,12 @@ class Path:
 
     def eval_full_path(self):
         if self.is_nixpkgs_path:
-            parent_dir = environment.get_nixpkgs_path()
-            # strip nixpkgs from path because self.path will start with it
-            if os.path.basename(os.path.normpath(parent_dir)) == 'nixpkgs':
-                parent_dir = os.path.dirname(os.path.normpath(parent_dir))
+            return nix_eval.resolve_nix_search_path(self.path)
         else:
-            parent_dir = self.cwd
-        return os.path.join(
-            os.path.normpath(parent_dir),
-            os.path.normpath(self.path)
-        )
+            return os.path.join(
+                os.path.normpath(self.cwd),
+                os.path.normpath(self.path)
+            )
 
 
 class OptionDefinition:
