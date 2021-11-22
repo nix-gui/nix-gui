@@ -156,5 +156,5 @@ def resolve_nix_search_path(search_path):
     """
     resolve the source directory of <nix/search/paths>
     """
-    assert search_path[0] == '<' and search_path[-1] == '>'
+    assert search_path[0] == '<' and search_path[-1] == '>', search_path
     return nix_instantiate('--find-file', search_path[1:-1], '--json').strip()

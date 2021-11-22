@@ -263,7 +263,7 @@ def expression_node_to_python_object(value_node, context):
                 path_string = value_node.elems[0].quoted
                 if path_string[0] == '<' and path_string[-1] == '>':
                     return Path(
-                        path_string[1:-1],
+                        path_string,
                         is_nixpkgs_path=True
                     )
                 else:
