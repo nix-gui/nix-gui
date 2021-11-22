@@ -63,7 +63,7 @@ def nix_instantiate_eval(expr, strict=False, show_trace=False, retry_show_trace_
             try:
                 err_str = e.stderr.decode('utf-8')
             except UnicodeDecodeError:
-                err_str = repr(e.stdout)
+                err_str = repr(e.stderr)
             raise NixEvalError(err_str)
 
     try:
