@@ -9,11 +9,11 @@ SAMPLES_PATH = 'tests/sample'
 
 
 @pytest.mark.parametrize('option_loc,new_value', [
-    (Attribute.from_string('sound.enable'), OptionDefinition.from_object(False)),  # boolean
-    (Attribute.from_string('services.logind.lidSwitch'), OptionDefinition.from_object('dosomething')),  # string
-    (Attribute.from_string('services.redshift.temperature.day'), OptionDefinition.from_object(1000)),  # integer
-    (Attribute.from_string('networking.firewall.allowedTCPPorts'), OptionDefinition.from_object([1, 2, 3, 4, 5])),  # list of ints
-    #(Attribute.from_string('users.extraUsers.sample.isNormalUser'), OptionDefinition.from_object(False)),  # modify submodule
+    (Attribute('sound.enable'), OptionDefinition.from_object(False)),  # boolean
+    (Attribute('services.logind.lidSwitch'), OptionDefinition.from_object('dosomething')),  # string
+    (Attribute('services.redshift.temperature.day'), OptionDefinition.from_object(1000)),  # integer
+    (Attribute('networking.firewall.allowedTCPPorts'), OptionDefinition.from_object([1, 2, 3, 4, 5])),  # list of ints
+    #(Attribute('users.extraUsers.sample.isNormalUser'), OptionDefinition.from_object(False)),  # modify submodule
 ])
 @pytest.mark.datafiles(SAMPLES_PATH)
 def test_load_edit_save(option_loc, new_value):
@@ -47,12 +47,12 @@ def test_load_edit_save(option_loc, new_value):
 
 def test_get_update_set_simple(statemodel):
     statemodel.record_update(
-        Attribute.from_string('sound.enable'),
+        Attribute('sound.enable'),
         OptionDefinition.from_object(False)
     )
     statemodel.persist_updates()
     statemodel.record_update(
-        Attribute.from_string('sound.enable'),
+        Attribute('sound.enable'),
         OptionDefinition.from_object(True)
     )
     updates = statemodel.get_update_set()
@@ -81,20 +81,20 @@ def test_get_update_set_defined_by_descendent(statemodel):
         ...
     """
     statemodel.record_update(
-        Attribute.from_string('services.bookstack.nginx.listen."[0]".addr'),
+        Attribute('services.bookstack.nginx.listen."[0]".addr'),
         OptionDefinition.from_object('10.0.0.1')
     )
     statemodel.record_update(
-        Attribute.from_string('services.bookstack.nginx.listen."[1]".port'),
+        Attribute('services.bookstack.nginx.listen."[1]".port'),
         OptionDefinition.from_object(101)
     )
     updates = statemodel.get_update_set()
     assert len(updates) == 2
 
-    assert updates[0].option == Attribute.from_string('services.bookstack.nginx.listen."[0]".addr')
+    assert updates[0].option == Attribute('services.bookstack.nginx.listen."[0]".addr')
     assert updates[0].old_definition.obj == "195.154.1.1"
     assert updates[0].new_definition.obj == "10.0.0.1"
 
-    assert updates[1].option == Attribute.from_string('services.bookstack.nginx.listen."[1]".port')
+    assert updates[1].option == Attribute('services.bookstack.nginx.listen."[1]".port')
     assert updates[1].old_definition.obj == 80
     assert updates[1].new_definition.obj == 101
