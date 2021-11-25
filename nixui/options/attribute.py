@@ -12,6 +12,8 @@ class Attribute:
             object.__setattr__(self, 'loc', path)
         elif isinstance(path, str):
             object.__setattr__(self, 'loc', next(csv.reader([path], delimiter='.', quotechar='"')))
+        else:
+            raise TypeError(str(type(path)), path)
 
     @classmethod
     def from_insertion(cls, attribute_set, attribute):
