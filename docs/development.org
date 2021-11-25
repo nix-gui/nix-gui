@@ -13,16 +13,97 @@ nix-shell -p libsForQt5.qtstyleplugin-kvantum --run "QT_STYLE_OVERRIDE=kvantum-d
 
 * Development Goals
 ** 0) Intuition
-=nix-gui= is UX focused. All counterintuitive elements should be considered a bug. Bug reports can be filed at https://github.com/lapp0/nix-gui/issues There are no stupid questions. This program is intended to make nixos usable by someone with basic competence in Ubuntu, Mint, Windows, or OS X.
+=nix-gui= is UX focused. All counterintuitive elements should be considered a bug. Bug reports can be filed at https://github.com/nix-gui/nix-gui/issues There are no stupid questions. This program is intended to make nixos usable by someone with basic competence in Ubuntu, Mint, Windows, or OS X.
 
 ** 1) Comprehension
-=nix-gui= strives to provide the ability to make any system changes that are possible with editing =configuration.nix=.
+=nix-gui= strives to provide the ability to make any system changes that are possible with editing =configuration.nix= or =home-manager=.
 
-** 2) Simple Code
+** 2) Sane Code
 =nix-gui= is a relatively simple graphical program written in python with recursively defined elements to explore and define options.
 
 ** 3) Speed
-Once built, =nix-gui= targets a 10ms load time for all form changes.
+Once built, =nix-gui= targets a 100ms load time for all form changes.
+* Architecture
+Nix-Gui may be considered to have two components: the backend and the frontend.
+
+The backend (=nixui/options=) reads information from both NixOS and the configuration path being edited, then converts them to data-structures useful for navigation, search, and editing. The backend maintains in-memory state for all changes and commits those changes to disk by writing to the configuration path.
+
+The frontend (=nixui/graphics=) constructs various widgets comprising Nix-Gui and loads them with data from the backend. The frontend doesn't manage any edit state. All graphical "edits" send an update request to the backend.
+
+** Backend
+The backend handles three major tasks: configuration retrieval to initialize data-structures, in-memory configuration mutation, and configuration commitment. It provides APIs for frontend interaction, but doesn't concern itself with how the frontend renders any of its data.
+
+*** Loading the Option Tree Data-Structure
+Nix-Gui queries information from the configuration path and =<nixpkgs>= in order to construct a data-structure (=nixui.options.option_tree.OptionTree=) mapping options and attributes to metadata (=nixui.options.option_tree.OptionData=) including their =NixType=, their =OptionDefinition='s:
+- =_type=: A static python-object representation of the options type, informs the frontend of how =FieldWidget= should be generated and input checking should be performed.
+- =system_default_definition=: Provided by =<nixpkgs>=, the default value if nothing is set in the configuration path.
+- =configured_definition=: Provided by the configuration path, overrides =system_default_definition=.
+- =in_memory_definition=: Undefined when the data-structure is loaded, can be mutated and later committed to disk.
+
+=nixui/nix/lib.nix= (invoked by =nixui.options.nix_eval=) contains the function =get_all_nixos_options()= which is used to retrieve metadata to retrieve =OptionData= for the universe of NixOS options.
+
+=nixui/options/parser.py= contains the function =get_all_option_values(module_path)= which
+- retrieves all =attributePath = string representation of nix expression;= pairs in the file by parsing the =nixui.options.syntax_tree.SyntaxTree= constructed using =nix_dump_syntax_tree_json=.
+- resolves the path of all =imports= and recurses
+
+The result of =get_all_option_values= is used to set =OptionData.configured_definition= where applicable.
+
+**** Caveat
+The =OptionTree= has a node for each option in the option tree, as well as attributes that aren't actually options.
+
+For example =users.ldap.loginPam= is a valid nix option. However its "parent", =users.ldap= isn't a valid option. Regardless, =users.ldap= has its own node in the =OptionTree=.
+
+Likewise, =environment.etc."resolv.conf"= isn't an option, it is an attribute of the =environment.etc= option, and it will have a node in the =OptionTree=. This is true of the aforementioned =attribute set of submodules=, as well as =submodule= type options.
+
+=list of= options are part of the option tree despite not having a proper attribute path, e.g. a list of allowed TCP ports in the firewall will have the element =networking.firewall.allowedTCPPorts."[0]"= . This is not the same as setting =networking.firewall.allowedTCPPorts."[0]" = <expression>=, rather, it is the equivalent of =networking.firewall.allowedTCPPorts = [<expression> ...]=.
+
+**** =OptionDefinition=
+Nix expression strings are immediately converted to =nixui.options.option_definition.OptionDefinition= Python objects. The =OptionDefinition= class provides methods to get the python representation of an expression string (e.g. an attribute set is converted to a dict, ="true;"= is converted to =True=).
+
+=OptionDefinition='s also has the =_type= property, which returns the types the current definition is compatible with.
+
+Additionally =OptionDefinition='s can be used to convert Python objects to nix expressions, which is useful for the next section.
+
+*** State Management
+Once constructed, the backend can handle updates to an =OptionDefinition= and attribute renaming.
+
+All updates to the =OptionTree= coming from the frontend pass through =nixui.state_model.StateModel=, which is a layer on top of the =OptionTree= with =Update='s integrated. Each updating method results in an =Update= (an object containing information necessary to revert a change) being appended to =StateModel.update_history=.
+
+The =StateModel='s updating methods include
+- =record_update=: Update the =in_memory_definition= of an attribute in the =OptionTree=
+- =rename_option=: Generally used to rename a submodule, e.g. =filesystems."/"= -> ="filesystems."/boot"=
+- =add_new_option=: Generally used to add an attribute or element to a =submodule= or =list of=.
+- =undo=: Revert the latest =Update= in =update_history=
+
+*** Commit Changes to Disk
+The =StateModel= also provides the method =persist_updates=, which is just a helper function that
+- retrieves changes from =OptionTree.iter_changes()=, an iterator that yields each attribute where the =in_memory_definition= and =configured_definition= differ
+- calls =api.apply_update= (to be refactored), which extracts the =expression_string= from each changed =OptionDefinition= and calls =parser.inject_expressions()= with the map of attributes -> updated =expression_string='s.
+
+**** Expression injection
+The algorithm in =nixui.options.parser.inject_expressions= is as follows
+- Given a module, construct =attribute_path_to_expression_node_mapping=, a mapping between the attribute path and the syntax tree expression node object (=parser.get_key_value_nodes=)
+- For each option to be updated,
+  - If the option is in =attribute_path_to_syntax_node_mapping=, call =SyntaxTree.replace= to replace the old expression node with the new expression node
+  - Otherwise, inject the option definition at the top of the module.
+
+We are left with a new SyntaxTree with updated / added option definitions. =SyntaxTree.to_string()= provides us the contents written to =module_path=.
+
+** Frontend
+The frontend renders a graphical tool for changing configurations. =nixui.graphics.nav_interface= creates and manages three widgets:
+- Navbar: View and update the URI.
+- Navlist: A list of attribute paths which, if clicked, updates the URI.
+- Options Editor: A container for a list of =FieldWidgets= which contains option/attribute metadata and editing widgets.
+
+A primer on frontend functionality can be found at [[docs/usage.org#Interface]].
+
+*** Navbar
+
+*** Navlist
+
+*** Options Editor
+
+
 * Structure
 ** Architecture
 TODO: expand on this general outline
