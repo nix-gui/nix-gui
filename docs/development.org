@@ -95,7 +95,7 @@ The frontend renders a graphical tool for changing configurations. =nixui.graphi
 - Navlist: A list of attribute paths which, if clicked, updates the URI.
 - Options Editor: A container for a list of =FieldWidgets= which contains option/attribute metadata and editing widgets.
 
-A primer on frontend functionality can be found at [[docs/usage.org#Interface]].
+A primer on frontend functionality can be found at [[./usage.org#Interface]]
 
 *** Navbar
 
