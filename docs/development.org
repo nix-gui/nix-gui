@@ -53,9 +53,9 @@ The =OptionTree= has a node for each option in the option tree, as well as attri
 
 For example =users.ldap.loginPam= is a valid nix option. However its "parent", =users.ldap= isn't a valid option. Regardless, =users.ldap= has its own node in the =OptionTree=.
 
-Likewise, =environment.etc.'resolv.conf'= isn't an option, it is an attribute of the =environment.etc= option, and it will have a node in the =OptionTree=. This is true of the aforementioned =attribute set of submodules=, as well as =submodule= type options.
+Likewise, =environment.etc."resolv.conf"=== isn't an option, it is an attribute of the =environment.etc= option, and it will have a node in the =OptionTree=. This is true of the aforementioned =attribute set of submodules=, as well as =submodule= type options.
 
-=list of= options are part of the option tree despite not having a proper attribute path, e.g. a list of allowed TCP ports in the firewall will have the element =networking.firewall.allowedTCPPorts.'[0]'= . This is not the same as setting =networking.firewall.allowedTCPPorts.'[0]' = <expression>=, rather, it is the equivalent of =networking.firewall.allowedTCPPorts = [<expression> ...]=.
+=list of= options are part of the option tree despite not having a proper attribute path, e.g. a list of allowed TCP ports in the firewall will have the element =networking.firewall.allowedTCPPorts."[0]"=== . This is not the same as setting =networking.firewall.allowedTCPPorts."[0]" = <expression>=, rather, it is the equivalent of =networking.firewall.allowedTCPPorts = [<expression> ...]=.
 
 **** =OptionDefinition=
 Nix expression strings are immediately converted to =nixui.options.option_definition.OptionDefinition= Python objects. The =OptionDefinition= class provides methods to get the python representation of an expression string (e.g. an attribute set is converted to a dict, ="true;"= is converted to =True=).
