@@ -62,7 +62,7 @@ Nix expression strings are immediately converted to =nixui.options.option_defini
 
 =OptionDefinition='s also has the =_type= property, which returns the types the current definition is compatible with.
 
-Additionally =OptionDefinition='s can be used to convert Python objects to nix expressions, which is useful for the next section.
+Additionally =OptionDefinition='s can be used to convert Python objects to nix expressions, which is useful for the "Commit Changes to Disk" section.
 
 *** State Management
 Once constructed, the backend can handle updates to an =OptionDefinition= and attribute renaming.
