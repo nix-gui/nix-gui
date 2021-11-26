@@ -1,6 +1,6 @@
 let
   inherit (import <nixpkgs> {}) pkgs lib;
-  inherit (import <nixpkgs/nixos> {}) config;
+  inherit (import <nixos> {}) config;
   modulesPath = <nixpkgs/nixos/modules>;
 in lib.makeExtensible (self: {
   /* Recurse through the declaration tree of a module collecting
