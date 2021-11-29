@@ -67,35 +67,11 @@ def get_all_option_values(module_path, allow_errors=True):
             value_node.to_string()
         )
 
-    # get imports node from syntax tree and recurse if possible
-    imports_node = get_imports_node(module_path, tree)
-    if imports_node is None:
-        return option_expr_map
-
-    # extract definition from imports_node
-    _, imports_value_node = [e for e in imports_node.elems if isinstance(e, syntax_tree.Node)]
-    imports_definition = OptionDefinition.from_expression_string(
-        imports_value_node.to_string(),
-        {'module_dir': os.path.dirname(module_path)}
-    )
-
-    if imports_definition.obj == Unresolvable:
-        err_str = f'imports definition for {module_path} is unresolvable'
-        if allow_errors:
-            logger.error(err_str)
-            return option_expr_map
-        else:
-            raise ValueError(err_str)
-
-    # for each valid parsable import, recurse
-    for i, import_path in enumerate(imports_definition.obj):
-        if import_path == Unresolvable:
-            logger.error(f'failed to load element {i} of \n{imports_definition.expression_string}')
-            continue
-        full_import_path = import_path.eval_full_path()
+    # for each import, recurse
+    for import_path in nix_eval.get_modules_evaluated_import_paths(module_path):
         try:
-            # TODO: this isn't the correct way to merge attributes between modules, it needs to be implemented
-            option_expr_map.update(get_all_option_values(full_import_path))
+            # TODO: this isn't the correct way to merge attributes between module imports, it needs to be implemented correctly
+            option_expr_map.update(get_all_option_values(import_path))
         except (nix_eval.NixEvalError, FileNotFoundError) as e:
             if allow_errors:
                 logger.error(e)  # TODO: ensure all legal import elements are resolved and don't `continue`

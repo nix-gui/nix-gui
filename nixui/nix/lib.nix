@@ -1,6 +1,7 @@
 let
   inherit (import <nixpkgs> {}) pkgs lib;
-  inherit (import <nixpkgs/nixos> {}) config;
+  inherit (import <nixos> {}) config;
+  modulesPath = <nixos/modules>;
 in lib.makeExtensible (self: {
   /* Recurse through the declaration tree of a module collecting
      the positions of the declarations within the module
@@ -46,9 +47,23 @@ in lib.makeExtensible (self: {
           inherit pkgs;
           name = "";
           config = config;
-          modulesPath = builtins.dirOf module_path;
+          modulesPath = modulesPath;
         }
       else m;
+
+  /*Evaluate the imports of a given module*/
+  get_modules_evaluated_import_paths = module_path:
+    let
+      inherit (self) evalModuleStub;
+      module_config = evalModuleStub module_path;
+    in
+      /* Converting paths to strings is a hack required by https://github.com/NixOS/nix/issues/5612 */
+      map builtins.toString (
+        if builtins.hasAttr "imports" module_config
+        then module_config.imports
+        else []
+      );
+
 
   /* Get all NixOS options as a list of options with the following schema:
     {
