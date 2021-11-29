@@ -19,8 +19,8 @@ def test_nixpkgs_nixos_instantiate_eval():
 def test_get_modules_defined_attrs_set_configuration():
     module_path = os.path.abspath(os.path.join(SAMPLES_PATH, 'set_configuration.nix'))
     result = nix_eval.get_modules_defined_attrs(module_path)
-    assert result[attribute.Attribute.from_string('system.stateVersion')]['position']['column'] == 5
-    assert result[attribute.Attribute.from_string('system.stateVersion')]['position']['line'] == 5
+    assert result[attribute.Attribute('system.stateVersion')]['position']['column'] == 5
+    assert result[attribute.Attribute('system.stateVersion')]['position']['line'] == 5
 
 
 @pytest.mark.datafiles(SAMPLES_PATH)

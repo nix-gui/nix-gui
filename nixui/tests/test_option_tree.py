@@ -49,6 +49,6 @@ def test_list_children_simple():
         os.path.abspath(os.path.join(SAMPLES_PATH, 'configuration.nix'))
     )
     children = option_tree.children(
-        Attribute.from_string('networking.firewall.allowedTCPPorts')
+        Attribute('networking.firewall.allowedTCPPorts')
     )
     assert [c.configured_definition.obj for c in children.values()] == [80, 443]
