@@ -58,6 +58,7 @@ def test_get_all_option_values_correct_attributes():
         'hardware.bluetooth.settings',
         'hardware.bluetooth.settings.General',
         'hardware.bluetooth.settings.General.Enable',
+        'hardware.enableRedistributableFirmware',
         'hardware.opengl.driSupport32Bit',
         'hardware.pulseaudio',
         'hardware.pulseaudio.enable',

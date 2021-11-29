@@ -48,10 +48,10 @@
 
       in {
         packages.nix-gui = pkgs.callPackage
-          ({ stdenv, lib, rustPlatform, fetchFromGitHub, enable-profiling ? false }:
+          ({ stdenv, lib, rustPlatform, fetchFromGitHub, enable-profiling ? false, specific-test ? "" }:
             pythonPackages.buildPythonPackage rec {
               pname = "nix-gui";
-              version = "0.1.4";
+              version = "0.1.5";
               src = ./.;
               propagatedBuildInputs = [
                 pythonPackages.pyqt5
@@ -89,9 +89,9 @@
                 export NIX_PATH=${pkgs.path}:nixpkgs=${pkgs.path}:nixos-config=${sample}/configuration.nix
                 cd nixui
               '' + (if !enable-profiling then ''
-                python3 -m pytest -vv
+                python3 -m pytest -vv ${specific-test}
               '' else ''
-                python3 -m cProfile -o profile -m pytest
+                python3 -m cProfile -o profile -m pytest ${specific-test}
                 python3 -c "import pstats; p = pstats.Stats('profile'); p.strip_dirs(); p.sort_stats('cumtime'); p.print_stats(50)"
               '');
             }) { };
