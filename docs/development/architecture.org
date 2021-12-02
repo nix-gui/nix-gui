@@ -9,10 +9,10 @@ It then lazily converts the read information to data-structures useful for navig
 The frontend (=nixui/graphics=) constructs various widgets comprising Nix-Gui and loads them with data from the backend. The frontend doesn't manage any edit state. All "edit" actions performed in the GUI send a request-for-update to the backend.
 
 * Backend
-The backend handles three major tasks: configuration retrieval to initialize data-structures, in-memory configuration mutation, and configuration commitment. It provides APIs for frontend interaction, but doesn't concern itself with how the frontend renders any of its data.
+The backend handles three major tasks: configuration retrieval to initialize data-structures, in-memory configuration mutation, and configuration committing. It provides APIs for frontend interaction, but doesn't concern itself with how the frontend renders any of its data, similar to most websites wherein the webpage defines the Javascript determining how the backend will be queried, and the HTML / CSS determining how it will be rendered to the user.
 
 ** Loading the Option Tree Data-Structure
-Nix-Gui queries information from the configuration path and =<nixpkgs>= in order to construct a data-structure (=nixui.options.option_tree.OptionTree=) mapping options and attributes to metadata (=nixui.options.option_tree.OptionData=) including the attributes =NixType= and =Optiondefinition=:
+Nix-Gui queries information from the configuration path and =<nixpkgs>= in order to construct a data-structure (=nixui.options.option_tree.OptionTree=) mapping options and attributes to metadata (=nixui.options.option_tree.OptionData=) including the attributes type and definition:
 - =_type=: A static python-object representation of the option type (=NixType=). Informs the frontend of how =FieldWidget= should be generated and input checking should be performed.
 - =system_default_definition=: Provided by =<nixpkgs>=, the default value if nothing is set in the configuration path.
 - =configured_definition=: Provided by the configuration path, overrides =system_default_definition=.
