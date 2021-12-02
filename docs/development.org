@@ -90,19 +90,54 @@ The algorithm in =nixui.options.parser.inject_expressions= is as follows
 We are left with a new SyntaxTree with updated / added option definitions. =SyntaxTree.to_string()= provides us the contents written to =module_path=.
 
 ** Frontend
-The frontend renders a graphical tool for changing configurations. =nixui.graphics.nav_interface= creates and manages three widgets:
+The frontend renders a graphical tool for changing configurations. A primer on frontend functionality can be found at [[./usage.org#Interface]]
+
+The Nav Interface (=nixui.graphics.nav_interface.OptionNavigationInterface=) is the main widget. It contains a layout with place-holders for three widgets:
 - Navbar: View and update the URI.
 - Navlist: A list of attribute paths which, if clicked, updates the URI.
 - Options Editor: A container for a list of =FieldWidgets= which contains option/attribute metadata and editing widgets.
 
-A primer on frontend functionality can be found at [[./usage.org#Interface]]
+*** URI Resolution
+Each time the URI changes, the Nav Interface creates a new instance of each widget, replacing the old instance.
+
+When loading a new URI,
+- A Navbar is instantiated which displays the new URIs
+- A Navlist is instantiated which displays the children of the attribute path, or search results. Selects the navlist item if the URI instructs to.
+- An Options Editor is instantiated which either shows a list of Option Displays an item in the navlist is selected.
+
+**** URI Format
+There are currently two types of URIs, =config:option.path.here= and =search:search text here=.
 
 *** Navbar
+The Navbar displays the URI and has four widgets, each of which results in a callback telling the Nav Interface to change the URI:
+- Up Arrow: Change the URI from =config:foo.bar.baz= to =config:foo.bar=. (disabled for =search:= and top level =config:=)
+- Back Arrow: Change the URI to the previous URI.
+- URI Box: Shows a pretty format of the URI, allow for direct editing of the URI when clicked.
+- Search Box: Change URI to =search:<entered text>=.
 
 *** Navlist
+The Navlist displays navigable options based on the URI. If the URI is =config:parent.option.path=, the navlist will display each option which is a member of the set =parent.option.path=. If the URI is =search:<search string>=, the navlist will display each option matching the search.
+
+If a Navlist item is clicked, the Nav Interface will load the clicked items URI.
+
+There are a variety of Navlist types defined in =nixui.graphics.navlist=:
+- =StaticAttrsOf=: immutable listing of attributes of the URI
+- =DynamicAttrsOf=: mutable list of attributes. Useful for =attribute set of <t>= type options.
+- =DynamicListOf=: mutable list elements, shown when a =list of <t>= type option is loaded.
+- =SearchResultListDisplay=: immutable list of search results including details about why it matched the search. Searches are matched based on =Attribute Path=, =Type=, and =Description=.
 
 *** Options Editor
+The Options Editor is comprised of an Option Display Group (=nixui.graphics.option_display_group.OptionDisplayGroupBox=), a layout containing one or many Option Displays (=nixui.graphics.option_display.GenericOptionDisplay=).
 
+An Option Display is a tool for editing the value of a single option or attribute. The current value and option/attribute type impact how it is rendered.
+
+A Field Widget (=nixui.graphics.field_widgets=) is the component of an Option Display which allows the user to edit the value of an option/attribute.
+
+There are a variety of Field Widgets, and types of functionality for Field Widgets:
+- Standard Field Widget: allows changes to =OptionDefinition.obj= which will be converted to a nix expression
+- Expression Field Widget: allows changes to the nix expression itself (=OptionDefinition.expression_string=)
+- Reference Field Widget: (NOT IMPLEMENTED) allows users to refer to a package, option, or other variable in scope, a simpler form of the Expression Field Widget.
+- Redirect Field Widget: For =ListOf= and =AttrsOf=, changes the URI so the navlist is the editor for the elements / set members for the list / set.
 
 * Structure
 ** Architecture
