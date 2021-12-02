@@ -14,7 +14,7 @@ Nix-Gui queries information from the configuration path and =<nixpkgs>= in order
 - =configured_definition=: Provided by the configuration path, overrides =system_default_definition=.
 - =in_memory_definition=: Undefined when the data-structure is loaded, can be mutated by the user and later committed to disk.
 
-=nixui/nix/lib.nix= (invoked by =nixui.options.nix_eval=) contains the function =get_all_nixos_options()= which is used to retrieve =OptionData= including =system_default_definition= and =_type= for the universe of NixOS options.
+=nixui/nix/lib.nix= (invoked by =nixui.options.nix_eval=) contains the function =get_all_nixos_options()= which is used to retrieve =OptionData= including =system_default_definition= and =_type= for all options from =<nixos>=.
 
 =nixui/options/parser.py= contains the function =get_all_option_values(module_path)= which
 - retrieves all =attributePath = string representation of nix expression;= pairs in the file by parsing the =nixui.options.syntax_tree.SyntaxTree= constructed using =nix_dump_syntax_tree_json=.
