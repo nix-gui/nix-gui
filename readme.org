@@ -7,6 +7,21 @@ Make NixOS usable for non-technical users through a settings / package managemen
 
 [[screenshots/historical_search_2021_10_10.png]]
 
+** Using
+Prerequisites:
+- Ensure NixOS is installed
+
+Run
+- =nix run github:nix-gui/nix-gui=
+
+Print help string
+- =nix run github:nix-gui/nix-gui -- --help=
+
+If you don't have [[https://nixos.wiki/wiki/Flakes][Nix Flakes]] enabled, either
+- Run =nix --experimental-features 'nix-command flakes' run github:nix-gui/nix-gui=, or
+- Set =nix.extraOptions = ''experimental-features = nix-command flakes'';= in =configuration.nix= and rebuild to enable.
+
+For details on how to use Nix-Gui, see the [[docs/usage.org][Usage]] page.
 
 ** Motives
 
@@ -54,22 +69,6 @@ Currently there are a few major limitations to Nix-Gui, including
 - The interface for =ListOf= and =AttrsOf= is incomplete (https://github.com/nix-gui/nix-gui/issues/72) (https://github.com/nix-gui/nix-gui/issues/30).
 - Nix-Gui has yet to be thoroughly vetted, therefore the configuration path is copied to =~/.config/nixgui/configurations/=, in which all changes made by Nix-Gui are saved.
 - Some option types aren't handled yet (e.g. =package=, =lambda=, and specific types like =ncdns.conf configuration type=, =systemd option=). These options can only be edited as a nix expression, as they do not have a matching widget.
-
-** Using
-Prerequisites:
-- Ensure NixOS is installed
-
-Run
-- =nix run github:nix-gui/nix-gui=
-
-Print help string
-- =nix run github:nix-gui/nix-gui -- --help=
-
-If you don't have [[https://nixos.wiki/wiki/Flakes][Nix Flakes]] enabled, either
-- Run =nix --experimental-features 'nix-command flakes' run github:nix-gui/nix-gui=, or
-- Set =nix.extraOptions = ''experimental-features = nix-command flakes'';= in =configuration.nix= and rebuild to enable.
-
-For details on how to use Nix-Gui, see the Usage link in the section below.
 
 ** Documentation
 - [[docs/usage.org][Usage]]
