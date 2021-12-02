@@ -36,12 +36,12 @@ networking.firewall.allowedTCPPorts."[0]"
 
 This is **not** the same as
 #+begin_src nix
-networking.firewall.allowedTCPPorts."[0]" = <expression>
+networking.firewall.allowedTCPPorts."[0]" = <expression>;
 #+end_src
 
 rather, it is equivalent to
 #+begin_src nix
-networking.firewall.allowedTCPPorts = [<expression> ...]
+networking.firewall.allowedTCPPorts = [<expression> ...];
 #+end_src
 
 *** =OptionDefinition=
