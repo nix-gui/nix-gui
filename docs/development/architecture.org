@@ -56,8 +56,8 @@ Nix expression strings are immediately converted to =nixui.options.option_defini
 Additionally =OptionDefinition='s can be used to convert Python objects to nix expressions, which is useful for the "Commit Changes to Disk" section below.
 
 ** State Management
-Once constructed, the backend can perform two mutation operations:
-- replacing an old =OptionDefinition= with a new =OptionDefinition=
+Once constructed, the backend can perform three mutation operations:
+- replacing an old =in_memory_definition= (=OptionDefinition=) with a new one
 - adding a new attribute with a new =OptionDefinition=
 - renaming an attribute
 
