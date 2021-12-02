@@ -1,0 +1,17 @@
+* Create a Development Environment
+#+BEGIN_src bash
+$ nix develop
+$ python -m nixui.main --help
+#+END_src bash
+
+* Run Tests
+(outside development environment)
+#+BEGIN_src bash
+$ nix flake check
+#+END_src bash
+
+* Smoke Test Dark Theme
+(outside development environment)
+#+BEGIN_src bash
+$  nix-shell -p libsForQt5.qtstyleplugin-kvantum --run "QT_STYLE_OVERRIDE=kvantum-dark nix run nix-gui
+#+END_src bash

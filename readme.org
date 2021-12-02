@@ -50,16 +50,18 @@ This data is retrieved from =<nixos/nixpkgs>= and from the configuration path vi
 ** Major Shortcomings to be Fixed
 
 Currently there are a few major limitations to Nix-Gui, including
-- Documentation is incomplete.
+- Documentation is can be improved.
 - The interface for =ListOf= and =AttrsOf= is incomplete (https://github.com/nix-gui/nix-gui/issues/72) (https://github.com/nix-gui/nix-gui/issues/30).
 - Nix-Gui has yet to be thoroughly vetted, therefore the configuration path is copied to =~/.config/nixgui/configurations/=, in which all changes made by Nix-Gui are saved.
 - Some option types aren't handled yet (e.g. =package=, =lambda=, and specific types like =ncdns.conf configuration type=, =systemd option=). These options can only be edited as a nix expression, as they do not have a matching widget.
 
-** Docs
-
+** Documentation
 - [[docs/usage.org][Usage]]
-- [[docs/behavior.org][Behavior]]
-- [[docs/development.org][Development]]
+- Development
+  - [[docs/development/goals.org][Development Goals]]
+  - [[docs/development/architecture.org][Nix-Gui Architecture]]
+  - [[docs/development/commands.org][Development Commands]]
+- [[docs/references.org][References]]
 
 ** Contributing
 Developers and users, if you want to help please
