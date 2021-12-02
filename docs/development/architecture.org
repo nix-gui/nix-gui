@@ -1,6 +1,10 @@
-Nix-Gui may be considered to have two components: the backend and the frontend.
+Nix-Gui has two components: the backend and the frontend.
 
-The backend (=nixui/options=) reads information from both NixOS and the configuration path being edited, then converts them to data-structures useful for navigation, search, and editing. The backend maintains in-memory state for all changes and commits those changes to disk by writing to the configuration path.
+The backend (=nixui/options=) reads information from two sources:
+- NixOS (=<nixpkgs>= and =<nixos>=)
+- and the configuration path being edited.
+
+It then lazily converts the read information to data-structures useful for navigation, search, and editing. The backend maintains in-memory state for all changes and commits those changes to disk by writing to the configuration path.
 
 The frontend (=nixui/graphics=) constructs various widgets comprising Nix-Gui and loads them with data from the backend. The frontend doesn't manage any edit state. All "edit" actions performed in the GUI send a request-for-update to the backend.
 
