@@ -3,7 +3,7 @@
 Either a description or if it fully resolves an issue and does nothing else, simply write "fixes <issue link>".
 
 # Checklist
-- [ ] I incremented the patch version in `nixui/version.py` OR this is strictly a graphical change not impacting any cached functions.
+- [ ] I incremented the patch version in `nixui/version.py` and `packages.nix-gui.version` of `flake.nix` OR this is strictly a graphical change not impacting any cached functions.
 - [ ] If the frontend or backend architecture was changed, I updated `docs/development/architecture.org`
 - [ ] If the behavior of the GUI was impacted I included a screenshot.
 - [ ] I smoke tested any frontend functionality changes.
