@@ -2,69 +2,85 @@ Nix-Gui may be considered to have two components: the backend and the frontend.
 
 The backend (=nixui/options=) reads information from both NixOS and the configuration path being edited, then converts them to data-structures useful for navigation, search, and editing. The backend maintains in-memory state for all changes and commits those changes to disk by writing to the configuration path.
 
-The frontend (=nixui/graphics=) constructs various widgets comprising Nix-Gui and loads them with data from the backend. The frontend doesn't manage any edit state. All graphical "edits" send an update request to the backend.
+The frontend (=nixui/graphics=) constructs various widgets comprising Nix-Gui and loads them with data from the backend. The frontend doesn't manage any edit state. All "edit" actions performed in the GUI send a request-for-update to the backend.
 
 * Backend
 The backend handles three major tasks: configuration retrieval to initialize data-structures, in-memory configuration mutation, and configuration commitment. It provides APIs for frontend interaction, but doesn't concern itself with how the frontend renders any of its data.
 
 ** Loading the Option Tree Data-Structure
-Nix-Gui queries information from the configuration path and =<nixpkgs>= in order to construct a data-structure (=nixui.options.option_tree.OptionTree=) mapping options and attributes to metadata (=nixui.options.option_tree.OptionData=) including their =NixType=, their =OptionDefinition='s:
-- =_type=: A static python-object representation of the options type, informs the frontend of how =FieldWidget= should be generated and input checking should be performed.
+Nix-Gui queries information from the configuration path and =<nixpkgs>= in order to construct a data-structure (=nixui.options.option_tree.OptionTree=) mapping options and attributes to metadata (=nixui.options.option_tree.OptionData=) including the attributes =NixType= and =Optiondefinition=:
+- =_type=: A static python-object representation of the option type (=NixType=). Informs the frontend of how =FieldWidget= should be generated and input checking should be performed.
 - =system_default_definition=: Provided by =<nixpkgs>=, the default value if nothing is set in the configuration path.
 - =configured_definition=: Provided by the configuration path, overrides =system_default_definition=.
-- =in_memory_definition=: Undefined when the data-structure is loaded, can be mutated and later committed to disk.
+- =in_memory_definition=: Undefined when the data-structure is loaded, can be mutated by the user and later committed to disk.
 
-=nixui/nix/lib.nix= (invoked by =nixui.options.nix_eval=) contains the function =get_all_nixos_options()= which is used to retrieve metadata to retrieve =OptionData= for the universe of NixOS options.
+=nixui/nix/lib.nix= (invoked by =nixui.options.nix_eval=) contains the function =get_all_nixos_options()= which is used to retrieve =OptionData= including =system_default_definition= and =_type= for the universe of NixOS options.
 
 =nixui/options/parser.py= contains the function =get_all_option_values(module_path)= which
 - retrieves all =attributePath = string representation of nix expression;= pairs in the file by parsing the =nixui.options.syntax_tree.SyntaxTree= constructed using =nix_dump_syntax_tree_json=.
 - resolves the path of all =imports= and recurses
 
-The result of =get_all_option_values= is used to set =OptionData.configured_definition= where applicable.
+The result of =get_all_option_values(module_path)= is used to set =OptionData.configured_definition= where applicable.
 
 *** Caveat
 The =OptionTree= has a node for each option in the option tree, as well as attributes that aren't actually options.
 
 For example =users.ldap.loginPam= is a valid nix option. However its "parent", =users.ldap= isn't a valid option. Regardless, =users.ldap= has its own node in the =OptionTree=.
 
-Likewise, =environment.etc."resolv.conf"= isn't an option, it is an attribute of the =environment.etc= option, and it will have a node in the =OptionTree=. This is true of the aforementioned =attribute set of submodules=, as well as =submodule= type options.
+Likewise, =environment.etc."resolv.conf".text= isn't an option, it is an attribute of the option =environment.etc=. It will have a node in the =OptionTree=. This is true of =attribute set of submodules=, as well as =submodule= type options.
 
-=list of= options are part of the option tree despite not having a proper attribute path, e.g. a list of allowed TCP ports in the firewall will have the element =networking.firewall.allowedTCPPorts."[0]"= . This is not the same as setting =networking.firewall.allowedTCPPorts."[0]" = <expression>=, rather, it is the equivalent of =networking.firewall.allowedTCPPorts = [<expression> ...]=.
+=list of= options are part of the option tree despite not having a proper attribute path, e.g. a list of allowed TCP ports in the firewall will have the element
+#+begin_src nix
+networking.firewall.allowedTCPPorts."[0]"
+#+end_src
+
+This is **not** the same as
+#+begin_src nix
+networking.firewall.allowedTCPPorts."[0]" = <expression>
+#+end_src
+
+rather, it is equivalent to
+#+begin_src nix
+networking.firewall.allowedTCPPorts = [<expression> ...]
+#+end_src
 
 *** =OptionDefinition=
-Nix expression strings are immediately converted to =nixui.options.option_definition.OptionDefinition= Python objects. The =OptionDefinition= class provides methods to get the python representation of an expression string (e.g. an attribute set is converted to a dict, ="true;"= is converted to =True=).
+Nix expression strings are immediately converted to =nixui.options.option_definition.OptionDefinition= Python objects. The =OptionDefinition= class provides methods to get the python representation of an expression string. E.g. an attribute set is converted to a dict, ="true"= is converted to =True=, ="5.424"= is converted to =float(5.424)=).
 
-=OptionDefinition='s also has the =_type= property, which returns the types the current definition is compatible with.
+=OptionDefinition='s also have the =_type= property, which returns the =NixType= the current definition is compatible with.
 
-Additionally =OptionDefinition='s can be used to convert Python objects to nix expressions, which is useful for the "Commit Changes to Disk" section.
+Additionally =OptionDefinition='s can be used to convert Python objects to nix expressions, which is useful for the "Commit Changes to Disk" section below.
 
 ** State Management
-Once constructed, the backend can handle updates to an =OptionDefinition= and attribute renaming.
+Once constructed, the backend can perform two mutation operations:
+- replacing an old =OptionDefinition= with a new =OptionDefinition=
+- adding a new attribute with a new =OptionDefinition=
+- renaming an attribute
 
-All updates to the =OptionTree= coming from the frontend pass through =nixui.state_model.StateModel=, which is a layer on top of the =OptionTree= with =Update='s integrated. Each updating method results in an =Update= (an object containing information necessary to revert a change) being appended to =StateModel.update_history=.
+All updates to the =OptionTree= coming from the frontend pass through =nixui.state_model.StateModel=, which is a layer on top of the =OptionTree= with =Update='s integrated. Each mutating method results in an =Update= (an object containing information necessary to revert a change) being appended to =StateModel.update_history=.
 
-The =StateModel='s updating methods include
+The =StateModel='s mutating methods include
 - =record_update=: Update the =in_memory_definition= of an attribute in the =OptionTree=
-- =rename_option=: Generally used to rename a submodule, e.g. =filesystems."/"= -> ="filesystems."/boot"=
+- =rename_option=: Generally used to rename a submodule, e.g. =filesystems."/".foo= -> ="filesystems."/boot".foo=
 - =add_new_option=: Generally used to add an attribute or element to a =submodule= or =list of=.
 - =undo=: Revert the latest =Update= in =update_history=
 
 ** Commit Changes to Disk
 The =StateModel= also provides the method =persist_updates=, which is just a helper function that
-- retrieves changes from =OptionTree.iter_changes()=, an iterator that yields each attribute where the =in_memory_definition= and =configured_definition= differ
+- retrieves changes from =OptionTree.iter_changes()=, an iterator that yields each attribute and =OptionDefinition= where the =in_memory_definition= and =configured_definition= differ
 - calls =api.apply_update= (to be refactored), which extracts the =expression_string= from each changed =OptionDefinition= and calls =parser.inject_expressions()= with the map of attributes -> updated =expression_string='s.
 
 *** Expression injection
 The algorithm in =nixui.options.parser.inject_expressions= is as follows
 - Given a module, construct =attribute_path_to_expression_node_mapping=, a mapping between the attribute path and the syntax tree expression node object (=parser.get_key_value_nodes=)
 - For each option to be updated,
-  - If the option is in =attribute_path_to_syntax_node_mapping=, call =SyntaxTree.replace= to replace the old expression node with the new expression node
+  - If the option is in =attribute_path_to_syntax_node_mapping= (meaning the attribute is already defined in the module), call =SyntaxTree.replace= to replace the old expression node with the new expression node.
   - Otherwise, inject the option definition at the top of the module.
 
-We are left with a new SyntaxTree with updated / added option definitions. =SyntaxTree.to_string()= provides us the contents written to =module_path=.
+We are left with a new SyntaxTree with updated / added option definitions. =SyntaxTree.to_string()= provides us the string which will be written to =module_path=.
 
 * Frontend
-The frontend renders a graphical tool for changing configurations. A primer on frontend functionality can be found at [[./usage.org#Interface]]
+The frontend renders a graphical tool for changing configurations. A primer on frontend functionality can be found in [[../usage.org#Interface][Usage#Interface]].
 
 The Nav Interface (=nixui.graphics.nav_interface.OptionNavigationInterface=) is the main widget. It contains a layout with place-holders for three widgets:
 - Navbar: View and update the URI.
@@ -77,14 +93,14 @@ Each time the URI changes, the Nav Interface creates a new instance of each widg
 When loading a new URI,
 - A Navbar is instantiated which displays the new URIs
 - A Navlist is instantiated which displays the children of the attribute path, or search results. Selects the navlist item if the URI instructs to.
-- An Options Editor is instantiated which either shows a list of Option Displays an item in the navlist is selected.
+- An Options Editor is instantiated which either is blank or shows a list of Option Displays an item in the navlist is selected.
 
 *** URI Format
 There are currently two types of URIs, =config:option.path.here= and =search:search text here=.
 
 ** Navbar
 The Navbar displays the URI and has four widgets, each of which results in a callback telling the Nav Interface to change the URI:
-- Up Arrow: Change the URI from =config:foo.bar.baz= to =config:foo.bar=. (disabled for =search:= and top level =config:=)
+- Up Arrow: Change the URI from =config:foo.bar.baz= to =config:foo.bar=. (disabled for =search:anything= and top level =config:=)
 - Back Arrow: Change the URI to the previous URI.
 - URI Box: Shows a pretty format of the URI, allow for direct editing of the URI when clicked.
 - Search Box: Change URI to =search:<entered text>=.
@@ -95,13 +111,13 @@ The Navlist displays navigable options based on the URI. If the URI is =config:p
 If a Navlist item is clicked, the Nav Interface will load the clicked items URI.
 
 There are a variety of Navlist types defined in =nixui.graphics.navlist=:
-- =StaticAttrsOf=: immutable listing of attributes of the URI
-- =DynamicAttrsOf=: mutable list of attributes. Useful for =attribute set of <t>= type options.
-- =DynamicListOf=: mutable list elements, shown when a =list of <t>= type option is loaded.
+- =StaticAttrsOf=: immutable listing of attributes of the URIs config path.
+- =DynamicAttrsOf=: mutable list of attributes. Useful for =attribute set of <t>= type attributes.
+- =DynamicListOf=: mutable list elements, shown for a =list of <t>= type attributes.
 - =SearchResultListDisplay=: immutable list of search results including details about why it matched the search. Searches are matched based on =Attribute Path=, =Type=, and =Description=.
 
 ** Options Editor
-The Options Editor is comprised of an Option Display Group (=nixui.graphics.option_display_group.OptionDisplayGroupBox=), a layout containing one or many Option Displays (=nixui.graphics.option_display.GenericOptionDisplay=).
+The Options Editor is comprised of an Option Display Group (=nixui.graphics.option_display_group.OptionDisplayGroupBox=), a =QGroupBox= containing one or many Option Displays (=nixui.graphics.option_display.GenericOptionDisplay=).
 
 An Option Display is a tool for editing the value of a single option or attribute. The current value and option/attribute type impact how it is rendered.
 
@@ -110,5 +126,5 @@ A Field Widget (=nixui.graphics.field_widgets=) is the component of an Option Di
 There are a variety of Field Widgets, and types of functionality for Field Widgets:
 - Standard Field Widget: allows changes to =OptionDefinition.obj= which will be converted to a nix expression
 - Expression Field Widget: allows changes to the nix expression itself (=OptionDefinition.expression_string=)
-- Reference Field Widget: (NOT IMPLEMENTED) allows users to refer to a package, option, or other variable in scope, a simpler form of the Expression Field Widget.
+- Reference Field Widget: (NOT IMPLEMENTED) allows users to refer to a package, option, or other variable in scope. This is a more constrained form of the Expression Field Widget and allows users to reference variables more easily.
 - Redirect Field Widget: For =ListOf= and =AttrsOf=, changes the URI so the navlist is the editor for the elements / set members for the list / set.
