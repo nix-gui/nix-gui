@@ -67,6 +67,7 @@ Currently there are a few major limitations to Nix-Gui, including
 Developers and users, if you want to help please
 - Run the application and submit bug report and feature request issues on GitHub.
 - Contribute to the [[https://github.com/nix-gui/nix-gui/issues/129][UX Survey]].
+- Read the Development documentation in the section above
 - See [[https://github.com/nix-gui/nix-gui/labels/good%20first%20issue][good first issues]].
 - Create issues to ask questions about code, documentation, etc (there are no dumb questions).
 - Contribute to important dependencies including [[https://github.com/nix-community/rnix-parser/][rnix-parser]] and [[https://github.com/nix-community/rnix-lsp][rnix-lsp]].
