@@ -154,9 +154,10 @@ class OptionTree:
             return tree
 
     def _get_data(self, attribute):
-        if self.tree.get_node(attribute).data is None:
+        result = self.tree.get_node(attribute).data
+        if result == None:
             raise ValueError()
-        return self.tree.get_node(attribute).data
+        return result
 
     def iter_changes(self, get_configured_changes=False):
         """
