@@ -45,6 +45,8 @@
           ];
           doCheck = false;
         };
+        runTests = true;
+        #runTests = false; # debug: skip tests
 
       in {
         packages.nix-gui = pkgs.callPackage
@@ -67,7 +69,7 @@
                 "--set QT_PLUGIN_PATH ${pkgs.qt5.qtbase}/${pkgs.qt5.qtbase.qtPluginPrefix}"
               ];
 
-              checkInputs = [
+              checkInputs = if runTests then [
                 pkgs.nix
                 pkgs.nixpkgs-fmt
                 nix-dump-syntax-tree-json
@@ -76,7 +78,7 @@
                 pythonPackages.pytest-datafiles
                 pythonPackages.pytest-mock
                 pythonPackages.pytest-qt
-              ];
+              ] else [];
               checkPhase = let
                 sample = "${./nixui/tests/sample}";
               in ''
@@ -88,12 +90,12 @@
                 export NIX_STATE_DIR=$NIX_BUILD_TOP
                 export NIX_PATH=${pkgs.path}:nixpkgs=${pkgs.path}:nixos-config=${sample}/configuration.nix
                 cd nixui
-              '' + (if !enable-profiling then ''
+              '' + (if runTests then ((if !enable-profiling then ''
                 python3 -m pytest -vv ${specific-test}
               '' else ''
                 python3 -m cProfile -o profile -m pytest ${specific-test}
                 python3 -c "import pstats; p = pstats.Stats('profile'); p.strip_dirs(); p.sort_stats('cumtime'); p.print_stats(50)"
-              '');
+              '')) else "");
             }) { };
         packages.scrape-github = pkgs.callPackage
           ({ stdenv, lib}:
