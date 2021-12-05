@@ -50,11 +50,18 @@ class StateModel:
         parent_type = self.option_tree.get_type(parent_option)
 
         # get best default name
-        children = self.option_tree.children(parent_option)
+        child_keys = set([c[-1] for c in self.option_tree.children(parent_option).keys()])
         if isinstance(parent_type, types.ListOfType):
-            new_child_attribute_path = attribute.Attribute.from_insertion(parent_option, f'[{len(children)}]')
+            new_child_attribute_path = attribute.Attribute.from_insertion(parent_option, f'[{len(child_keys)}]')
         elif isinstance(parent_type, types.AttrsOfType):
-            new_child_attribute_path = attribute.Attribute.from_insertion(parent_option, f'newAttribute{len(children)}')
+            suggested_child_key = 'newAttribute'
+            for i in range(len(child_keys)):
+                if suggested_child_key not in child_keys:
+                    break
+                suggested_child_key = f'newAttribute{i}'
+            new_child_attribute_path = attribute.Attribute.from_insertion(parent_option, suggested_child_key)
+        else:
+            raise TypeError
 
         # add to option tree and return name
         self.option_tree.insert_attribute(new_child_attribute_path)
