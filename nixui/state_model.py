@@ -1,6 +1,6 @@
 import collections
 
-from nixui.options import api
+from nixui.options import api, attribute, types
 from nixui.utils.logger import logger
 
 
@@ -46,8 +46,19 @@ class StateModel:
     def rename_option(self, old_option, option):
         self.option_tree.rename_attribute(old_option, option)
 
-    def add_new_option(self, option):
-        self.option_tree.insert_attribute(option)
+    def add_new_option(self, parent_option):
+        parent_type = self.option_tree.get_type(parent_option)
+
+        # get best default name
+        children = self.option_tree.children(parent_option)
+        if isinstance(parent_type, types.ListOfType):
+            new_child_attribute_path = attribute.Attribute.from_insertion(parent_option, f'[{len(children)}]')
+        elif isinstance(parent_type, types.AttrsOfType):
+            new_child_attribute_path = attribute.Attribute.from_insertion(parent_option, f'newAttribute{len(children)}')
+
+        # add to option tree and return name
+        self.option_tree.insert_attribute(new_child_attribute_path)
+        return new_child_attribute_path
 
     def record_update(self, option, new_definition):
         old_definition = self.option_tree.get_definition(option)

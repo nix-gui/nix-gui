@@ -236,12 +236,12 @@ class DynamicAttrsOf(QtWidgets.QWidget):
         self.statemodel.rename_option(item.previous_option, item.option)
 
     def add_clicked(self):
+        new_child_attribute_path = self.statemodel.add_new_option(self.option_path)
         item = OptionListItem(
-            Attribute.from_insertion(self.option_path, 'newAttribute'),
+            new_child_attribute_path,
             editable=True
         )
         self.list_widget.addItem(item)
-        self.statemodel.add_new_option(item.option)
         self.list_widget.editItem(item)
 
     def remove_clicked(self):
@@ -302,13 +302,9 @@ class DynamicListOf(QtWidgets.QWidget):
         self.statemodel.rename_option(item.previous_option, item.option)
 
     def add_clicked(self):
-        item = OptionListItem(
-            Attribute.from_insertion(self.option_path, 'newAttribute'),  # TODO: fix this
-            editable=True
-        )
+        new_child_attribute_path = self.statemodel.add_new_option(self.option_path)
+        item = OptionListItem(new_child_attribute_path)
         self.list_widget.addItem(item)
-        self.statemodel.add_new_option(item.option)
-        self.list_widget.editItem(item)
 
     def remove_clicked(self):
         self.list_widget.takeItem(self.list_widget.currentItem())
