@@ -24,6 +24,13 @@ class OptionListItemDelegate(QtWidgets.QStyledItemDelegate):
     padding = 5
     default_font_family = QtGui.QFont().family()
 
+    def setEditorData(self, editor, index):
+        data = index.data(QtCore.Qt.DisplayRole)
+        editor.setText(data['option_suffix'])
+
+    def setModelData(self, editor, model, index):
+        index.model().setData(index, editor.text(), QtCore.Qt.EditRole)
+
     def paint(self, painter, option, index):
         # ensure different background colors are applied for selected rows
         viewOption = QtWidgets.QStyleOptionViewItem(option)
@@ -123,13 +130,14 @@ class OptionListItem(QtWidgets.QListWidgetItem):
 
         self.setData(QtCore.Qt.DisplayRole, str(self.option))
 
-    def setData(self, role, value_str):
+    def setData(self, role, option_suffix):
         if role == QtCore.Qt.EditRole:
             self.previous_option = self.option
-            self.option = Attribute.from_insertion(self.option.get_set(), value_str)
+            self.option = Attribute.from_insertion(self.option.get_set(), option_suffix)
 
-        # Delegate takes a dict, convert
+        # Delegate takes a dict, converts to painted object
         value = {
+            'option_suffix': self.option[-1],
             'text': str(self.option) if self.use_full_option_path else str(self.option[-1]),
             'child_count': self.child_count,
             'extra_text': self.extra_text,
@@ -229,6 +237,9 @@ class DynamicAttrsOf(QtWidgets.QWidget):
         layout.addWidget(self.list_widget)
         self.setLayout(layout)
 
+    def edit_item(self, item):
+        self.list_widget.editItem(item)
+
     def remove_item(self, item):
         print('not implemented')
 
@@ -286,7 +297,6 @@ class DynamicListOf(QtWidgets.QWidget):
         btn_hbox.addWidget(self.up_btn)
         btn_hbox.addWidget(self.down_btn)
 
-        self.list_widget.itemDoubleClicked.connect(self.list_widget.editItem)
         self.list_widget.itemChanged.connect(self.rename_item)
         self.list_widget.model().rowsRemoved.connect(lambda: self.remove_item)
 
