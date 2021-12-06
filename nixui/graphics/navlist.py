@@ -144,7 +144,7 @@ class OptionListItem(QtWidgets.QListWidgetItem):
             'icon_path': self.icon_path,
             'status_circle_color': self.status_color
         }
-        super().setData(role, value)
+        return super().setData(role, value)
 
     @property
     def status_color(self):
@@ -157,7 +157,7 @@ class OptionListItem(QtWidgets.QListWidgetItem):
 
 
 class OptionScrollListSelector(QtWidgets.QListWidget):
-    def __init__(self, base_option_path, set_option_path_fn=None):
+    def __init__(self, base_option_path, set_option_path_fn=None, **item_kwargs):
         super().__init__()
 
         # change selected callback
@@ -165,11 +165,10 @@ class OptionScrollListSelector(QtWidgets.QListWidget):
         self.set_option_path_fn = set_option_path_fn
         self.itemClicked.connect(self.set_option_path_callback)
 
-        # load options
-        options = api.get_option_tree().children(base_option_path)
         self.option_item_map = {}
+        options = api.get_option_tree().children(self.base_option_path)
         for option in options:
-            item = OptionListItem(option)
+            item = OptionListItem(option, **item_kwargs)
             self.addItem(item)
             self.option_item_map[option.get_end()] = item
 
@@ -210,7 +209,7 @@ class DynamicAttrsOf(QtWidgets.QWidget):
         self.statemodel = statemodel
         self.option_path = option_path
 
-        self.list_widget = OptionScrollListSelector(option_path, set_option_path_fn)
+        self.list_widget = OptionScrollListSelector(option_path, set_option_path_fn, editable=True)
         if selected:
             self.list_widget.set_current_option(selected)
 
@@ -237,6 +236,13 @@ class DynamicAttrsOf(QtWidgets.QWidget):
         layout.addWidget(self.list_widget)
         self.setLayout(layout)
 
+    def keyPressEvent(self, e):
+        if e.key() == QtCore.Qt.Key_F2:
+            item = self.list_widget.currentItem()
+            if item:
+                self.edit_item(item)
+        return super().keyPressEvent(e)
+
     def edit_item(self, item):
         self.list_widget.editItem(item)
 
@@ -257,11 +263,6 @@ class DynamicAttrsOf(QtWidgets.QWidget):
 
     def remove_clicked(self):
         self.list_widget.takeItem(self.list_widget.currentItem())
-
-    def insert_items(self):
-        for option in api.get_option_tree().children(self.option_path):
-            it = self.ItemCls(option)
-            self.list_widget.addItem(it)
 
 
 class DynamicListOf(QtWidgets.QWidget):
@@ -333,11 +334,6 @@ class DynamicListOf(QtWidgets.QWidget):
             logger.info('Cannot move item up, current index is end of list')
         current_item = self.list_widget.takeItem(current_row)
         self.list_widget.addItem(current_item)
-
-    def insert_items(self):
-        for option in api.get_option_tree().children(self.option_path):
-            it = self.ItemCls(option)
-            self.list_widget.addItem(it)
 
 
 class SearchResultListDisplay(QtWidgets.QListWidget):
