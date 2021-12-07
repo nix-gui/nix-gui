@@ -90,4 +90,4 @@ Developers and users, if you want to help please
 - Join the matrix below to discuss.
 
 ** Matrix
-Development, support, discussion on Matrix =#nix-gui:mtx.rew.la= https://matrix.to/#/#nix-gui:mtx.rew.la
+Development, support, discussion on Matrix =#nix-gui:nixos.org= https://matrix.to/#/#nix-gui:nixos.org
