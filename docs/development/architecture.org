@@ -42,8 +42,9 @@ hardware.bluetooth.powerOnBoot = mkOption {
 #+end_src
 
 **** User-Defined Attribute
-For =types.attrsOf= options, users can specify their attributes. For example in =<nixos>= source code, the schema-defined attribute =environment.etc= provides the ability to set the User-Defined Attribute =environment.etc."resolv.conf".text= in =configuration.nix=:
+For =types.attrsOf= options, users can specify the name of the attribute being defined, such as the names of users, the paths to files, and systemd service names. For example in =<nixos>= source code, the schema-defined attribute =environment.etc= provides the ability to set the User-Defined Attribute =environment.etc."resolv.conf"= in =configuration.nix=.
 
+=nixos/modules/system/etc/etc.nix=:
 #+begin_src nix
 environment.etc = mkOption {
   default = {};
