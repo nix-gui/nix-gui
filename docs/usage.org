@@ -1,8 +1,20 @@
 * Running
 Prerequisites:
 - Ensure nixos is installed
-- Ensure =nix.extraOptions = ''experimental-features = nix-command flakes'';= is set in =configuration.nix= (and you've rebuilt) to enable [[https://nixos.wiki/wiki/Flakes][Nix Flakes]]
+- Ensure nix has [[https://nixos.wiki/wiki/Flakes][Flakes]] support
 
+#+NAME: /etc/nixos/configuration.nix
+#+BEGIN_SRC nix
+{ pkgs, ... }: {
+  # enable nix flakes
+  nix = {
+    package = pkgs.nixFlakes;
+    extraOptions = ''
+      experimental-features = nix-command flakes
+    '';
+   };
+}
+#+END_SRC
 
 Run
 - =nix run github:nix-gui/nix-gui=
