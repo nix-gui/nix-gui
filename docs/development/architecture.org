@@ -27,20 +27,21 @@ Nix-Gui reads information from the configuration path and =<nixos>= in order to 
 The result of =get_all_option_values(module_path)= is used to set =OptionData.configured_definition= where applicable.
 
 *** Caveat
-The =OptionTree= has a node for each option in the option tree, as well as attributes that aren't actually options.
+Attributes in the =OptionTree= can either be *schema-defined* (attribute sets and options specified by =mkOption= in =<nixos>=), or *user-defined*.
+User-defined attributes exist as elements / keys of attributes with types which specify a collection (e.g. =list of= and =attribute set of=).
 
-For example =users.ldap.loginPam= is a valid nix option. However its "parent", =users.ldap= isn't a valid option. Regardless, =users.ldap= has its own node in the =OptionTree=.
+For example, =environment.etc."resolv.conf".text= is a user-defined attribute path, it is part of the schema-defined attribute =environment.etc=.
 
-Likewise, =environment.etc."resolv.conf".text= isn't an option, it is an attribute of the option =environment.etc=. It will have a node in the =OptionTree=. This is true of =attribute set of submodules=, as well as =submodule= type options.
+Both schema-defined and user-defined attributes have nodes in the =OptionTree=.
 
 =list of= options are part of the option tree despite not having a proper attribute path, e.g. a list of allowed TCP ports in the firewall will have the element
 #+begin_src nix
-networking.firewall.allowedTCPPorts."[0]"
+networking.firewall.allowedTCPPorts[0]
 #+end_src
 
-This is **not** the same as
+This is *not* the same as
 #+begin_src nix
-networking.firewall.allowedTCPPorts."[0]" = <expression>;
+networking.firewall.allowedTCPPorts[0] = <expression>;  # illegal syntax in nix
 #+end_src
 
 rather, it is equivalent to
