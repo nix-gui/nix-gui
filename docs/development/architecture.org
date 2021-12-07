@@ -27,14 +27,45 @@ Nix-Gui reads information from the configuration path and =<nixos>= in order to 
 The result of =get_all_option_values(module_path)= is used to set =OptionData.configured_definition= where applicable.
 
 *** Caveat
-Attributes in the =OptionTree= can either be *schema-defined* (attribute sets and options specified by =mkOption= in =<nixos>=), or *user-defined*.
-User-defined attributes exist as elements / keys of attributes of collection types (e.g. =list of= and =attribute set of=).
+Attributes in the =OptionTree= can either be *schema-defined* or *user-defined*.
 
-For example, =environment.etc."resolv.conf".text= is a user-defined attribute path, it is part of the schema-defined attribute =environment.etc=.
+**** Schema-Defined Attribute
+These attributes are defined in the NixOS config schema, so we call them "schema-defined" attributes.
+In the =<nixos>= source code, schema-defined attributes are specified by =mkOption= for example
 
-Both schema-defined and user-defined attributes have nodes in the =OptionTree=.
+#+begin_src nix
+hardware.bluetooth.powerOnBoot = mkOption {
+  type = types.bool;
+  default = true;
+  description = "Whether to power up the default Bluetooth controller on boot.";
+};
+#+end_src
 
-=list of= options are part of the option tree despite not having a proper attribute path, e.g. a list of allowed TCP ports in the firewall will have the element
+**** User-Defined Attribute
+For =types.attrsOf= options, users can specify their attributes. For example in =<nixos>= source code, the Schema-Defined Attribute =environment.etc= provides the ability to set the User-Defined Attribute =environment.etc."resolv.conf".text= in =configuration.nix=:
+
+#+begin_src nix
+environment.etc = mkOption {
+  default = {};
+  type = with types; attrsOf (submodule (
+    { name, config, options, ... }:
+    { options = {
+        text = mkOption {
+          default = null;
+          type = types.nullOr types.lines;
+        };
+        ...
+#+end_src
+
+=configuration.nix=:
+#+begin_src nix
+environment.etc."resolv.conf".text = "text here";
+#+end_src
+
+***** User-Defined List Elements
+
+=types.listOf= options are also part of the option tree despite not having a proper attribute path, e.g. a list of allowed TCP ports in the firewall will have the element
+
 #+begin_src nix
 networking.firewall.allowedTCPPorts[0]
 #+end_src
