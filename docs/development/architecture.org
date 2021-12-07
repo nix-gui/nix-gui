@@ -28,7 +28,7 @@ The result of =get_all_option_values(module_path)= is used to set =OptionData.co
 
 *** Caveat
 Attributes in the =OptionTree= can either be *schema-defined* (attribute sets and options specified by =mkOption= in =<nixos>=), or *user-defined*.
-User-defined attributes exist as elements / keys of attributes with types which specify a collection (e.g. =list of= and =attribute set of=).
+User-defined attributes exist as elements / keys of attributes of collection types (e.g. =list of= and =attribute set of=).
 
 For example, =environment.etc."resolv.conf".text= is a user-defined attribute path, it is part of the schema-defined attribute =environment.etc=.
 
