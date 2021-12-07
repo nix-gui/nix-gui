@@ -7,6 +7,21 @@ Make NixOS usable for non-technical users through a settings / package managemen
 
 [[screenshots/historical_search_2021_10_10.png]]
 
+** Using
+Prerequisites:
+- Ensure NixOS is installed
+
+Run
+- =nix run github:nix-gui/nix-gui=
+
+Print help string
+- =nix run github:nix-gui/nix-gui -- --help=
+
+If you don't have [[https://nixos.wiki/wiki/Flakes][Nix Flakes]] enabled, either
+- Run =nix --experimental-features 'nix-command flakes' run github:nix-gui/nix-gui=, or
+- Set =nix.extraOptions = ''experimental-features = nix-command flakes'';= in =configuration.nix= and rebuild to enable.
+
+For details on how to use Nix-Gui, see the [[docs/usage.org][Usage]] page.
 
 ** Motives
 
@@ -50,26 +65,29 @@ This data is retrieved from =<nixos/nixpkgs>= and from the configuration path vi
 ** Major Shortcomings to be Fixed
 
 Currently there are a few major limitations to Nix-Gui, including
-- Documentation is incomplete.
+- Documentation is can be improved.
 - The interface for =ListOf= and =AttrsOf= is incomplete (https://github.com/nix-gui/nix-gui/issues/72) (https://github.com/nix-gui/nix-gui/issues/30).
 - Nix-Gui has yet to be thoroughly vetted, therefore the configuration path is copied to =~/.config/nixgui/configurations/=, in which all changes made by Nix-Gui are saved.
 - Some option types aren't handled yet (e.g. =package=, =lambda=, and specific types like =ncdns.conf configuration type=, =systemd option=). These options can only be edited as a nix expression, as they do not have a matching widget.
 
-** Docs
-
+** Documentation
 - [[docs/usage.org][Usage]]
-- [[docs/behavior.org][Behavior]]
-- [[docs/development.org][Development]]
+- Development
+  - [[docs/development/goals.org][Development Goals]]
+  - [[docs/development/architecture.org][Nix-Gui Architecture]]
+  - [[docs/development/commands.org][Development Commands]]
+- [[docs/references.org][References]]
 
 ** Contributing
 Developers and users, if you want to help please
 - Run the application and submit bug report and feature request issues on GitHub.
 - Contribute to the [[https://github.com/nix-gui/nix-gui/issues/129][UX Survey]].
+- Read the Development documentation in the section above.
+- Review existing [[https://github.com/nix-gui/nix-gui/pulls][pull requests]].
 - See [[https://github.com/nix-gui/nix-gui/labels/good%20first%20issue][good first issues]].
 - Create issues to ask questions about code, documentation, etc (there are no dumb questions).
 - Contribute to important dependencies including [[https://github.com/nix-community/rnix-parser/][rnix-parser]] and [[https://github.com/nix-community/rnix-lsp][rnix-lsp]].
-- Or contact me on matrix to discuss.
+- Join the matrix below to discuss.
 
-** Contact
-
-Contact me on Matrix (=andrew:mtx.rew.la=)
+** Matrix
+Development, support, discussion on Matrix =#nix-gui:mtx.rew.la= https://matrix.to/#/#nix-gui:mtx.rew.la
