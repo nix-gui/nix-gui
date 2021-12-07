@@ -31,7 +31,7 @@ Attributes in the =OptionTree= can either be *schema-defined* or *user-defined*.
 
 **** Schema-Defined Attribute
 These attributes are defined in the NixOS config schema, so we call them "schema-defined" attributes.
-In the =<nixos>= source code, schema-defined attributes are specified by =mkOption= for example
+In the =<nixos>= source code, schema-defined attributes are specified by =mkOption=, for example:
 
 #+begin_src nix
 hardware.bluetooth.powerOnBoot = mkOption {
@@ -42,7 +42,7 @@ hardware.bluetooth.powerOnBoot = mkOption {
 #+end_src
 
 **** User-Defined Attribute
-For =types.attrsOf= options, users can specify their attributes. For example in =<nixos>= source code, the Schema-Defined Attribute =environment.etc= provides the ability to set the User-Defined Attribute =environment.etc."resolv.conf".text= in =configuration.nix=:
+For =types.attrsOf= options, users can specify their attributes. For example in =<nixos>= source code, the schema-defined attribute =environment.etc= provides the ability to set the User-Defined Attribute =environment.etc."resolv.conf".text= in =configuration.nix=:
 
 #+begin_src nix
 environment.etc = mkOption {
@@ -64,7 +64,7 @@ environment.etc."resolv.conf".text = "text here";
 
 ***** User-Defined List Elements
 
-=types.listOf= options are also part of the option tree despite not having a proper attribute path, e.g. a list of allowed TCP ports in the firewall will have the element
+=types.listOf= options are also part of the =OptionTree= despite not having a proper attribute path, e.g. a list of allowed TCP ports in the firewall will have the element
 
 #+begin_src nix
 networking.firewall.allowedTCPPorts[0]
