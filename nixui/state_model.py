@@ -1,6 +1,6 @@
 import collections
 
-from nixui.options import api, attribute, types
+from nixui.options import api, attribute, types, state_update
 from nixui.utils.logger import logger
 
 
@@ -18,16 +18,13 @@ class SlotMapper:
         return fn
 
 
-Update = collections.namedtuple('Update', ['option', 'old_definition', 'new_definition'])
-
-
 class StateModel:
     def __init__(self):
         self.update_history = []
 
         # TODO: is including the slotmapper overloading the StateModel? What are the alternatives?
         self.slotmapper = SlotMapper()
-        self.slotmapper.add_slot('form_definition_changed', self.record_update)
+        self.slotmapper.add_slot('form_definition_changed', self.change_definition)
         self.slotmapper.add_slot('undo', self.undo)
 
     @property
@@ -38,18 +35,37 @@ class StateModel:
         return self.option_tree.get_definition(option)
 
     def get_update_set(self):
+        # TODO: THIS NEEDS TO BE GENERALIZED FOR ALL UPDATES
         return [
-            Update(option, configured_value, current_value)
+            state_update.ChangeDefinitionUpdate(
+                option=option,
+                old_definition=configured_value,
+                new_definition=current_value
+            )
             for option, configured_value, current_value in self.option_tree.iter_changes()
         ]
 
     def rename_option(self, old_option, option):
         self.option_tree.rename_attribute(old_option, option)
+        update = state_update.RenameUpdate(
+            old_attribute=old_option,
+            new_attribute=option
+        )
+        self._record_update(update)
+
+    def remove_option(self, option):
+        subtree = self.option_tree.remove_attribute(option)
+        update = state_update.RemoveUpdate(
+            attribute=attribute,
+            deleted_subtree=subtree
+        )
+        self._record_update(update)
 
     def add_new_option(self, parent_option):
         parent_type = self.option_tree.get_type(parent_option)
 
         # get best default name
+        # TODO: logic for getting name should be moved to option_tree.py?
         child_keys = set([c[-1] for c in self.option_tree.children(parent_option).keys()])
         if isinstance(parent_type, types.ListOfType):
             new_child_attribute_path = attribute.Attribute.from_insertion(parent_option, f'[{len(child_keys)}]')
@@ -63,29 +79,34 @@ class StateModel:
         else:
             raise TypeError
 
-        # add to option tree and return name
+        # add to option tree, append update, and return name
         self.option_tree.insert_attribute(new_child_attribute_path)
+        update = state_update.CreateUpdate(attribute=new_child_attribute_path)
+        self._record_update(update)
         return new_child_attribute_path
 
-    def record_update(self, option, new_definition):
+    def change_definition(self, option, new_definition):
         old_definition = self.option_tree.get_definition(option)
         if old_definition != new_definition:
-            if self.update_history and option == self.update_history[-1].option:
-                # replace old update if we're still working on the same option
-                update = Update(option, self.update_history[-1].old_definition, new_definition)
-                self.update_history[-1] = update
-                logger.debug(f'update: {update}')
-            else:
-                update = Update(option, old_definition, new_definition)
-                self.update_history.append(update)
-                logger.info(f'update: {update}')
-
-            self.slotmapper('update_recorded')(
-                option,
-                update.old_definition.expression_string,
-                update.new_definition.expression_string,
-            )
             self.option_tree.set_definition(option, new_definition)
+            update = state_update.ChangeDefinitionUpdate(
+                option=option,
+                old_definition=old_definition,
+                new_definition=new_definition
+            )
+            self._record_update(update)
+
+    def _record_update(self, update):
+        merged_update = update.merge_with_previous_update(self.update_history[-1]) if self.update_history else None
+        if merged_update:
+            self.update_history[-1] = merged_update
+            logger.debug(f'updates merged: {update} -> {merged_update}')
+            self.slotmapper('update_recorded')(merged_update)
+        else:
+            self.update_history.append(update)
+            logger.info(f'update recorded: {update}')
+            self.slotmapper('update_recorded')(update)
+
 
     def persist_updates(self):
         option_new_definition_map = {
@@ -97,7 +118,7 @@ class StateModel:
 
     def undo(self, *args, **kwargs):
         last_update = self.update_history.pop()
-        self.option_tree.set_definition(last_update.option, last_update.old_definition)
+        last_update.revert(self.option_tree)
 
         if not self.update_history:
             self.slotmapper('no_updates_exist')()
