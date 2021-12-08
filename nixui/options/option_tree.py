@@ -208,6 +208,9 @@ class OptionTree:
             new_child_attribute = Attribute.from_insertion(new_attribute, old_child_attribute.get_end())
             self.rename_attribute(old_child_attribute, new_child_attribute)
 
+    def remove_attribute(self, attribute):
+        return self.tree.remove_subtree(attribute)
+
     def set_definition(self, option_path, option_definition):
         self._upsert_node_data(option_path, {'in_memory_definition': option_definition})
         self._update_in_memory_change_cache(option_path, option_definition)
