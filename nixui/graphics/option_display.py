@@ -116,7 +116,6 @@ class GenericOptionDisplay(QtWidgets.QWidget):
             else:
                 field = field_widget_class(option)
             field.stateChanged.connect(self.handle_state_change)
-            self.statemodel.slotmapper.add_slot(('update_field', option), self._load_definition)
             fields.append(field)
         return fields
 

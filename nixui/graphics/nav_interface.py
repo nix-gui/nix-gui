@@ -38,6 +38,9 @@ class OptionNavigationInterface(QtWidgets.QWidget):
 
         self.set_lookup_key(starting_lookup_key)
 
+        # when undo is called, refresh option path
+        self.statemodel.slotmapper.add_slot('reload_attribute', self.set_option_path)
+
     def revert_to_previous_lookup_key(self):
         current_uri = self.uri_stack.pop()
         previous_uri = self.uri_stack.pop()
