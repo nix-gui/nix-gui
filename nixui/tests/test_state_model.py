@@ -28,7 +28,7 @@ def test_load_edit_save(option_loc, new_value):
     # open, update, save
     m0 = state_model.StateModel()
     v0 = m0.get_definition(option_loc)
-    m0.record_update(option_loc, new_value)
+    m0.change_definition(option_loc, new_value)
     m0.persist_updates()
 
     # reopen, verify
@@ -37,7 +37,7 @@ def test_load_edit_save(option_loc, new_value):
     assert v1 == new_value
 
     # reset, verify same as original
-    m1.record_update(option_loc, v0)
+    m1.change_definition(option_loc, v0)
     m1.persist_updates()
 
     m2 = state_model.StateModel()
@@ -46,12 +46,12 @@ def test_load_edit_save(option_loc, new_value):
 
 
 def test_get_update_set_simple(statemodel):
-    statemodel.record_update(
+    statemodel.change_definition(
         Attribute('sound.enable'),
         OptionDefinition.from_object(False)
     )
     statemodel.persist_updates()
-    statemodel.record_update(
+    statemodel.change_definition(
         Attribute('sound.enable'),
         OptionDefinition.from_object(True)
     )
@@ -80,11 +80,11 @@ def test_get_update_set_defined_by_descendent(statemodel):
         ];
         ...
     """
-    statemodel.record_update(
+    statemodel.change_definition(
         Attribute('services.bookstack.nginx.listen."[0]".addr'),
         OptionDefinition.from_object('10.0.0.1')
     )
-    statemodel.record_update(
+    statemodel.change_definition(
         Attribute('services.bookstack.nginx.listen."[1]".port'),
         OptionDefinition.from_object(101)
     )
