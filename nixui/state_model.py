@@ -1,6 +1,7 @@
 import collections
 
-from nixui.options import api, attribute, types, state_update
+from nixui.options import api, types, state_update
+from nixui.options.attribute import Attribute
 from nixui.utils.logger import logger
 
 
@@ -56,7 +57,7 @@ class StateModel:
     def remove_option(self, option):
         subtree = self.option_tree.remove_attribute(option)
         update = state_update.RemoveUpdate(
-            attribute=attribute,
+            attribute=option,
             deleted_subtree=subtree
         )
         self._record_update(update)
@@ -68,14 +69,14 @@ class StateModel:
         # TODO: logic for getting name should be moved to option_tree.py?
         child_keys = set([c[-1] for c in self.option_tree.children(parent_option).keys()])
         if isinstance(parent_type, types.ListOfType):
-            new_child_attribute_path = attribute.Attribute.from_insertion(parent_option, f'[{len(child_keys)}]')
+            new_child_attribute_path = Attribute.from_insertion(parent_option, f'[{len(child_keys)}]')
         elif isinstance(parent_type, types.AttrsOfType):
             suggested_child_key = 'newAttribute'
             for i in range(len(child_keys)):
                 if suggested_child_key not in child_keys:
                     break
                 suggested_child_key = f'newAttribute{i}'
-            new_child_attribute_path = attribute.Attribute.from_insertion(parent_option, suggested_child_key)
+            new_child_attribute_path = Attribute.from_insertion(parent_option, suggested_child_key)
         else:
             raise TypeError
 
@@ -101,12 +102,11 @@ class StateModel:
         if merged_update:
             self.update_history[-1] = merged_update
             logger.debug(f'updates merged: {update} -> {merged_update}')
-            self.slotmapper('update_recorded')(merged_update)
+            self.slotmapper('update_recorded')(merged_update.details_string())
         else:
             self.update_history.append(update)
             logger.info(f'update recorded: {update}')
-            self.slotmapper('update_recorded')(update)
-
+            self.slotmapper('update_recorded')(update.details_string)
 
     def persist_updates(self):
         option_new_definition_map = {
@@ -123,5 +123,7 @@ class StateModel:
         if not self.update_history:
             self.slotmapper('no_updates_exist')()
 
-        self.slotmapper('undo_performed')(last_update.option, last_update.old_definition, last_update.new_definition)
-        self.slotmapper(('update_field', last_update.option))()
+        self.slotmapper('undo_performed')(last_update.details_string())
+        self.slotmapper('reload_attribute')(
+            last_update.reversion_impacted_attribute()
+        )
