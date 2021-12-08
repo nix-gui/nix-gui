@@ -5,6 +5,8 @@ import pytest
 
 from nixui.graphics import main_window
 from nixui import state_model
+from nixui.options.option_tree import OptionTree
+from nixui.options.attribute import Attribute
 
 
 SAMPLES_PATH = 'tests/sample'
@@ -50,3 +52,21 @@ def option_tree():
     os.environ['CONFIGURATION_PATH'] = os.path.abspath(os.path.join(SAMPLES_PATH, 'configuration.nix'))
     statemodel = state_model.StateModel()
     return statemodel.option_tree
+
+
+@pytest.fixture
+def minimal_option_tree():
+    return OptionTree(
+        {
+            Attribute('myList'): {'type_string': 'list of strings'},
+            Attribute('myAttrs'): {'type_string': 'attribute set of submodules'},
+            Attribute('myAttrs."<name>"'): {},
+        },
+        {}
+    )
+
+
+@pytest.fixture
+def minimal_state_model(mocker, minimal_option_tree):
+    mocker.patch('nixui.state_model.api.get_option_tree', return_value=minimal_option_tree)
+    return state_model.StateModel()

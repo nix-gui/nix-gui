@@ -98,3 +98,42 @@ def test_get_update_set_defined_by_descendent(statemodel):
     assert updates[1].option == Attribute('services.bookstack.nginx.listen."[1]".port')
     assert updates[1].old_definition.obj == 80
     assert updates[1].new_definition.obj == 101
+
+
+def test_add_new_option_simple(minimal_state_model):
+    # add
+    minimal_state_model.add_new_option(Attribute('myAttrs'))
+    assert len(set(minimal_state_model.option_tree.iter_attributes())) == 4
+    assert Attribute('myAttrs.newAttribute') in set(minimal_state_model.option_tree.iter_attributes())
+
+    # revert
+    minimal_state_model.undo()
+    assert len(set(minimal_state_model.option_tree.iter_attributes())) == 3
+    assert Attribute('myAttrs.newAttribute') not in set(minimal_state_model.option_tree.iter_attributes())
+
+
+def test_rename_option_simple(minimal_state_model):
+    minimal_state_model.add_new_option(Attribute('myAttrs'))
+    assert Attribute('myAttrs.newAttribute') in set(minimal_state_model.option_tree.iter_attributes())
+
+    # rename
+    minimal_state_model.rename_option(Attribute('myAttrs.newAttribute'), Attribute('myAttrs.renamed'))
+    assert Attribute('myAttrs.newAttribute') not in set(minimal_state_model.option_tree.iter_attributes())
+    assert Attribute('myAttrs.renamed') in set(minimal_state_model.option_tree.iter_attributes())
+
+    # revert
+    minimal_state_model.undo()
+    assert Attribute('myAttrs.newAttribute') in set(minimal_state_model.option_tree.iter_attributes())
+    assert Attribute('myAttrs.renamed') not in set(minimal_state_model.option_tree.iter_attributes())
+
+
+def test_remove_option_simple(minimal_state_model):
+    minimal_state_model.add_new_option(Attribute('myAttrs'))
+
+    # remove
+    minimal_state_model.remove_option(Attribute('myAttrs.newAttribute'))
+    assert Attribute('myAttrs.newAttribute') not in set(minimal_state_model.option_tree.iter_attributes())
+
+    # revert
+    minimal_state_model.undo()
+    assert Attribute('myAttrs.newAttribute') in set(minimal_state_model.option_tree.iter_attributes())
