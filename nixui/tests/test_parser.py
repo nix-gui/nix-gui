@@ -1,6 +1,7 @@
 import os
 import pytest
-from nixui.options import parser
+from nixui.options import parser, option_definition, state_update
+from nixui.options.attribute import Attribute
 
 
 SAMPLES_PATH = 'tests/sample'
@@ -144,3 +145,45 @@ def test_get_all_option_values_correct_attributes():
         'virtualisation.libvirtd.enable'
     }
     assert found_attrs == expected_attrs
+
+
+@pytest.mark.datafiles(SAMPLES_PATH)
+def test_persist_multiple_updates():
+    module_path = os.path.abspath(os.path.join(SAMPLES_PATH, 'configuration.nix'))
+    option_def_map = parser.get_all_option_values(module_path)
+
+    # assert sample configuration.nix is as expected prior to updates
+    assert Attribute('users.extraUsers.sample.extraGroups') in option_def_map
+    assert Attribute('users.extraUsers.renamedsample.extraGroups') not in option_def_map
+    assert Attribute('filesystems."/mockpath"') not in option_def_map
+    assert option_def_map[Attribute('services.unbound.enable')].obj is True
+    assert Attribute('environment.etc."resolv.conf".text') in option_def_map
+
+    # apply updates
+    updates = [
+        state_update.RenameUpdate(
+            Attribute('users.extraUsers.sample'),
+            Attribute('users.extraUsers.renamedsample')
+        ),
+        state_update.CreateUpdate(
+            Attribute('filesystems."/mockpath"')
+        ),
+        state_update.ChangeDefinitionUpdate(
+            Attribute('services.unbound.enable'),
+            option_def_map[Attribute('services.unbound.enable')],
+            option_definition.OptionDefinition.from_object(False)
+        ),
+        state_update.RemoveUpdate(
+            Attribute('environment.etc."resolv.conf"')
+        ),
+    ]
+    parser.persist_updates(module_path, updates)
+
+    option_def_map = parser.get_all_option_values(module_path)
+
+    # assert updates are sane
+    assert Attribute('users.extraUsers.sample.extraGroups') not in option_def_map
+    assert Attribute('users.extraUsers.renamedsample.extraGroups') in option_def_map
+    assert Attribute('filesystems."/mockpath"') in option_def_map
+    assert option_def_map[Attribute('services.unbound.enable')].obj is False
+    assert Attribute('environment.etc."resolv.conf".text') not in option_def_map
