@@ -9,15 +9,30 @@ from nixui.options.attribute import Attribute
 
 class Update(abc.ABC):
     def revert(self, option_tree):
+        """
+        Function applied to option_tree to revert the update
+        """
         raise NotImplementedError
 
     def merge_with_previous_update(self, previous_update):
+        """
+        In some cases updates can merged with the previous update.
+        If merging is possible, return an Update reflecting the merging of the two updates
+        If merging is not possible, return None
+        """
         return None
 
     def details_string(self):
+        """
+        String description of update for logging and status bar
+        """
         raise NotImplementedError
 
     def reversion_impacted_attribute(self):
+        """
+        Used to determine which attribute to display when Undo is performed.
+
+        """
         raise NotImplementedError
 
 
@@ -25,7 +40,7 @@ class Update(abc.ABC):
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class ChangeDefinitionUpdate(Update):
-    option: Attribute
+    option: Attribute  # TODO: https://github.com/nix-gui/nix-gui/issues/75
     old_definition: option_definition.OptionDefinition
     new_definition: option_definition.OptionDefinition
 
