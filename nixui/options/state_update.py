@@ -71,6 +71,13 @@ class RenameUpdate(Update):
     def revert(self, option_tree):
         option_tree.rename_attribute(self.new_attribute, self.old_attribute)
 
+    def merge_with_previous_update(self, previous_update):
+        if isinstance(previous_update, CreateUpdate) and previous_update.attribute == self.old_attribute:
+            return CreateUpdate(
+                attribute=self.new_attribute,
+                definition=previous_update.definition
+            )
+
     def details_string(self):
         return f'Renamed attribute {self.old_attribute} to {self.new_attribute}'
 
