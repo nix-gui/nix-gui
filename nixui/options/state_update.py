@@ -36,8 +36,6 @@ class Update(abc.ABC):
         raise NotImplementedError
 
 
-
-
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class ChangeDefinitionUpdate(Update):
     option: Attribute  # TODO: https://github.com/nix-gui/nix-gui/issues/75
