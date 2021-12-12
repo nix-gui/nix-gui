@@ -46,7 +46,7 @@ class OptionTree:
     """
     Data structure managing option retrieval, option setting, and special handling for attribute sets of submodules
 
-    system_options: mapping from Attribute to dict containing {'description', 'readOnly', 'type', 'default'}
+    system_option_data: mapping from Attribute to dict containing {'description', 'readOnly', 'type', 'default'}
     config_options: mapping from Attribute to configured definition
     """
     def __init__(self, system_option_data, config_options):

@@ -35,17 +35,6 @@ class StateModel:
     def get_definition(self, option):
         return self.option_tree.get_definition(option)
 
-    def get_update_set(self):
-        # TODO: THIS NEEDS TO BE GENERALIZED FOR ALL UPDATES
-        return [
-            state_update.ChangeDefinitionUpdate(
-                option=option,
-                old_definition=configured_value,
-                new_definition=current_value
-            )
-            for option, configured_value, current_value in self.option_tree.iter_changes()
-        ]
-
     def rename_option(self, old_option, option):
         self.option_tree.rename_attribute(old_option, option)
         update = state_update.RenameUpdate(
@@ -107,14 +96,6 @@ class StateModel:
             self.update_history.append(update)
             logger.info(f'update recorded: {update}')
             self.slotmapper('update_recorded')(update.details_string)
-
-    def persist_updates(self):
-        option_new_definition_map = {
-            u.option: u.new_definition
-            for u in self.get_update_set()
-        }
-        save_path = api.apply_updates(option_new_definition_map)
-        self.slotmapper('changes_saved')(save_path)
 
     def undo(self, *args, **kwargs):
         last_update = self.update_history.pop()
