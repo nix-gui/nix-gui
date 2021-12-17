@@ -91,17 +91,34 @@ def test_get_update_set_defined_by_descendent(statemodel):
     updates = statemodel.get_update_set()
     assert len(updates) == 2
 
-    assert updates[0].option == Attribute('services.bookstack.nginx.listen."[0]".addr')
+    assert updates[0].attribute == Attribute('services.bookstack.nginx.listen."[0]".addr')
     assert updates[0].old_definition.obj == "195.154.1.1"
     assert updates[0].new_definition.obj == "10.0.0.1"
 
-    assert updates[1].option == Attribute('services.bookstack.nginx.listen."[1]".port')
+    assert updates[1].attribute == Attribute('services.bookstack.nginx.listen."[1]".port')
     assert updates[1].old_definition.obj == 80
     assert updates[1].new_definition.obj == 101
 
 
+# TODO: assert option_tree has the same hash as it started with
+
+def test_change_definition_simple(minimal_state_model):
+    minimal_state_model.add_new_option(Attribute('myAttrs'))
+    assert Attribute('myAttrs.newAttribute') in set(minimal_state_model.option_tree.iter_attributes())
+
+    # assert undefined
+    assert minimal_state_model.get_definition(Attribute('myAttrs.newAttribute')).is_undefined
+
+    # change
+    minimal_state_model.change_definition(Attribute('myAttrs.newAttribute'), OptionDefinition.from_object(5))
+    assert minimal_state_model.get_definition(Attribute('myAttrs.newAttribute')).obj == 5
+
+    # revert
+    minimal_state_model.undo()
+    assert minimal_state_model.get_definition(Attribute('myAttrs.newAttribute')).is_undefined
+
+
 def test_add_new_option_simple(minimal_state_model):
-    # add
     minimal_state_model.add_new_option(Attribute('myAttrs'))
     assert len(set(minimal_state_model.option_tree.iter_attributes())) == 4
     assert Attribute('myAttrs.newAttribute') in set(minimal_state_model.option_tree.iter_attributes())
@@ -113,18 +130,15 @@ def test_add_new_option_simple(minimal_state_model):
 
 
 def test_rename_option_simple(minimal_state_model):
-    minimal_state_model.add_new_option(Attribute('myAttrs'))
-    assert Attribute('myAttrs.newAttribute') in set(minimal_state_model.option_tree.iter_attributes())
-
     # rename
-    minimal_state_model.rename_option(Attribute('myAttrs.newAttribute'), Attribute('myAttrs.renamed'))
-    assert Attribute('myAttrs.newAttribute') not in set(minimal_state_model.option_tree.iter_attributes())
-    assert Attribute('myAttrs.renamed') in set(minimal_state_model.option_tree.iter_attributes())
+    minimal_state_model.rename_option(Attribute('myAttrs'), Attribute('myAttrs2'))
+    assert Attribute('myAttrs') not in set(minimal_state_model.option_tree.iter_attributes())
+    assert Attribute('myAttrs2') in set(minimal_state_model.option_tree.iter_attributes())
 
     # revert
     minimal_state_model.undo()
-    assert Attribute('myAttrs.newAttribute') in set(minimal_state_model.option_tree.iter_attributes())
-    assert Attribute('myAttrs.renamed') not in set(minimal_state_model.option_tree.iter_attributes())
+    assert Attribute('myAttrs') in set(minimal_state_model.option_tree.iter_attributes())
+    assert Attribute('myAttrs2') not in set(minimal_state_model.option_tree.iter_attributes())
 
 
 def test_remove_option_simple(minimal_state_model):

@@ -38,27 +38,29 @@ class Update(abc.ABC):
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class ChangeDefinitionUpdate(Update):
-    option: Attribute  # TODO: https://github.com/nix-gui/nix-gui/issues/75
+    attribute: Attribute  # TODO: https://github.com/nix-gui/nix-gui/issues/75
     old_definition: option_definition.OptionDefinition
     new_definition: option_definition.OptionDefinition
 
     def revert(self, option_tree):
-        option_tree.set_definition(self.option, self.old_definition)
+        option_tree.set_definition(self.attribute, self.old_definition)
 
     def merge_with_previous_update(self, previous_update):
-        if previous_update.option != self.option:
+        if isinstance(previous_update, (CreateUpdate, ChangeDefinitionUpdate)):
+            return None
+        elif previous_update.attribute != self.attribute:
             return None
         return ChangeDefinitionUpdate(
-            option=self.option,
+            attribute=self.attribute,
             old_definition=previous_update.old_definition,
             new_definition=self.new_definition
         )
 
     def details_string(self):
-        return f'Changed {self.option} from {self.old_definition} -> {self.new_definition}'
+        return f'Changed {self.attribute} from {self.old_definition} -> {self.new_definition}'
 
     def reversion_impacted_attribute(self):
-        return self.option
+        return self.attribute
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
@@ -101,10 +103,12 @@ class RenameUpdate(Update):
 class RemoveUpdate(Update):
     attribute: Attribute
     deleted_subtree: Tree
+    old_in_memory_definitions: dict
 
     def revert(self, option_tree):
         parent_nid = self.attribute[:-1]
         option_tree.tree.paste(parent_nid, self.deleted_subtree)
+        option_tree.in_memory_change_cache.update(self.old_in_memory_definitions)
 
     def details_string(self):
         return f'Removed attribute {self.attribute}'

@@ -44,10 +44,11 @@ class StateModel:
         self._record_update(update)
 
     def remove_option(self, option):
-        subtree = self.option_tree.remove_attribute(option)
+        old_in_memory_definitions, deleted_subtree = self.option_tree.remove_attribute(option)
         update = state_update.RemoveUpdate(
             attribute=option,
-            deleted_subtree=subtree
+            deleted_subtree=deleted_subtree,
+            old_in_memory_definitions=old_in_memory_definitions
         )
         self._record_update(update)
 
@@ -80,7 +81,7 @@ class StateModel:
         if old_definition != new_definition:
             self.option_tree.set_definition(option, new_definition)
             update = state_update.ChangeDefinitionUpdate(
-                option=option,
+                attribute=option,
                 old_definition=old_definition,
                 new_definition=new_definition
             )
