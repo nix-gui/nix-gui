@@ -56,9 +56,9 @@ class Attribute:
 
     def __str__(self):
         return '.'.join([
-            f'"{attribute}"'
-            if attribute_key_should_be_quoted(attribute)
-            else attribute
+            attribute
+            if attribute_key_neednt_be_quoted(attribute)
+            else f'"{attribute}"'
             for attribute in self.loc
         ])
 
@@ -80,5 +80,5 @@ NIX_PATH_KEY_REGEXP = re.compile(r'^[a-zA-Z\_][a-zA-Z0-9\_\'\-]*$')
 
 
 @functools.lru_cache(100000)
-def attribute_key_should_be_quoted(attribute_str):
+def attribute_key_neednt_be_quoted(attribute_str):
     return bool(NIX_PATH_KEY_REGEXP.search(attribute_str))
