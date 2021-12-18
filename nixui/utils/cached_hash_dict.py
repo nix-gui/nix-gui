@@ -1,33 +1,44 @@
-# from https://stackoverflow.com/a/39375731
-class CachedHashDict(dict):
-    __slots__ = ()  # no __dict__ - that would be redundant
+from collections.abc import MutableMapping
+
+
+# based on https://stackoverflow.com/a/3387975
+class CachedHashDict(MutableMapping):
+    """A dictionary that applies an arbitrary key-altering
+       function before accessing the keys"""
 
     def __init__(self, *args, **kwargs):
-        dict.__init__(*args, **kwargs)
+        self.store = dict()
+        self.update(dict(*args, **kwargs))
+
+        self._hash = None
         self._recalculate_hash()
+        self.has_changed = False
 
     def __hash__(self):
+        if self.has_changed:
+            self._recalculate_hash()
+        self.has_changed = False
         return self._hash
 
-    def __setitem__(self, *args, **kwargs):
-        res = super().__setitem__(*args, **kwargs)
-        self._recalculate_hash()
-        return res
+    def __getitem__(self, key):
+        return self.store[self._keytransform(key)]
 
-    def __delitem__(self, *args, **kwargs):
-        res = super().__delitem__(*args, **kwargs)
-        self._recalculate_hash()
-        return res
+    def __setitem__(self, key, value):
+        self.store[self._keytransform(key)] = value
+        self.has_changed = True
 
-    def pop(self, *args, **kwargs):
-        res = super().pop(*args, **kwargs)
-        self._recalculate_hash()
-        return res
+    def __delitem__(self, key):
+        del self.store[self._keytransform(key)]
+        self.has_changed = True
 
-    def update(self, *args, **kwargs):
-        res = dict.update(*args, **kwargs)
-        self._recalculate_hash()
-        return res
+    def __iter__(self):
+        return iter(self.store)
+
+    def __len__(self):
+        return len(self.store)
+
+    def _keytransform(self, key):
+        return key
 
     def _recalculate_hash(self):
         self._hash = hash(tuple(sorted(self.items())))
