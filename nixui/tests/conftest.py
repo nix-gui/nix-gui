@@ -1,5 +1,6 @@
 import os
 from distutils.dir_util import copy_tree
+import time
 
 import pytest
 
@@ -27,6 +28,24 @@ def pytest_collection_modifyitems(config, items):
         if "slow" in item.keywords:
             item.add_marker(skip_slow)
 
+
+class Helpers:
+    class timeout(object):
+        def __init__(self, seconds):
+            self.seconds = seconds
+        def __enter__(self):
+            self.die_after = time.time() + self.seconds
+            return self
+        def __exit__(self, type, value, traceback):
+            pass
+        @property
+        def timed_out(self):
+            return time.time() > self.die_after
+
+
+@pytest.fixture
+def helpers():
+    return Helpers
 
 @pytest.fixture
 def samples_path(tmpdir):

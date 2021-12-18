@@ -1,10 +1,10 @@
 import dataclasses
 import functools
-import uuid
 
 from treelib import Tree, Node
 import treelib.exceptions
 
+from nixui.utils.cached_hash_dict import CachedHashDict
 from nixui.options import types
 from nixui.options.attribute import Attribute
 from nixui.options.option_definition import OptionDefinition, Undefined
@@ -58,9 +58,8 @@ class OptionTree:
         self.tree.create_node(identifier=Attribute([]), data=OptionData(_type=types.AttrsType()))
 
         # cache for faster lookup of changed nodes
-        self.in_memory_change_cache = {}
+        self.in_memory_change_cache = CachedHashDict()
         self.configured_change_cache = {}
-        self.change_marker = None
 
         # insert option data with parent option data inserted first via `sorted`
         sort_key = lambda s: str(s[0]).replace('"<name>"', '')  # todo, clean up this hack
@@ -77,7 +76,7 @@ class OptionTree:
             self.configured_change_cache[option_path] = option_definition
 
     def __hash__(self):
-        return hash(self.change_marker)
+        return hash(self.in_memory_change_cache)
 
     def __eq__(self, other):
         # hack, only should be used to enable lru_cache for OptionTree methods
