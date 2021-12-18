@@ -1,7 +1,9 @@
 from dataclasses import dataclass, field
+import functools
 import re
 from typing import List
 import csv
+
 
 @dataclass(frozen=True)
 class Attribute:
@@ -53,15 +55,10 @@ class Attribute:
         return (-len(self), str(self)) < (-len(other), str(other))
 
     def __str__(self):
-        """
-        regexp based on
-        https://github.com/NixOS/nix/blob/99f8fc995b2f080cc0a6fe934c8d9c777edc3751/src/libexpr/lexer.l#L97
-        https://github.com/NixOS/nixpkgs/blob/8da27ef161e8bd0403c8f9ae030ef1e91cb6c475/pkgs/tools/nix/nixos-option/libnix-copy-paste.cc#L52
-        """
         return '.'.join([
-            attribute
-            if re.match(r'^[a-zA-Z\_][a-zA-Z0-9\_\'\-]*$', attribute)
-            else f'"{attribute}"'
+            f'"{attribute}"'
+            if attribute_key_should_be_quoted(attribute)
+            else attribute
             for attribute in self.loc
         ])
 
@@ -70,3 +67,18 @@ class Attribute:
 
     def __hash__(self):
         return hash(tuple(self.loc))
+
+
+"""
+regexp based on
+https://github.com/NixOS/nix/blob/99f8fc995b2f080cc0a6fe934c8d9c777edc3751/src/libexpr/lexer.l#L97
+https://github.com/NixOS/nixpkgs/blob/8da27ef161e8bd0403c8f9ae030ef1e91cb6c475/pkgs/tools/nix/nixos-option/libnix-copy-paste.cc#L52
+
+determines whether an attribute path key should be quoted
+"""
+NIX_PATH_KEY_REGEXP = re.compile(r'^[a-zA-Z\_][a-zA-Z0-9\_\'\-]*$')
+
+
+@functools.lru_cache(100000)
+def attribute_key_should_be_quoted(attribute_str):
+    return bool(NIX_PATH_KEY_REGEXP.search(attribute_str))
