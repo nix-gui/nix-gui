@@ -38,9 +38,9 @@ def test_set_configuration_loads():
     option_tree = api.get_option_tree(
         os.path.abspath(os.path.join(SAMPLES_PATH, 'set_configuration.nix'))
     )
-    for attr, old_d, new_d in option_tree.iter_changes(get_configured_changes=True):
+    for attr, new_definition in option_tree.get_changes(get_configured_changes=True).items():
         # evaluate expression strings
-        (attr, old_d.expression_string, new_d.expression_string)
+        (attr, new_definition.expression_string)
 
 
 @pytest.mark.datafiles(SAMPLES_PATH)

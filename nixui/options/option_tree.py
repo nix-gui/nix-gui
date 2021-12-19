@@ -51,7 +51,7 @@ class OptionTree:
     config_options: mapping from Attribute to configured definition
 
     in_memory_change_cache is a dictionary storing all changes made to the tree. This makes calculating the hash of
-    the OptionTree trivial. Note that a value of `Undefined` indicates deletion of the definition.
+    the OptionTree trivial. Note that a value of `None` indicates deletion of the definition.
     """
     def __init__(self, system_option_data, config_options):
         # load data into Tree with OptionData leaves
@@ -59,7 +59,7 @@ class OptionTree:
         self.tree.create_node(identifier=Attribute([]), data=OptionData(_type=types.AttrsType()))
 
         # cache for faster lookup of changed nodes
-        self.in_memory_change_cache = CachedHashDict()
+        self.in_memory_diff = CachedHashDict()
         self.configured_change_cache = {}
 
         # insert option data with parent option data inserted first via `sorted`
@@ -77,7 +77,7 @@ class OptionTree:
             self.configured_change_cache[option_path] = option_definition
 
     def __hash__(self):
-        return hash(self.in_memory_change_cache)
+        return hash(self.in_memory_diff)
 
     def __eq__(self, other):
         # hack, only should be used to enable lru_cache for OptionTree methods
@@ -153,7 +153,7 @@ class OptionTree:
             raise ValueError()
         return result
 
-    def iter_changes(self, get_configured_changes=False):
+    def get_changes(self, get_configured_changes=False):
         """
         Iterate over each attribute which has been changed, their old definition and new definition.
         If an options definition is distinct from the its old setting it is included.
@@ -165,7 +165,9 @@ class OptionTree:
         if get_configured_changes:
             change_cache = self.configured_change_cache
         else:
-            change_cache = self.in_memory_change_cache
+            change_cache = self.in_memory_diff
+
+        result = {}
         for attr, new_definition in change_cache.items():
             old_definition = self.get_definition(
                 attr,
@@ -173,18 +175,28 @@ class OptionTree:
                 include_configured_change=not get_configured_changes
             )
             if new_definition != old_definition:
-                yield (attr, old_definition, new_definition)
+                result[attr] = new_definition
+        return result
 
     @functools.lru_cache()
     def get_change_set_with_ancestors(self, get_configured_changes=False):
         attributes_with_mutated_descendents = set()
-        for attr, old_d, new_d in self.iter_changes(get_configured_changes):
+        for attr, new_definition in self.get_changes(get_configured_changes).items():
             for i in range(len(attr)):
                 attributes_with_mutated_descendents.add(attr[:i])
         return attributes_with_mutated_descendents
 
     def iter_attribute_data(self):
         for node in self.tree.all_nodes():
+            # Pass definition from in_memory_diff if appropriate
+            if node.identifier in self.in_memory_diff:
+                if self.in_memory_diff[node.identifier] is None:
+                    continue
+                elif self.in_memory_diff[node.identifier] == OptionDefinition.undefined():
+                    pass
+                else:
+                    yield self.in_memory_diff[node.identifier]
+                    continue
             if '<name>' not in node.tag:
                 yield (node.identifier, node.data)
 
@@ -195,17 +207,19 @@ class OptionTree:
     def insert_attribute(self, attribute):
         # update tree
         self._upsert_node_data(attribute, {})
-        # update in_memory_change_cache
-        self.in_memory_change_cache[attribute] = OptionDefinition.undefined()
+        # update in_memory_diff
+        self.in_memory_diff[attribute] = OptionDefinition.undefined()
 
     def rename_attribute(self, old_attribute, new_attribute):
-        # update in_memory_change_cache
-        if old_attribute in self.in_memory_change_cache:
-            self.in_memory_change_cache[new_attribute] = self.in_memory_change_cache[old_attribute]
+        # update in_memory_diff
+        if old_attribute in self.in_memory_diff:
+            self.in_memory_diff[new_attribute] = self.in_memory_diff[old_attribute]
+            # if its not defined in configuration, deletion results in no diff recorded
             if self.get_configured_definition(old_attribute) == OptionDefinition.undefined():
-                del self.in_memory_change_cache[old_attribute]
+                del self.in_memory_diff[old_attribute]
+            # if defined in configuration, record None to indicate deletion
             else:
-                self.in_memory_change_cache[old_attribute] = None
+                self.in_memory_diff[old_attribute] = None
         # update tree
         self.tree.update_node(old_attribute, identifier=new_attribute, tag=new_attribute)
         for node in self.tree.children(new_attribute):
@@ -217,12 +231,14 @@ class OptionTree:
         # update in memory change cache
         old_in_memory_definitions = {}
         for node in self.tree.subtree(attribute).all_nodes():
-            if node.identifier in self.in_memory_change_cache:
-                old_in_memory_definitions[node.identifier] = self.in_memory_change_cache[node.identifier]
+            if node.identifier in self.in_memory_diff:
+                old_in_memory_definitions[node.identifier] = self.in_memory_diff[node.identifier]
+            # if its not defined in configuration, deletion results in no diff recorded
             if self.get_configured_definition(attribute) == OptionDefinition.undefined():
-                del self.in_memory_change_cache[attribute]
+                del self.in_memory_diff[attribute]
+            # if defined in configuration, record None to indicate deletion
             else:
-                self.in_memory_change_cache[attribute] = None
+                self.in_memory_diff[attribute] = None
         # update tree
         deleted_subtree = self.tree.remove_subtree(attribute)
         return old_in_memory_definitions, deleted_subtree
@@ -231,12 +247,11 @@ class OptionTree:
         # update tree
         self._upsert_node_data(option_path, {'in_memory_definition': option_definition})
         # update in memory change cache
-        in_memory_definition = self.tree.get_node(option_path).data.in_memory_definition
-        if in_memory_definition == self.tree.get_node(option_path).data.configured_definition:
-            if option_path in self.in_memory_change_cache:
-                del self.in_memory_change_cache[option_path]
+        if option_definition == self.tree.get_node(option_path).data.configured_definition:
+            if option_path in self.in_memory_diff:
+                del self.in_memory_diff[option_path]
         else:
-            self.in_memory_change_cache[option_path] = option_definition
+            self.in_memory_diff[option_path] = option_definition
 
     def get_definition(self, attribute, include_in_memory_definition=True, include_configured_change=True):
         if include_in_memory_definition:

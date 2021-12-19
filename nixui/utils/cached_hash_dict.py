@@ -37,6 +37,9 @@ class CachedHashDict(MutableMapping):
     def __len__(self):
         return len(self.store)
 
+    def __repr__(self):
+        return f'CachedHashDict({repr(self.store)})'
+
     def _keytransform(self, key):
         return key
 

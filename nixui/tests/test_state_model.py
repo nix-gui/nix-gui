@@ -29,7 +29,7 @@ def test_load_edit_save(option_loc, new_value):
     m0 = state_model.StateModel()
     v0 = m0.get_definition(option_loc)
     m0.change_definition(option_loc, new_value)
-    m0.persist_updates()
+    m0.persist_changes()
 
     # reopen, verify
     m1 = state_model.StateModel()
@@ -38,7 +38,7 @@ def test_load_edit_save(option_loc, new_value):
 
     # reset, verify same as original
     m1.change_definition(option_loc, v0)
-    m1.persist_updates()
+    m1.persist_changes()
 
     m2 = state_model.StateModel()
     v2 = m2.get_definition(option_loc)
@@ -50,15 +50,15 @@ def test_get_update_set_simple(statemodel):
         Attribute('sound.enable'),
         OptionDefinition.from_object(False)
     )
-    statemodel.persist_updates()
+    statemodel.persist_changes()
     statemodel.change_definition(
         Attribute('sound.enable'),
         OptionDefinition.from_object(True)
     )
-    updates = statemodel.get_update_set()
+    updates = statemodel.option_tree.get_changes()
     assert len(updates) == 1
-    assert updates[0].old_definition.obj == False
-    assert updates[0].new_definition.obj == True
+    update = list(updates.values())[0]
+    assert update.obj == True
 
 
 def test_get_update_set_defined_by_descendent(statemodel):
@@ -88,16 +88,11 @@ def test_get_update_set_defined_by_descendent(statemodel):
         Attribute('services.bookstack.nginx.listen."[1]".port'),
         OptionDefinition.from_object(101)
     )
-    updates = statemodel.get_update_set()
+    updates = statemodel.option_tree.get_changes()
     assert len(updates) == 2
 
-    assert updates[0].attribute == Attribute('services.bookstack.nginx.listen."[0]".addr')
-    assert updates[0].old_definition.obj == "195.154.1.1"
-    assert updates[0].new_definition.obj == "10.0.0.1"
-
-    assert updates[1].attribute == Attribute('services.bookstack.nginx.listen."[1]".port')
-    assert updates[1].old_definition.obj == 80
-    assert updates[1].new_definition.obj == 101
+    assert updates[Attribute('services.bookstack.nginx.listen."[0]".addr')].obj == "10.0.0.1"
+    assert updates[Attribute('services.bookstack.nginx.listen."[1]".port')].obj == 101
 
 
 def test_change_definition_simple(minimal_state_model):

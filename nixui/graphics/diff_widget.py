@@ -87,5 +87,5 @@ class SaveDialog(DiffDialogBase):
         return btn_box
 
     def save(self):
-        self.statemodel.persist_updates()
+        self.statemodel.persist_changes()
         self.accept()

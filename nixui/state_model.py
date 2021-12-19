@@ -109,3 +109,7 @@ class StateModel:
         self.slotmapper('reload_attribute')(
             last_update.reversion_impacted_attribute()
         )
+
+    def persist_changes(self):
+        save_path = api.persist_changes(self.option_tree.get_changes())
+        self.slotmapper('changes_saved')(save_path)

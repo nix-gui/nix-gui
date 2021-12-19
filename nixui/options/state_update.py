@@ -108,7 +108,7 @@ class RemoveUpdate(Update):
     def revert(self, option_tree):
         parent_nid = self.attribute[:-1]
         option_tree.tree.paste(parent_nid, self.deleted_subtree)
-        option_tree.in_memory_change_cache.update(self.old_in_memory_definitions)
+        option_tree.in_memory_diff.update(self.old_in_memory_definitions)
 
     def details_string(self):
         return f'Removed attribute {self.attribute}'

@@ -28,17 +28,13 @@ def get_option_tree(configuration_path=None):
 ###############
 # Apply Updates
 ###############
-def apply_updates(option_definition_map):
+def persist_changes(option_definition_map):
     """
     option_definition_map: map between option string and python object form of value
     """
-    option_expr_str_map = {
-        option: option_definition.expression_string
-        for option, option_definition in option_definition_map.items()
-    }
-    module_string = parser.inject_expressions(
-        os.environ['CONFIGURATION_PATH'],  # TODO: fix this hack - we should get the module the option is defined in
-        option_expr_str_map
+    module_string = parser.calculate_changed_module(
+        os.environ['CONFIGURATION_PATH'],  #  TODO: fix this hack - we should get the module the option is defined in
+        option_definition_map
     )
     # TODO: once stable set save_path to os.environ['CONFIGURATION_PATH']
     if os.environ.get('NIXGUI_CONFIGURATION_PATH_CAN_BE_CORRUPTED'):
