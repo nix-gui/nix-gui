@@ -100,9 +100,9 @@ def test_get_update_set_defined_by_descendent(statemodel):
     assert updates[1].new_definition.obj == 101
 
 
-# TODO: assert option_tree has the same hash as it started with
-
 def test_change_definition_simple(minimal_state_model):
+    start_hash = hash(minimal_state_model.option_tree)
+
     minimal_state_model.add_new_option(Attribute('myAttrs'))
     assert Attribute('myAttrs.newAttribute') in set(minimal_state_model.option_tree.iter_attributes())
 
@@ -117,8 +117,12 @@ def test_change_definition_simple(minimal_state_model):
     minimal_state_model.undo()
     assert minimal_state_model.get_definition(Attribute('myAttrs.newAttribute')).is_undefined
 
+    assert hash(minimal_state_model.option_tree) == start_hash
+
 
 def test_add_new_option_simple(minimal_state_model):
+    start_hash = hash(minimal_state_model.option_tree)
+
     minimal_state_model.add_new_option(Attribute('myAttrs'))
     assert len(set(minimal_state_model.option_tree.iter_attributes())) == 4
     assert Attribute('myAttrs.newAttribute') in set(minimal_state_model.option_tree.iter_attributes())
@@ -128,8 +132,12 @@ def test_add_new_option_simple(minimal_state_model):
     assert len(set(minimal_state_model.option_tree.iter_attributes())) == 3
     assert Attribute('myAttrs.newAttribute') not in set(minimal_state_model.option_tree.iter_attributes())
 
+    assert hash(minimal_state_model.option_tree) == start_hash
+
 
 def test_rename_option_simple(minimal_state_model):
+    start_hash = hash(minimal_state_model.option_tree)
+
     # rename
     minimal_state_model.rename_option(Attribute('myAttrs'), Attribute('myAttrs2'))
     assert Attribute('myAttrs') not in set(minimal_state_model.option_tree.iter_attributes())
@@ -140,9 +148,12 @@ def test_rename_option_simple(minimal_state_model):
     assert Attribute('myAttrs') in set(minimal_state_model.option_tree.iter_attributes())
     assert Attribute('myAttrs2') not in set(minimal_state_model.option_tree.iter_attributes())
 
+    assert hash(minimal_state_model.option_tree) == start_hash
+
 
 def test_remove_option_simple(minimal_state_model):
     minimal_state_model.add_new_option(Attribute('myAttrs'))
+    start_hash = hash(minimal_state_model.option_tree)
 
     # remove
     minimal_state_model.remove_option(Attribute('myAttrs.newAttribute'))
@@ -151,3 +162,5 @@ def test_remove_option_simple(minimal_state_model):
     # revert
     minimal_state_model.undo()
     assert Attribute('myAttrs.newAttribute') in set(minimal_state_model.option_tree.iter_attributes())
+
+    assert hash(minimal_state_model.option_tree) == start_hash

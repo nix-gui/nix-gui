@@ -201,7 +201,10 @@ class OptionTree:
         # update in_memory_change_cache
         if old_attribute in self.in_memory_change_cache:
             self.in_memory_change_cache[new_attribute] = self.in_memory_change_cache[old_attribute]
-            del self.in_memory_change_cache[old_attribute]
+            if self.get_configured_definition(old_attribute) == OptionDefinition.undefined():
+                del self.in_memory_change_cache[old_attribute]
+            else:
+                self.in_memory_change_cache[old_attribute] = None
         # update tree
         self.tree.update_node(old_attribute, identifier=new_attribute, tag=new_attribute)
         for node in self.tree.children(new_attribute):
@@ -215,7 +218,10 @@ class OptionTree:
         for node in self.tree.subtree(attribute).all_nodes():
             if node.identifier in self.in_memory_change_cache:
                 old_in_memory_definitions[node.identifier] = self.in_memory_change_cache[node.identifier]
-            self.in_memory_change_cache[node.identifier] = OptionDefinition.undefined()
+            if self.get_configured_definition(attribute) == OptionDefinition.undefined():
+                del self.in_memory_change_cache[attribute]
+            else:
+                self.in_memory_change_cache[attribute] = None
         # update tree
         deleted_subtree = self.tree.remove_subtree(attribute)
         return old_in_memory_definitions, deleted_subtree
