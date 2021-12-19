@@ -44,7 +44,7 @@ class OptionListItemDelegate(QtWidgets.QStyledItemDelegate):
         return doc
 
 
-def get_option_html(option, use_fancy_name=True, child_count=None, type_label=None, description=None, extra_text=None):
+def get_option_html(option, use_fancy_name=True, child_count=None, type_label=None, description=None, example=None, extra_text=None):
     # TODO: 60% and 100% don't work with QT
     no_margin_style = 'margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px'
     sub_style = f'font-style:italic; color:Gray; font-size:60%; {no_margin_style}'
@@ -61,6 +61,8 @@ def get_option_html(option, use_fancy_name=True, child_count=None, type_label=No
         s += f'<p style="{sub_style}">Type: {type_label}</p>'
     if description:
         s += f'<p style="{sub_style}">Description: {docbook_to_html(description)}</p>'
+    if example:
+        s += f'<p style="{sub_style}">Example: {example_to_html(example)}</p>'
     if extra_text:
         s += f'<p style="{sub_style}">{extra_text}</p>'
     return s
@@ -71,3 +73,12 @@ def docbook_to_html(docbook_str):
         return pypandoc.convert_text(docbook_str, 'html', format='docbook')
     except RuntimeError:
         return None  # handle case - pandoc errors due to invalid XML
+
+def example_to_html(example):
+    """
+    Examples can use `literalExample` or `literalExpression` fields for raw text so we can extract that here.
+    """
+    if isinstance(example, dict):
+        if example.get("_type") in ["literalExample", "literalExpression"]:
+            return example["text"]
+    return example

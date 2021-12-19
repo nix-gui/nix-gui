@@ -14,6 +14,7 @@ from nixui.options.option_definition import OptionDefinition, Undefined
 class OptionData:
     is_declared_option: bool = False  # the node is part of a declaraed option or part of Attrs/List defining one
     description: str = Undefined
+    example = Undefined
     readOnly: bool = Undefined
     _type_string: str = Undefined
     _type: types.NixType = Undefined
@@ -268,6 +269,9 @@ class OptionTree:
 
     def get_description(self, attribute):
         return self._get_data(attribute).description
+
+    def get_example(self, attribute):
+        return self._get_data(attribute).example
 
     def is_readonly(self, attribute):
         return self._get_data(attribute).readOnly
