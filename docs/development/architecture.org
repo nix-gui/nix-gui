@@ -89,10 +89,13 @@ Nix expression strings are immediately converted to =nixui.options.option_defini
 Additionally =OptionDefinition='s can be used to convert Python objects to nix expressions, which is useful for the "Commit Changes to Disk" section below.
 
 ** State Management
-Once constructed, the backend can perform three mutation operations:
+Once constructed, the backend can perform four mutation operations:
 - replacing an old =in_memory_definition= (=OptionDefinition=) with a new one
 - adding a new attribute with a new =OptionDefinition=
 - renaming an attribute
+- removing an attribute
+
+=OptionTree.in_memory_diff= contains a cache of all state changes represented simply as a mapping between attributes and their new =OptionDefinition= (or =None= if deleted).
 
 All updates to the =OptionTree= coming from the frontend pass through =nixui.state_model.StateModel=, which is a layer on top of the =OptionTree= with =Update='s integrated. Each mutating method results in an =Update= (an object containing information necessary to revert a change) being appended to =StateModel.update_history=.
 
@@ -103,18 +106,11 @@ The =StateModel='s mutating methods include
 - =undo=: Revert the latest =Update= in =update_history=
 
 ** Commit Changes to Disk
-The =StateModel= also provides the method =persist_updates=, which is just a helper function that
-- retrieves changes from =OptionTree.iter_changes()=, an iterator that yields each attribute and =OptionDefinition= where the =in_memory_definition= and =configured_definition= differ
-- calls =api.apply_update= (to be refactored), which extracts the =expression_string= from each changed =OptionDefinition= and calls =parser.inject_expressions()= with the map of attributes -> updated =expression_string='s.
+The =StateModel= also provides the method =persist_changes=, which is a passthrough function which
+- retrieves changes from =OptionTree.get_changes()=, which retrieves a mapping of attributes to definitions for which the =in_memory_diff= and =configured_definition= differ.
+- calls =parser.calculate_changed_module=, which extracts the =expression_string= from each changed =OptionDefinition= and calls one of three =SyntaxTree=-modifying functions (=parser.remove_definition()=, =parser.remove_definition()=, or =parser.remove_definition()= if =None=).
 
-*** Expression injection
-The algorithm in =nixui.options.parser.inject_expressions= is as follows
-- Given a module, construct =attribute_path_to_expression_node_mapping=, a mapping between the attribute path and the syntax tree expression node object (=parser.get_key_value_nodes=)
-- For each option to be updated,
-  - If the option is in =attribute_path_to_syntax_node_mapping= (meaning the attribute is already defined in the module), call =SyntaxTree.replace= to replace the old expression node with the new expression node.
-  - Otherwise, inject the option definition at the top of the module.
-
-We are left with a new SyntaxTree with updated / added option definitions. =SyntaxTree.to_string()= provides us the string which will be written to =module_path=.
+We are left with a new SyntaxTree. =SyntaxTree.to_string()= provides us the string which will be written to =module_path=.
 
 * Frontend
 The frontend renders a graphical tool for changing configurations. A primer on frontend functionality can be found in [[../usage.org#Interface][Usage#Interface]].
