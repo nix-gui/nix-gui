@@ -226,3 +226,27 @@ def test_persist_multiple_changes():
     del new_option_def_map[Attribute('users.extraUsers.renamedsample.extraGroups."[5]"')]
     Attribute('users.extraGroups.vboxusers.members."[1]"')
     assert {k: v.expression_string for k, v in new_option_def_map.items()} == {k: v.expression_string for k, v in old_option_def_map.items()}
+
+
+def test_sane_placement():
+    tf = tempfile.NamedTemporaryFile(mode='w')
+    tf.write(SAMPLE_MODULE_STR)
+    tf.flush()
+    module_path = tf.name
+    changed_module_str = parser.calculate_changed_module(module_path, SAMPLE_CHANGES)
+
+    expected_module_str = """
+    { config, pkgs, ... }:
+    {
+        imports = [];
+        users.extraGroups.vboxusers.members = [ "sample" "sampleB" ];
+        users.extraGroups.foo = 111;
+        users.extraUsers.sample = {
+            isNormalUser = true;
+            home = "/home/sample_number_2";
+            description = "Sample";
+            extraGroups = ["wheel" "networkmanager" "vboxsf" "dialout" "libvirtd" "othergroup"];
+        };
+    }
+    """
+    assert changed_module_str == expected_module_str, changed_module_str
