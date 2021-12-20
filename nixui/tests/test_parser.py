@@ -1,6 +1,8 @@
 import os
+import tempfile
 import pytest
-from nixui.options import parser, option_definition, state_update
+from nixui.options import parser
+from nixui.options.option_definition import OptionDefinition
 from nixui.options.attribute import Attribute
 
 
@@ -147,43 +149,80 @@ def test_get_all_option_values_correct_attributes():
     assert found_attrs == expected_attrs
 
 
-@pytest.mark.datafiles(SAMPLES_PATH)
-def test_persist_multiple_updates():
-    module_path = os.path.abspath(os.path.join(SAMPLES_PATH, 'configuration.nix'))
-    option_def_map = parser.get_all_option_values(module_path)
+SAMPLE_MODULE_STR = """
+    { config, pkgs, ... }:
+    {
+        imports = [];
+        users.extraGroups.vboxusers.members = [ "sample" "sampleB" ];
+        users.extraUsers.sample = {
+            isNormalUser = true;
+            home = "/home/sample";
+            description = "Sample";
+            extraGroups = ["wheel" "networkmanager" "vboxsf" "dialout" "libvirtd"];
+        };
 
-    # assert sample configuration.nix is as expected prior to updates
-    assert Attribute('users.extraUsers.sample.extraGroups') in option_def_map
-    assert Attribute('users.extraUsers.renamedsample.extraGroups') not in option_def_map
-    assert Attribute('filesystems."/mockpath"') not in option_def_map
-    assert option_def_map[Attribute('services.unbound.enable')].obj is True
-    assert Attribute('environment.etc."resolv.conf".text') in option_def_map
+        fileSystems."/".options = [ "noatime" "nodiratime" "discard" ];
+        fileSystems."/".label = "sampledrive";
+    }
+"""
+SAMPLE_CHANGES = {
+    Attribute('fileSystems."/"'): None,  # delete
+    #Attribute('users.extraGroups.vboxusers.members."[1]"'): None,  # delete list element
+    Attribute('users.extraUsers.sample.home'): OptionDefinition.from_object("/home/sample_number_2"),  # change
+    # TODO: change list element
+    Attribute('users.extraGroups.foo'): OptionDefinition.from_object(111),  # create
+    Attribute('users.extraUsers.renamedsample.extraGroups."[5]"'): OptionDefinition.from_object("othergroup"),  # create
+}
 
-    # apply updates
-    updates = [
-        state_update.RenameUpdate(
-            Attribute('users.extraUsers.sample'),
-            Attribute('users.extraUsers.renamedsample')
-        ),
-        state_update.CreateUpdate(
-            Attribute('filesystems."/mockpath"')
-        ),
-        state_update.ChangeDefinitionUpdate(
-            Attribute('services.unbound.enable'),
-            option_def_map[Attribute('services.unbound.enable')],
-            option_definition.OptionDefinition.from_object(False)
-        ),
-        state_update.RemoveUpdate(
-            Attribute('environment.etc."resolv.conf"')
-        ),
-    ]
-    parser.persist_updates(module_path, updates)
 
-    option_def_map = parser.get_all_option_values(module_path)
+def test_persist_multiple_changes():
+    tf = tempfile.NamedTemporaryFile(mode='w')
+    tf.write(SAMPLE_MODULE_STR)
+    tf.flush()
+    module_path = tf.name
 
-    # assert updates are sane
-    assert Attribute('users.extraUsers.sample.extraGroups') not in option_def_map
-    assert Attribute('users.extraUsers.renamedsample.extraGroups') in option_def_map
-    assert Attribute('filesystems."/mockpath"') in option_def_map
-    assert option_def_map[Attribute('services.unbound.enable')].obj is False
-    assert Attribute('environment.etc."resolv.conf".text') not in option_def_map
+    old_option_def_map = parser.get_all_option_values(module_path)
+    changed_module_str = parser.calculate_changed_module(module_path, SAMPLE_CHANGES)
+
+    tf = tempfile.NamedTemporaryFile(mode='w')
+    tf.write(changed_module_str)
+    tf.flush()
+    module_path = tf.name
+
+    new_option_def_map = parser.get_all_option_values(module_path)
+
+    # assert changes were made
+    assert Attribute('fileSystems."/".options') in old_option_def_map
+    assert Attribute('fileSystems."/".options') not in new_option_def_map
+
+    assert Attribute('fileSystems."/".label') in old_option_def_map
+    assert Attribute('fileSystems."/".label') not in new_option_def_map
+
+    # TODO: fix
+    #assert Attribute('users.extraGroups.vboxusers.members."[1]"') in old_option_def_map
+    #assert Attribute('users.extraGroups.vboxusers.members."[1]"') not in new_option_def_map
+
+    assert old_option_def_map[Attribute('users.extraUsers.sample.home')].obj == '/home/sample'
+    assert new_option_def_map[Attribute('users.extraUsers.sample.home')].obj == '/home/sample_number_2'
+
+    assert Attribute('users.extraGroups.foo') not in old_option_def_map
+    assert new_option_def_map[Attribute('users.extraGroups.foo')].obj == 111
+
+    assert Attribute('users.extraUsers.renamedsample.extraGroups."[5]"') not in old_option_def_map
+    assert new_option_def_map[Attribute('users.extraUsers.renamedsample.extraGroups."[5]"')].obj == 'othergroup'
+
+    # delete all changes from both option_def_map's and assert they're equivalent otherwise
+    del old_option_def_map[Attribute('fileSystems."/".options')]
+    del old_option_def_map[Attribute('fileSystems."/".options."[0]"')]
+    del old_option_def_map[Attribute('fileSystems."/".options."[1]"')]
+    del old_option_def_map[Attribute('fileSystems."/".options."[2]"')]
+    del old_option_def_map[Attribute('fileSystems."/".label')]
+    #del old_option_def_map[Attribute('users.extraGroups.vboxusers.members."[1]"')]
+    del old_option_def_map[Attribute('users.extraUsers.sample.home')]
+    del old_option_def_map[Attribute('users.extraUsers.sample')]
+    del new_option_def_map[Attribute('users.extraUsers.sample')]
+    del new_option_def_map[Attribute('users.extraUsers.sample.home')]
+    del new_option_def_map[Attribute('users.extraGroups.foo')]
+    del new_option_def_map[Attribute('users.extraUsers.renamedsample.extraGroups."[5]"')]
+    Attribute('users.extraGroups.vboxusers.members."[1]"')
+    assert {k: v.expression_string for k, v in new_option_def_map.items()} == {k: v.expression_string for k, v in old_option_def_map.items()}

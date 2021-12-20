@@ -57,7 +57,7 @@ def test_list_children_simple():
 @pytest.mark.datafiles(SAMPLES_PATH)
 def test_benchmark__hash__(helpers):
     """
-    Assert OptionTree hash can be calculated 100,000 times in 1 second
+    Assert OptionTree hash can be calculated 10,000 times in 1/10th of a second
     """
     option_tree = api.get_option_tree(
         os.path.abspath(os.path.join(SAMPLES_PATH, 'configuration.nix'))
@@ -74,8 +74,8 @@ def test_benchmark__hash__(helpers):
 
     # test that recalculating the cache doesn't take long
     root_attr = Attribute('')
-    with helpers.timeout(seconds=1) as t:
-        for i in range(100000):
+    with helpers.timeout(seconds=0.1) as t:
+        for i in range(10000):
             option_tree.count_leaves(root_attr)
             if t.timed_out:
                 raise Exception(f'{i} runs before timeout. Calculating OptionTree.__hash__')
