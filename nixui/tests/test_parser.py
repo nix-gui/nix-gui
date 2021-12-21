@@ -153,6 +153,7 @@ SAMPLE_MODULE_STR = """
     { config, pkgs, ... }:
     {
         imports = [];
+
         users.extraGroups.vboxusers.members = [ "sample" "sampleB" ];
         users.extraUsers.sample = {
             isNormalUser = true;
@@ -167,11 +168,13 @@ SAMPLE_MODULE_STR = """
 """
 SAMPLE_CHANGES = {
     Attribute('fileSystems."/"'): None,  # delete
-    #Attribute('users.extraGroups.vboxusers.members."[1]"'): None,  # delete list element
+    Attribute('users.extraGroups.vboxusers.members."[1]"'): None,  # delete list element
     Attribute('users.extraUsers.sample.home'): OptionDefinition.from_object("/home/sample_number_2"),  # change
     # TODO: change list element
     Attribute('users.extraGroups.foo'): OptionDefinition.from_object(111),  # create
-    Attribute('users.extraUsers.renamedsample.extraGroups."[5]"'): OptionDefinition.from_object("othergroup"),  # create
+    Attribute('users.extraUsers.sample.extraGroups."[5]"'): OptionDefinition.from_object("othergroup"),  # create
+    Attribute('users.extraUsers.sample.newListAttr."[1]"'): OptionDefinition.from_object(8),  # create
+    Attribute('users.extraUsers.sample.newListAttr."[0]"'): OptionDefinition.from_object(43290.43209),  # create
 }
 
 
@@ -217,7 +220,7 @@ def test_persist_multiple_changes():
     del old_option_def_map[Attribute('fileSystems."/".options."[1]"')]
     del old_option_def_map[Attribute('fileSystems."/".options."[2]"')]
     del old_option_def_map[Attribute('fileSystems."/".label')]
-    #del old_option_def_map[Attribute('users.extraGroups.vboxusers.members."[1]"')]
+    del old_option_def_map[Attribute('users.extraGroups.vboxusers.members."[1]"')]
     del old_option_def_map[Attribute('users.extraUsers.sample.home')]
     del old_option_def_map[Attribute('users.extraUsers.sample')]
     del new_option_def_map[Attribute('users.extraUsers.sample')]
@@ -239,14 +242,19 @@ def test_sane_placement():
     { config, pkgs, ... }:
     {
         imports = [];
+
+        # Changed by Nix-Gui on 2001-02-03 4:56:78
         users.extraGroups.vboxusers.members = [ "sample" "sampleB" ];
-        users.extraGroups.foo = 111;
+        users.extraGroups.foo = 111;  # Changed by Nix-Gui on 2001-02-03 4:56:78
         users.extraUsers.sample = {
             isNormalUser = true;
-            home = "/home/sample_number_2";
+            home = "/home/sample_number_2";  # Changed by Nix-Gui on 2001-02-03 4:56:78
             description = "Sample";
             extraGroups = ["wheel" "networkmanager" "vboxsf" "dialout" "libvirtd" "othergroup"];
+            newListAttr = [43290.43209 8]  # Changed by Nix-Gui on 2001-02-03 4:56:78
         };
+        # Nix-Gui removed fileSystems."/".options on 2001-02-03 4:56:78
+        # Nix-Gui removed fileSystems."/".label on 2001-02-03 4:56:78
     }
     """
     assert changed_module_str == expected_module_str, changed_module_str
