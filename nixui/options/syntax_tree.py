@@ -44,7 +44,7 @@ class SyntaxTree:
     @classmethod
     @functools.lru_cache()
     def from_string(cls, expression_string):
-        with tempfile.NamedTemporaryFile(mode='w') as temp:
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp:
             temp.write(expression_string)
             temp.flush()
             return cls(temp.name)
