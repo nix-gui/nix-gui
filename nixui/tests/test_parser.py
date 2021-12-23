@@ -162,6 +162,21 @@ SAMPLE_MODULE_STR = """
             extraGroups = ["wheel" "networkmanager" "vboxsf" "dialout" "libvirtd"];
         };
 
+        services.unbound.settings = {
+            server = {
+                cache-min-ttl = "1000";
+                do-tcp = "yes";
+            };
+            forward-zone = [{
+                forward-addr = [
+                    "dot-ch.blahdns.com@853"
+                    "dot-sg.blahdns.com@853"  # a comment
+                ];
+                name = ".";
+                forward-tls-upstream = "yes";
+            }];
+        };
+
         fileSystems."/".options = [ "noatime" "nodiratime" "discard" ];
         fileSystems."/".label = "sampledrive";
     }
@@ -170,11 +185,13 @@ SAMPLE_CHANGES = {
     Attribute('fileSystems."/"'): None,  # delete
     Attribute('users.extraGroups.vboxusers.members."[1]"'): None,  # delete list element
     Attribute('users.extraUsers.sample.home'): OptionDefinition.from_object("/home/sample_number_2"),  # change
-    # TODO: change list element
+    Attribute('users.extraUsers.sample.extraGroups."[0]"'): OptionDefinition.from_object("foogroup"),  # change
     Attribute('users.extraGroups.foo'): OptionDefinition.from_object(111),  # create
     Attribute('users.extraUsers.sample.extraGroups."[5]"'): OptionDefinition.from_object("othergroup"),  # create
     Attribute('users.extraUsers.sample.newListAttr."[1]"'): OptionDefinition.from_object(8),  # create
     Attribute('users.extraUsers.sample.newListAttr."[0]"'): OptionDefinition.from_object(43290.43209),  # create
+    Attribute('services.unbound.settings.forward-zone."[0]".forward-addr."[2]"'): OptionDefinition.from_object('foobar'),
+    Attribute('services.unbound.settings.forward-zone."[0]".forward-addr."[3]".test.test2."[0]"'): OptionDefinition.from_object('aaa'),
 }
 
 
@@ -231,7 +248,8 @@ def test_persist_multiple_changes():
     assert {k: v.expression_string for k, v in new_option_def_map.items()} == {k: v.expression_string for k, v in old_option_def_map.items()}
 
 
-def test_sane_placement():
+def test_sane_placement(freezer):
+    freezer.move_to("2001-02-03 04:56:01")
     tf = tempfile.NamedTemporaryFile(mode='w')
     tf.write(SAMPLE_MODULE_STR)
     tf.flush()
@@ -243,18 +261,59 @@ def test_sane_placement():
     {
         imports = [];
 
-        # Changed by Nix-Gui on 2001-02-03 4:56:78
-        users.extraGroups.vboxusers.members = [ "sample" "sampleB" ];
-        users.extraGroups.foo = 111;  # Changed by Nix-Gui on 2001-02-03 4:56:78
+        users.extraGroups.vboxusers.members = [ "sample"  ];# Nix-Gui removed users.extraGroups.vboxusers.members."[1]" on 2001-02-03 04:56:01
+        users.extraGroups.foo = 111;# Changed by Nix-Gui on 2001-02-03 04:56:01
         users.extraUsers.sample = {
             isNormalUser = true;
-            home = "/home/sample_number_2";  # Changed by Nix-Gui on 2001-02-03 4:56:78
+            home = "/home/sample_number_2";# Changed by Nix-Gui on 2001-02-03 04:56:01
             description = "Sample";
-            extraGroups = ["wheel" "networkmanager" "vboxsf" "dialout" "libvirtd" "othergroup"];
-            newListAttr = [43290.43209 8]  # Changed by Nix-Gui on 2001-02-03 4:56:78
+            extraGroups = ["foogroup" "networkmanager" "vboxsf" "dialout" "libvirtd" "othergroup"];# Changed by Nix-Gui on 2001-02-03 4:56:01
+            newListAttr = [43290.43209 8];  # Changed by Nix-Gui on 2001-02-03 4:56:01
         };
-        # Nix-Gui removed fileSystems."/".options on 2001-02-03 4:56:78
-        # Nix-Gui removed fileSystems."/".label on 2001-02-03 4:56:78
+
+        services.unbound.settings = {
+            server = {
+                cache-min-ttl = "1000";
+                do-tcp = "yes";
+            };
+            forward-zone = [{
+                forward-addr = [
+                    "dot-ch.blahdns.com@853"
+                    "dot-sg.blahdns.com@853"  # a comment
+                    "foobar"  # Added by Nix-Gui on 2001-02-03 4:56:01
+                    { test.test2 = [ "aaa" ]; };  # Added by Nix-Gui on 2001-02-03 4:56:01
+                ];
+                name = ".";
+                forward-tls-upstream = "yes";
+            }];
+        };
+
+        # Nix-Gui removed fileSystems."/".options on 2001-02-03 04:56:01
+        # Nix-Gui removed fileSystems."/".label on 2001-02-03 04:56:01
     }
-    """
+"""
     assert changed_module_str == expected_module_str, changed_module_str
+
+    """
+    TODO: should be on previous line since it exceeds max line length
+    extraGroups = ["foogroup" "networkmanager" "vboxsf" "dialout" "libvirtd" "othergroup"];# Changed by Nix-Gui on 2001-02-03 4:56:01
+should be
+    # Changed by Nix-Gui on 2001-02-03 4:56:01
+    extraGroups = ["foogroup" "networkmanager" "vboxsf" "dialout" "libvirtd" "othergroup"];
+
+    TODO: should say changed, not deleted since we changed an inline collection definition
+        # Changed by Nix-Gui on 2001-02-03 4:56:01
+        users.extraGroups.vboxusers.members = [ "sample"  ];
+
+    TODO: fix whitespace
+    users.extraGroups.vboxusers.members = [ "sample"  ];
+    should be
+    users.extraGroups.vboxusers.members = [ "sample" ];
+
+    TODO: two spaces before comment
+    home = "/home/sample_number_2";# Nix-Gui Changed users.extraUsers.sample.home on 2001-02-03 04:56:01
+    should be
+    home = "/home/sample_number_2";  # Nix-Gui Changed users.extraUsers.sample.home on 2001-02-03
+
+    TODO: ensure comments aren't concatenated after multiple changes in separate test
+    """
