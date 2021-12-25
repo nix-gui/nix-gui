@@ -9,6 +9,7 @@ https://nixos.wiki/wiki/Declaration
 - https://github.com/chriskiehl/Gooey
 
 * Related Discussions
+- https://discourse.nixos.org/t/why-is-there-no-installer-for-nixos/16644
 - https://old.reddit.com/r/NixOS/comments/o6807i/nixgui_work_in_progress_configure_your_system/
 - https://github.com/NixOS/nixpkgs/issues/21662
 - https://github.com/NixOS/nixpkgs/issues/15573
