@@ -79,6 +79,5 @@ determines whether an attribute path key should be quoted
 NIX_PATH_KEY_REGEXP = re.compile(r'^[a-zA-Z\_][a-zA-Z0-9\_\'\-]*$')
 
 
-@functools.lru_cache(100000)
 def attribute_key_neednt_be_quoted(attribute_str):
     return bool(NIX_PATH_KEY_REGEXP.search(attribute_str))
