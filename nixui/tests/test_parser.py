@@ -219,8 +219,8 @@ def test_persist_multiple_changes():
     assert Attribute('fileSystems."/".label') not in new_option_def_map
 
     # TODO: fix
-    #assert Attribute('users.extraGroups.vboxusers.members."[1]"') in old_option_def_map
-    #assert Attribute('users.extraGroups.vboxusers.members."[1]"') not in new_option_def_map
+    assert Attribute('users.extraGroups.vboxusers.members."[1]"') in old_option_def_map
+    assert Attribute('users.extraGroups.vboxusers.members."[1]"') not in new_option_def_map
 
     assert old_option_def_map[Attribute('users.extraUsers.sample.home')].obj == '/home/sample'
     assert new_option_def_map[Attribute('users.extraUsers.sample.home')].obj == '/home/sample_number_2'
@@ -228,25 +228,39 @@ def test_persist_multiple_changes():
     assert Attribute('users.extraGroups.foo') not in old_option_def_map
     assert new_option_def_map[Attribute('users.extraGroups.foo')].obj == 111
 
-    assert Attribute('users.extraUsers.renamedsample.extraGroups."[5]"') not in old_option_def_map
-    assert new_option_def_map[Attribute('users.extraUsers.renamedsample.extraGroups."[5]"')].obj == 'othergroup'
+    assert Attribute('users.extraUsers.sample.extraGroups."[5]"') not in old_option_def_map
+    assert new_option_def_map[Attribute('users.extraUsers.sample.extraGroups."[5]"')].obj == 'othergroup'
+
+    assert Attribute('users.extraUsers.sample.newListAttr."[0]"') not in old_option_def_map
+    assert new_option_def_map[Attribute('users.extraUsers.sample.newListAttr."[0]"')].obj == 43290.43209
+
+    assert Attribute('users.extraUsers.sample.newListAttr."[1]"') not in old_option_def_map
+    assert new_option_def_map[Attribute('users.extraUsers.sample.newListAttr."[1]"')].obj == 8
+
+    assert Attribute('services.unbound.settings.forward-zone."[0]".forward-addr."[2]"') not in old_option_def_map
+    assert new_option_def_map[Attribute('services.unbound.settings.forward-zone."[0]".forward-addr."[2]"')].obj == 'foobar'
+
+    assert Attribute('services.unbound.settings.forward-zone."[0]".forward-addr."[3]".test.test2."[0]"') not in old_option_def_map
+    assert new_option_def_map[Attribute('services.unbound.settings.forward-zone."[0]".forward-addr."[3]".test.test2."[0]"')].obj == 'aaa'
 
     # delete all changes from both option_def_map's and assert they're equivalent otherwise
-    del old_option_def_map[Attribute('fileSystems."/".options')]
-    del old_option_def_map[Attribute('fileSystems."/".options."[0]"')]
-    del old_option_def_map[Attribute('fileSystems."/".options."[1]"')]
-    del old_option_def_map[Attribute('fileSystems."/".options."[2]"')]
-    del old_option_def_map[Attribute('fileSystems."/".label')]
-    del old_option_def_map[Attribute('users.extraGroups.vboxusers.members."[1]"')]
-    del old_option_def_map[Attribute('users.extraUsers.sample.home')]
-    del old_option_def_map[Attribute('users.extraUsers.sample')]
-    del new_option_def_map[Attribute('users.extraUsers.sample')]
-    del new_option_def_map[Attribute('users.extraUsers.sample.home')]
-    del new_option_def_map[Attribute('users.extraGroups.foo')]
-    del new_option_def_map[Attribute('users.extraUsers.renamedsample.extraGroups."[5]"')]
-    Attribute('users.extraGroups.vboxusers.members."[1]"')
-    assert {k: v.expression_string for k, v in new_option_def_map.items()} == {k: v.expression_string for k, v in old_option_def_map.items()}
+    for attr in SAMPLE_CHANGES:
+        to_delete = []
+        for k in old_option_def_map:
+            if k.startswith(attr) or attr.startswith(k):
+                to_delete.append(k)
+        for d in to_delete:
+            del old_option_def_map[d]
+        to_delete = []
+        for k in new_option_def_map:
+            if k.startswith(attr) or attr.startswith(k):
+                to_delete.append(k)
+        for d in to_delete:
+            del new_option_def_map[d]
 
+    new_untouched_expression_dict = {k: v.expression_string for k, v in new_option_def_map.items()}
+    old_untouched_expression_dict = {k: v.expression_string for k, v in old_option_def_map.items()}
+    assert new_untouched_expression_dict == old_untouched_expression_dict
 
 def test_sane_placement(freezer):
     freezer.move_to("2001-02-03 04:56:01")
