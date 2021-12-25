@@ -188,15 +188,6 @@ class OptionTree:
 
     def iter_attribute_data(self):
         for node in self.tree.all_nodes():
-            # Pass definition from in_memory_diff if appropriate
-            if node.identifier in self.in_memory_diff:
-                if self.in_memory_diff[node.identifier] is None:
-                    continue
-                elif self.in_memory_diff[node.identifier] == OptionDefinition.undefined():
-                    pass
-                else:
-                    yield self.in_memory_diff[node.identifier]
-                    continue
             if '<name>' not in node.tag:
                 yield (node.identifier, node.data)
 
