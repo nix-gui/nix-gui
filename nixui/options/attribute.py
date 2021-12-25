@@ -35,6 +35,19 @@ class Attribute:
                 return False
         return True
 
+    def is_list_index(self, key_idx):
+        return self.get_attr_key_list_index(self[key_idx]) is not None
+
+    @staticmethod
+    def get_attr_key_list_index(key_str):
+        # TODO: fix https://github.com/nix-gui/nix-gui/issues/218
+        if key_str.startswith('[') and key_str.endswith(']'):
+            try:
+                return int(key_str[1:-1])
+            except ValueError:
+                return None
+        return None
+
     def __bool__(self):
         return bool(self.loc)
 

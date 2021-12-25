@@ -267,8 +267,8 @@ def test_sane_placement(freezer):
             isNormalUser = true;
             home = "/home/sample_number_2";# Changed by Nix-Gui on 2001-02-03 04:56:01
             description = "Sample";
-            extraGroups = ["foogroup" "networkmanager" "vboxsf" "dialout" "libvirtd" "othergroup"];# Changed by Nix-Gui on 2001-02-03 4:56:01
-            newListAttr = [43290.43209 8];  # Changed by Nix-Gui on 2001-02-03 4:56:01
+            extraGroups = ["foogroup" "networkmanager" "vboxsf" "dialout" "libvirtd" "othergroup"];# Changed by Nix-Gui on 2001-02-03 04:56:01
+            newListAttr = [ 43290.43209 8 ];  # Changed by Nix-Gui on 2001-02-03 04:56:01
         };
 
         services.unbound.settings = {
@@ -280,8 +280,8 @@ def test_sane_placement(freezer):
                 forward-addr = [
                     "dot-ch.blahdns.com@853"
                     "dot-sg.blahdns.com@853"  # a comment
-                    "foobar"  # Added by Nix-Gui on 2001-02-03 4:56:01
-                    { test.test2 = [ "aaa" ]; };  # Added by Nix-Gui on 2001-02-03 4:56:01
+                    "foobar"  # Added by Nix-Gui on 2001-02-03 04:56:01
+                    { test.test2 = [ "aaa" ]; }  # Added by Nix-Gui on 2001-02-03 04:56:01
                 ];
                 name = ".";
                 forward-tls-upstream = "yes";
@@ -296,13 +296,13 @@ def test_sane_placement(freezer):
 
     """
     TODO: should be on previous line since it exceeds max line length
-    extraGroups = ["foogroup" "networkmanager" "vboxsf" "dialout" "libvirtd" "othergroup"];# Changed by Nix-Gui on 2001-02-03 4:56:01
+    extraGroups = ["foogroup" "networkmanager" "vboxsf" "dialout" "libvirtd" "othergroup"];# Changed by Nix-Gui on 2001-02-03 04:56:01
 should be
-    # Changed by Nix-Gui on 2001-02-03 4:56:01
+    # Changed by Nix-Gui on 2001-02-03 04:56:01
     extraGroups = ["foogroup" "networkmanager" "vboxsf" "dialout" "libvirtd" "othergroup"];
 
     TODO: should say changed, not deleted since we changed an inline collection definition
-        # Changed by Nix-Gui on 2001-02-03 4:56:01
+        # Changed by Nix-Gui on 2001-02-03 04:56:01
         users.extraGroups.vboxusers.members = [ "sample"  ];
 
     TODO: fix whitespace
