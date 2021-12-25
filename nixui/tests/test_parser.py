@@ -261,7 +261,7 @@ def test_sane_placement(freezer):
     {
         imports = [];
 
-        users.extraGroups.vboxusers.members = [ "sample"  ];  # Nix-Gui removed users.extraGroups.vboxusers.members."[1]" on 2001-02-03 04:56:01
+        users.extraGroups.vboxusers.members = [ "sample"  ];# Nix-Gui removed users.extraGroups.vboxusers.members."[1]" on 2001-02-03 04:56:01
         users.extraGroups.foo = 111;  # Changed by Nix-Gui on 2001-02-03 04:56:01
         users.extraUsers.sample = {
             isNormalUser = true;
@@ -310,10 +310,8 @@ should be
     should be
     users.extraGroups.vboxusers.members = [ "sample" ];
 
-    TODO: two spaces before comment
-    home = "/home/sample_number_2";# Nix-Gui Changed users.extraUsers.sample.home on 2001-02-03 04:56:01
+    TODO: two spaces before comment when its an inline deletion
+    users.extraGroups.vboxusers.members = [ "sample"  ];# Nix-Gui removed users.extraGroups.vboxusers.members."[1]" on 2001-02-03 04:56:01
     should be
-    home = "/home/sample_number_2";  # Nix-Gui Changed users.extraUsers.sample.home on 2001-02-03
-
-    TODO: ensure comments aren't concatenated after multiple changes in separate test
+    users.extraGroups.vboxusers.members = [ "sample"  ];  # Nix-Gui removed users.extraGroups.vboxusers.members."[1]" on 2001-02-03 04:56:01
     """
