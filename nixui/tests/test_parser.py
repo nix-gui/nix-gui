@@ -1,6 +1,9 @@
 import os
+import tempfile
 import pytest
 from nixui.options import parser
+from nixui.options.option_definition import OptionDefinition
+from nixui.options.attribute import Attribute
 
 
 SAMPLES_PATH = 'tests/sample'
@@ -144,3 +147,82 @@ def test_get_all_option_values_correct_attributes():
         'virtualisation.libvirtd.enable'
     }
     assert found_attrs == expected_attrs
+
+
+SAMPLE_MODULE_STR = """
+    { config, pkgs, ... }:
+    {
+        imports = [];
+        users.extraGroups.vboxusers.members = [ "sample" "sampleB" ];
+        users.extraUsers.sample = {
+            isNormalUser = true;
+            home = "/home/sample";
+            description = "Sample";
+            extraGroups = ["wheel" "networkmanager" "vboxsf" "dialout" "libvirtd"];
+        };
+
+        fileSystems."/".options = [ "noatime" "nodiratime" "discard" ];
+        fileSystems."/".label = "sampledrive";
+    }
+"""
+SAMPLE_CHANGES = {
+    Attribute('fileSystems."/"'): None,  # delete
+    #Attribute('users.extraGroups.vboxusers.members."[1]"'): None,  # delete list element
+    Attribute('users.extraUsers.sample.home'): OptionDefinition.from_object("/home/sample_number_2"),  # change
+    # TODO: change list element
+    Attribute('users.extraGroups.foo'): OptionDefinition.from_object(111),  # create
+    Attribute('users.extraUsers.renamedsample.extraGroups."[5]"'): OptionDefinition.from_object("othergroup"),  # create
+}
+
+
+def test_persist_multiple_changes():
+    tf = tempfile.NamedTemporaryFile(mode='w')
+    tf.write(SAMPLE_MODULE_STR)
+    tf.flush()
+    module_path = tf.name
+
+    old_option_def_map = parser.get_all_option_values(module_path)
+    changed_module_str = parser.calculate_changed_module(module_path, SAMPLE_CHANGES)
+
+    tf = tempfile.NamedTemporaryFile(mode='w')
+    tf.write(changed_module_str)
+    tf.flush()
+    module_path = tf.name
+
+    new_option_def_map = parser.get_all_option_values(module_path)
+
+    # assert changes were made
+    assert Attribute('fileSystems."/".options') in old_option_def_map
+    assert Attribute('fileSystems."/".options') not in new_option_def_map
+
+    assert Attribute('fileSystems."/".label') in old_option_def_map
+    assert Attribute('fileSystems."/".label') not in new_option_def_map
+
+    # TODO: fix
+    #assert Attribute('users.extraGroups.vboxusers.members."[1]"') in old_option_def_map
+    #assert Attribute('users.extraGroups.vboxusers.members."[1]"') not in new_option_def_map
+
+    assert old_option_def_map[Attribute('users.extraUsers.sample.home')].obj == '/home/sample'
+    assert new_option_def_map[Attribute('users.extraUsers.sample.home')].obj == '/home/sample_number_2'
+
+    assert Attribute('users.extraGroups.foo') not in old_option_def_map
+    assert new_option_def_map[Attribute('users.extraGroups.foo')].obj == 111
+
+    assert Attribute('users.extraUsers.renamedsample.extraGroups."[5]"') not in old_option_def_map
+    assert new_option_def_map[Attribute('users.extraUsers.renamedsample.extraGroups."[5]"')].obj == 'othergroup'
+
+    # delete all changes from both option_def_map's and assert they're equivalent otherwise
+    del old_option_def_map[Attribute('fileSystems."/".options')]
+    del old_option_def_map[Attribute('fileSystems."/".options."[0]"')]
+    del old_option_def_map[Attribute('fileSystems."/".options."[1]"')]
+    del old_option_def_map[Attribute('fileSystems."/".options."[2]"')]
+    del old_option_def_map[Attribute('fileSystems."/".label')]
+    #del old_option_def_map[Attribute('users.extraGroups.vboxusers.members."[1]"')]
+    del old_option_def_map[Attribute('users.extraUsers.sample.home')]
+    del old_option_def_map[Attribute('users.extraUsers.sample')]
+    del new_option_def_map[Attribute('users.extraUsers.sample')]
+    del new_option_def_map[Attribute('users.extraUsers.sample.home')]
+    del new_option_def_map[Attribute('users.extraGroups.foo')]
+    del new_option_def_map[Attribute('users.extraUsers.renamedsample.extraGroups."[5]"')]
+    Attribute('users.extraGroups.vboxusers.members."[1]"')
+    assert {k: v.expression_string for k, v in new_option_def_map.items()} == {k: v.expression_string for k, v in old_option_def_map.items()}

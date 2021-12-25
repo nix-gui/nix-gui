@@ -39,6 +39,8 @@ class SyntaxTree:
         self.tree = self._get_tree(self.module_path)  # mutable, with call to self._load_structures()
         self._load_structures()
 
+    # TODO: use hash and get rid of _load_structures
+
     @classmethod
     @functools.lru_cache()
     def from_string(cls, expression_string):
@@ -157,6 +159,12 @@ class SyntaxTree:
         index = [i for i, elem in enumerate(parent.elems) if elem.id == to_replace.id][0]
         parent.elems[index] = replace_with
         self._load_structures()
+
+    def remove(self, to_remove):
+        self.replace(
+            to_remove,
+            Token(id=uuid.uuid4(), name='DELETION', position=None, quoted='')
+        )
 
     def insert(self, parent, new_value, index, after=None):
         parent.elems.insert(

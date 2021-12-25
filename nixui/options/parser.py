@@ -1,52 +1,76 @@
-import os
+# TODO: reorganize this isto parser/parser.py, parser/apply_changes.py, and move syntax_tree.py parser/syntax_tree.py
+
 import uuid
 
 from nixui.utils.logger import logger
 from nixui.utils import cache
 from nixui.options import syntax_tree, nix_eval, attribute
-from nixui.options.option_definition import OptionDefinition, Unresolvable
+from nixui.options.option_definition import OptionDefinition
 
 
-def inject_expressions(module_path, option_expr_map):
+NIX_GUI_COMMENT_STR = ''#'\n\n# Attribute defined by Nix-Gui\n'
+
+
+def calculate_changed_module(module_path, option_expr_map):
     tree = syntax_tree.SyntaxTree(module_path)
     option_expr_map = dict(option_expr_map)
 
     # mapping of option to the node which contains its expression
-    option_expr_nodes_map = get_key_value_nodes(module_path, tree)
+    option_expr_nodes_map = get_key_value_nodes(tree)
 
-    # node which contains options
-    returned_attr_set_node = get_returned_attr_set_node(module_path, tree)
-
-    comment_str = '\n\n# Attribute defined by Nix-Gui\n'
-
-    for option, expression in option_expr_map.items():
+    for option, definition in option_expr_map.items():
         # update option expressions where they exist
-        if option in option_expr_nodes_map:
-            value_node = option_expr_nodes_map[option]
-            token = syntax_tree.Token(id=uuid.uuid4(), name='INJECTION', position=None, quoted=expression)
-            tree.replace(value_node, token)
-            node_to_prefix_comment = tree.get_parent(
-                tree.get_parent(token, node=True),
-                node=True
-            )
-            # insert comment
-            tree.insert(
-                node_to_prefix_comment,
-                syntax_tree.Token(id=uuid.uuid4(), name='INJECTION', position=None, quoted=comment_str),
-                index=node_to_prefix_comment.elems.index(tree.get_parent(token, node=True))
-            )
-        # add new option definitions where they don't exist
+        if definition is None:
+            remove_definition(tree, option)
+        elif option in option_expr_nodes_map:
+            update_definition(tree, option, definition.expression_string, option_expr_nodes_map)
         else:
-            quoted = f'{option} = {expression};'
-            token = syntax_tree.Token(id=uuid.uuid4(), name='INJECTION', position=None, quoted=quoted)
-            tree.insert(returned_attr_set_node, token, index=1)
-            # insert comment
-            tree.insert(
-                tree.get_parent(token, node=True),
-                syntax_tree.Token(id=uuid.uuid4(), name='INJECTION', position=None, quoted=comment_str),
-                index=1
-            )
+            add_definition(tree, option, definition.expression_string)
     return tree.to_string()
+
+
+def remove_definition(tree, option):
+    for attr, attr_data in nix_eval.get_modules_defined_attrs(tree.module_path).items():
+        if attr[:len(option)] == option:
+            definition_node = tree.get_node_at_line_column(
+                attr_data['position']['line'],
+                attr_data['position']['column'],
+                legal_type='NODE_KEY_VALUE'
+            )
+            tree.remove(definition_node)
+
+
+def update_definition(tree, option, expression_str, option_expr_nodes_map):
+    value_node = option_expr_nodes_map[option]
+    token = syntax_tree.Token(id=uuid.uuid4(), name='INJECTION', position=None, quoted=expression_str)
+    tree.replace(value_node, token)
+    node_to_prefix_comment = tree.get_parent(
+        tree.get_parent(token, node=True),
+        node=True
+    )
+    # insert comment
+    tree.insert(
+        node_to_prefix_comment,
+        syntax_tree.Token(id=uuid.uuid4(), name='INJECTION', position=None, quoted=NIX_GUI_COMMENT_STR),
+        index=node_to_prefix_comment.elems.index(tree.get_parent(token, node=True))
+    )
+    return tree
+
+
+def add_definition(tree, option, expression_str):
+    # node which contains options
+    returned_attr_set_node = get_returned_attr_set_node(tree)
+
+    quoted = f'{option} = {expression_str};'
+    token = syntax_tree.Token(id=uuid.uuid4(), name='INJECTION', position=None, quoted=quoted)
+    tree.insert(returned_attr_set_node, token, index=1)
+    # insert comment
+    tree.insert(
+        tree.get_parent(token, node=True),
+        syntax_tree.Token(id=uuid.uuid4(), name='INJECTION', position=None, quoted=NIX_GUI_COMMENT_STR),
+        index=1
+    )
+    return tree
 
 
 def apply_indentation(string, num_spaces):
@@ -62,7 +86,7 @@ def get_all_option_values(module_path, allow_errors=True):
     # get option_expr_map for module_path
     option_expr_map = {}
     tree = syntax_tree.SyntaxTree(module_path)
-    for attr_loc, value_node in get_key_value_nodes(module_path, tree).items():
+    for attr_loc, value_node in get_key_value_nodes(tree).items():
         option_expr_map[attr_loc] = OptionDefinition.from_expression_string(
             value_node.to_string()
         )
@@ -82,8 +106,8 @@ def get_all_option_values(module_path, allow_errors=True):
     return option_expr_map
 
 
-def get_imports_node(module_path, tree):
-    import_pos = nix_eval.get_modules_import_position(module_path)
+def get_imports_node(tree):
+    import_pos = nix_eval.get_modules_import_position(tree.module_path)
     if import_pos is None:
         return None
     return tree.get_node_at_line_column(
@@ -93,13 +117,13 @@ def get_imports_node(module_path, tree):
     )
 
 
-def get_returned_attr_set_node(module_path, tree):
+def get_returned_attr_set_node(tree):
     """
     Get the NODE_ATTR_SET containing the attributes which are returned by the module
     """
     # TODO: fix HACK, currently we assume the node containing `imports` is the returned attr set
     #       but this may not always be the case?
-    imports_node = get_imports_node(module_path, tree)
+    imports_node = get_imports_node(tree)
     imports_key_node, _ = [e for e in imports_node.elems if isinstance(e, syntax_tree.Node)]
     imports_key_value_node = tree.get_parent(imports_key_node)
     returned_attr_set_node = tree.get_parent(imports_key_value_node)
@@ -131,9 +155,9 @@ def recursively_get_node_attr_set_data(parent_attribute, node):
             yield from recursively_get_node_list_data(full_attribute_path, value_node)
 
 
-def get_key_value_nodes(module_path, tree):
+def get_key_value_nodes(tree):
     mapping = {}
-    for attr, attr_data in nix_eval.get_modules_defined_attrs(module_path).items():
+    for attr, attr_data in nix_eval.get_modules_defined_attrs(tree.module_path).items():
         definition_node = tree.get_node_at_line_column(
             attr_data['position']['line'],
             attr_data['position']['column'],
