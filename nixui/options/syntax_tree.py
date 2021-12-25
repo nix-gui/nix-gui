@@ -155,11 +155,9 @@ class SyntaxTree:
         character_index = self.column_line_index_mapper(line - 1, column - 1)
         return self.get_node_at_position(character_index, legal_type)
 
-    def get_parent(self, elem, node=False):
+    def get_parent(self, elem):
         parent_id = self.elem_parent_map[elem.id]
         parent = self.elem_ids[parent_id]
-        if node and not isinstance(parent, Node):
-            return self.get_parent(elem, node)
         return parent
 
     def get_previous_token(self, elem):
@@ -174,12 +172,21 @@ class SyntaxTree:
             prev_elem = prev_elem.elems[-1]
         return prev_elem
 
-    def get_token_at_end_of_line(self, in_line_position):
-        # get first instance of a newline after in_line_position
-        for token in self._iter_tokens():
-            if token.position is not None:
-                if token.position.start > in_line_position.start and '\n' in token.quoted:
-                    return token
+    def get_token_at_end_of_line(self, inline_node):
+        # get token containing first instance of a newline after inline_node
+        parent_node = self.get_parent(inline_node)
+        inline_node_idx = parent_node.elems.index(inline_node)
+        for elem in parent_node.elems[inline_node_idx+1:]:
+            if '\n' in elem.to_string():
+                break
+        else:
+            return self.get_token_at_end_of_line(parent_node)
+        while isinstance(elem, Node):
+            for child_elem in elem.elems:
+                if '\n' in child_elem.to_string():
+                    elem = child_elem
+                    break
+        return elem
 
     def replace(self, to_replace, replace_with):
         parent = self.get_parent(to_replace)
@@ -192,10 +199,7 @@ class SyntaxTree:
         return self.replace(
             to_remove,
             Token(
-                id=uuid.uuid4(),
-                name='MODIFIED_IN_NIX_GUI',
                 position=to_remove.position,  # keep reference the same, not the true position
-                quoted=''
             )
         )
 

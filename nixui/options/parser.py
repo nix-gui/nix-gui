@@ -1,6 +1,5 @@
 # TODO: reorganize this isto parser/parser.py, parser/apply_changes.py, and move syntax_tree.py parser/syntax_tree.py
 import datetime as dt
-import uuid
 
 from nixui.utils.logger import logger
 from nixui.utils import cache
@@ -68,7 +67,7 @@ def apply_remove_definition(tree, option, current_datetime):
 
             insert_comment(
                 tree,
-                blank_node.position,
+                blank_node,
                 f'# Nix-Gui removed {attr} on {current_datetime}'
             )
 
@@ -78,15 +77,14 @@ def apply_update_definition(tree, option, new_expression_str, current_datetime):
     Find the definition node for `option`, and replace the its child value node with expression_str
     Add `# Changed by Nix-Gui on <datestamp>` after or above the definition
     """
-    option_expr_nodes_map = get_key_value_nodes(tree)
-    value_node = option_expr_nodes_map[option]
+    value_node = get_key_value_nodes(tree)[option]
     # keep reference the same, not the true position
-    token = syntax_tree.Token(quoted=new_expression_str)
-    tree.replace(value_node, token)
+    new_definition_token = syntax_tree.Token(quoted=new_expression_str, id=value_node.id)
+    tree.replace(value_node, new_definition_token)
 
     insert_comment(
         tree,
-        value_node.position,
+        new_definition_token,
         f'# Changed by Nix-Gui on {current_datetime}'
     )
 
@@ -157,24 +155,22 @@ def apply_add_definition(tree, option, expression_str, current_datetime):
         )
         attr_suffix = option
 
-    # insert definition
+    # insert definition and comment
+    inserted_definition_node = get_node_for_attribute_suffix(
+        tree,
+        attr_suffix,
+        expression_str,
+        structure_exists=True
+    )
     tree.insert(
         insertion_node,
-        get_node_for_attribute_suffix(
-            tree,
-            attr_suffix,
-            expression_str,
-            structure_exists=True
-        )
+        inserted_definition_node,
     )
-
-    """
     insert_comment(
         tree,
-        placeholder_node.position,
-        f'# Added by Nix-Gui on {current_datetime}'
+        inserted_definition_node,
+        f'# Changed by Nix-Gui on {current_datetime}'
     )
-    """
 
 
 def get_node_for_attribute_suffix(tree, attr_suffix, expression_str, structure_exists=False):
@@ -209,8 +205,18 @@ def get_node_for_attribute_suffix(tree, attr_suffix, expression_str, structure_e
             ])
 
 
-def insert_comment(tree, inline_position, comment_str):
-    eol_token = tree.get_token_at_end_of_line(inline_position)
+def insert_comment(tree, inline_node, comment_str):
+    eol_token = tree.get_token_at_end_of_line(inline_node)
+
+    # if there already is a nix-gui change comment, remove it
+    possible_comment_str = tree.get_previous_token(eol_token).to_string()
+    if possible_comment_str.startswith('# Changed by Nix-Gui on') or possible_comment_str.startswith('# Added by Nix-Gui on'):
+        tree.get_previous_token(eol_token).quoted = ''
+    elif inline_node.to_string().strip():
+        # add 2 spaces before comment if line isn't empty
+        comment_str = '  ' + comment_str
+
+    # replace eol token with comment str
     eol_token.quoted = eol_token.quoted.replace('\n', comment_str + '\n', 1)
     eol_token.name = 'MODIFIED_IN_NIX_GUI'
 

@@ -261,13 +261,13 @@ def test_sane_placement(freezer):
     {
         imports = [];
 
-        users.extraGroups.vboxusers.members = [ "sample"  ];# Nix-Gui removed users.extraGroups.vboxusers.members."[1]" on 2001-02-03 04:56:01
-        users.extraGroups.foo = 111;# Changed by Nix-Gui on 2001-02-03 04:56:01
+        users.extraGroups.vboxusers.members = [ "sample"  ];  # Nix-Gui removed users.extraGroups.vboxusers.members."[1]" on 2001-02-03 04:56:01
+        users.extraGroups.foo = 111;  # Changed by Nix-Gui on 2001-02-03 04:56:01
         users.extraUsers.sample = {
             isNormalUser = true;
-            home = "/home/sample_number_2";# Changed by Nix-Gui on 2001-02-03 04:56:01
+            home = "/home/sample_number_2";  # Changed by Nix-Gui on 2001-02-03 04:56:01
             description = "Sample";
-            extraGroups = ["foogroup" "networkmanager" "vboxsf" "dialout" "libvirtd" "othergroup"];# Changed by Nix-Gui on 2001-02-03 04:56:01
+            extraGroups = ["foogroup" "networkmanager" "vboxsf" "dialout" "libvirtd" "othergroup"];  # Changed by Nix-Gui on 2001-02-03 04:56:01
             newListAttr = [ 43290.43209 8 ];  # Changed by Nix-Gui on 2001-02-03 04:56:01
         };
 
@@ -280,8 +280,8 @@ def test_sane_placement(freezer):
                 forward-addr = [
                     "dot-ch.blahdns.com@853"
                     "dot-sg.blahdns.com@853"  # a comment
-                    "foobar"  # Added by Nix-Gui on 2001-02-03 04:56:01
-                    { test.test2 = [ "aaa" ]; }  # Added by Nix-Gui on 2001-02-03 04:56:01
+                    "foobar"  # Changed by Nix-Gui on 2001-02-03 04:56:01
+                    { test.test2 = [ "aaa" ]; }  # Changed by Nix-Gui on 2001-02-03 04:56:01
                 ];
                 name = ".";
                 forward-tls-upstream = "yes";
