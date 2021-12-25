@@ -110,6 +110,15 @@ class StateModel:
             last_update.reversion_impacted_attribute()
         )
 
+    def get_diffs(self):
+        diffs = {}
+        for attr, new_value in self.option_tree.get_changes().items():
+            diffs[attr] = (
+                self.option_tree.get_configured_definition(attr),
+                new_value
+            )
+        return diffs
+
     def persist_changes(self):
         save_path = api.persist_changes(self.option_tree.get_changes())
         self.slotmapper('changes_saved')(save_path)
