@@ -193,10 +193,9 @@ class SyntaxTree:
         index = [i for i, elem in enumerate(parent.elems) if elem.id == to_replace.id][0]
         parent.elems[index] = replace_with
         self._load_structures()
-        return replace_with
 
     def remove(self, to_remove):
-        return self.replace(
+        self.replace(
             to_remove,
             Token(
                 position=to_remove.position,  # keep reference the same, not the true position

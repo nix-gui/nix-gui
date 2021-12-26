@@ -60,9 +60,13 @@ def apply_remove_definition(tree, option, current_datetime):
 
     for attr, node in valid_matching_attr_nodes.items():
         if attr[:len(option)] == option:
-            if not attr.is_list_index(-1):
-                # if list index, remove the element, otherwise remove the key in the attribute set too
+            # if list index, remove the element, otherwise remove the key in the attribute set too
+            if attr.is_list_index(-1):
+                assert tree.get_parent(node).name == 'NODE_LIST'
+            else:
                 node = tree.get_parent(node)
+                assert node.name == 'NODE_KEY_VALUE'
+
             blank_node = tree.remove(node)
 
             insert_comment(
@@ -79,7 +83,7 @@ def apply_update_definition(tree, option, new_expression_str, current_datetime):
     """
     value_node = get_key_value_nodes(tree)[option]
     # keep reference the same, not the true position
-    new_definition_token = syntax_tree.Token(quoted=new_expression_str, id=value_node.id)
+    new_definition_token = syntax_tree.Token(quoted=new_expression_str)
     tree.replace(value_node, new_definition_token)
 
     insert_comment(
@@ -174,6 +178,13 @@ def apply_add_definition(tree, option, expression_str, current_datetime):
 
 
 def get_node_for_attribute_suffix(tree, attr_suffix, expression_str, structure_exists=False):
+    """
+    Construct the node which contains the remainder of the attribute (the attr_suffix).
+    If we discover that we can place foo.bar.baz."[0]".bif inside the already existing
+    foo.bar = { }
+    We need to construct the suffix baz."[0]".bif:
+    baz = [ { bif = expression_str } ];
+    """
     if not attr_suffix:
         return syntax_tree.Token(quoted=expression_str)
 
@@ -206,6 +217,11 @@ def get_node_for_attribute_suffix(tree, attr_suffix, expression_str, structure_e
 
 
 def insert_comment(tree, inline_node, comment_str):
+    """
+    Given inline_node, find the end of the line which conaints inilen_node and
+    inject comment_str with appropriate whitespace
+    """
+
     eol_token = tree.get_token_at_end_of_line(inline_node)
 
     # if there already is a nix-gui change comment, remove it
@@ -216,7 +232,7 @@ def insert_comment(tree, inline_node, comment_str):
         # add 2 spaces before comment if line isn't empty
         comment_str = '  ' + comment_str
 
-    # replace eol token with comment str
+    # insert comment_str into eol_token
     eol_token.quoted = eol_token.quoted.replace('\n', comment_str + '\n', 1)
     eol_token.name = 'MODIFIED_IN_NIX_GUI'
 
