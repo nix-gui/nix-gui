@@ -24,7 +24,6 @@ $ python -m nixui.main --help
 #+END_src bash
 
 ** Run a Single Test
-pytest -svv nixui/tests/test_parser.py::test_sane_placement
 #+BEGIN_src bash
 $ pytest -svv nixui/tests/test_parser.py::test_sane_placement  # run verbosely
 #+END_src bash
