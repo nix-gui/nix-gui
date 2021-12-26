@@ -83,7 +83,7 @@ def apply_update_definition(tree, option, new_expression_str, current_datetime):
     """
     value_node = get_key_value_nodes(tree)[option]
     # keep reference the same, not the true position
-    new_definition_token = syntax_tree.Token(quoted=new_expression_str, id=value_node.id)
+    new_definition_token = syntax_tree.Token(quoted=new_expression_str)
     tree.replace(value_node, new_definition_token)
 
     insert_comment(
