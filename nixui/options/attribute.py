@@ -35,6 +35,29 @@ class Attribute:
                 return False
         return True
 
+    def is_list_index(self, key_idx):
+        """
+        Determines whether the key at index idx is a list index.
+        For example, in foo.bar."[5]".baz, the 2nd key, "[5]" is a list index
+        whereas the 0th, 1st, and 3rd key aren't.
+        """
+        return self.get_attr_key_list_index(self[key_idx]) is not None
+
+    @staticmethod
+    def get_attr_key_list_index(key_str):
+        """
+        Given a key in an attribute path, return its integer list index value if it is a list index
+        "[22]" -> 22
+        "foo" -> None
+        """
+        # TODO: fix https://github.com/nix-gui/nix-gui/issues/218
+        if key_str.startswith('[') and key_str.endswith(']'):
+            try:
+                return int(key_str[1:-1])
+            except ValueError:
+                return None
+        return None
+
     def __bool__(self):
         return bool(self.loc)
 

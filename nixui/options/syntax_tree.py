@@ -13,10 +13,10 @@ NumRange = collections.namedtuple('NumRange', ['start', 'end'])
 
 @dataclasses.dataclass
 class Token:
-    id: uuid.UUID
-    name: str
-    position: NumRange
-    quoted: str
+    id: uuid.UUID = dataclasses.field(default_factory=uuid.uuid4)
+    name: str = 'MODIFIED_IN_NIX_GUI'
+    position: NumRange = None
+    quoted: str = ''
 
     def to_string(self):
         return self.quoted
@@ -24,10 +24,10 @@ class Token:
 
 @dataclasses.dataclass
 class Node:
-    id: uuid.UUID
-    name: str
-    position: NumRange
-    elems: list
+    id: uuid.UUID = dataclasses.field(default_factory=uuid.uuid4)
+    name: str = 'MODIFIED_IN_NIX_GUI'
+    position: NumRange = None
+    elems: list = dataclasses.field(default_factory=list)
 
     def to_string(self):
         return ''.join(elem.to_string() for elem in self.elems)
@@ -44,7 +44,7 @@ class SyntaxTree:
     @classmethod
     @functools.lru_cache()
     def from_string(cls, expression_string):
-        with tempfile.NamedTemporaryFile(mode='w') as temp:
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp:
             temp.write(expression_string)
             temp.flush()
             return cls(temp.name)
@@ -113,6 +113,14 @@ class SyntaxTree:
             node = new_node
         return node
 
+    def _iter_tokens(self, node=None):
+        node = node or self.tree
+        for elem in node.elems:
+            if isinstance(elem, Token):
+                yield elem
+            else:
+                yield from self._iter_tokens(elem)
+
     def to_string(self, node=None):
         """
         Get code string from AST
@@ -147,26 +155,57 @@ class SyntaxTree:
         character_index = self.column_line_index_mapper(line - 1, column - 1)
         return self.get_node_at_position(character_index, legal_type)
 
-    def get_parent(self, elem, node=False):
+    def get_parent(self, elem):
         parent_id = self.elem_parent_map[elem.id]
         parent = self.elem_ids[parent_id]
-        if node and not isinstance(parent, Node):
-            return self.get_parent(elem, node)
         return parent
+
+    def get_previous_token(self, elem):
+        if elem == self.tree:
+            return None
+        parent = self.get_parent(elem)
+        elem_idx = parent.elems.index(elem)
+        if elem_idx == 0:
+            return self.get_previous_token(parent)
+        prev_elem = parent.elems[elem_idx - 1]
+        while isinstance(prev_elem, Node):
+            prev_elem = prev_elem.elems[-1]
+        return prev_elem
+
+    def get_token_at_end_of_line(self, inline_node):
+        # get token containing first instance of a newline after inline_node
+        parent_node = self.get_parent(inline_node)
+        inline_node_idx = parent_node.elems.index(inline_node)
+        for elem in parent_node.elems[inline_node_idx+1:]:
+            if '\n' in elem.to_string():
+                break
+        else:
+            return self.get_token_at_end_of_line(parent_node)
+        while isinstance(elem, Node):
+            for child_elem in elem.elems:
+                if '\n' in child_elem.to_string():
+                    elem = child_elem
+                    break
+        return elem
 
     def replace(self, to_replace, replace_with):
         parent = self.get_parent(to_replace)
         index = [i for i, elem in enumerate(parent.elems) if elem.id == to_replace.id][0]
         parent.elems[index] = replace_with
         self._load_structures()
+        return replace_with
 
     def remove(self, to_remove):
-        self.replace(
+        return self.replace(
             to_remove,
-            Token(id=uuid.uuid4(), name='DELETION', position=None, quoted='')
+            Token(
+                position=to_remove.position,  # keep reference the same, not the true position
+            )
         )
 
-    def insert(self, parent, new_value, index, after=None):
+    def insert(self, parent, new_value, index=None, after=None):
+        if index is None:
+            index = len(parent.elems)
         parent.elems.insert(
             index,
             new_value

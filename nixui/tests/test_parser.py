@@ -153,6 +153,7 @@ SAMPLE_MODULE_STR = """
     { config, pkgs, ... }:
     {
         imports = [];
+
         users.extraGroups.vboxusers.members = [ "sample" "sampleB" ];
         users.extraUsers.sample = {
             isNormalUser = true;
@@ -161,17 +162,36 @@ SAMPLE_MODULE_STR = """
             extraGroups = ["wheel" "networkmanager" "vboxsf" "dialout" "libvirtd"];
         };
 
+        services.unbound.settings = {
+            server = {
+                cache-min-ttl = "1000";
+                do-tcp = "yes";
+            };
+            forward-zone = [{
+                forward-addr = [
+                    "dot-ch.blahdns.com@853"
+                    "dot-sg.blahdns.com@853"  # a comment
+                ];
+                name = ".";
+                forward-tls-upstream = "yes";
+            }];
+        };
+
         fileSystems."/".options = [ "noatime" "nodiratime" "discard" ];
         fileSystems."/".label = "sampledrive";
     }
 """
 SAMPLE_CHANGES = {
     Attribute('fileSystems."/"'): None,  # delete
-    #Attribute('users.extraGroups.vboxusers.members."[1]"'): None,  # delete list element
+    Attribute('users.extraGroups.vboxusers.members."[1]"'): None,  # delete list element
     Attribute('users.extraUsers.sample.home'): OptionDefinition.from_object("/home/sample_number_2"),  # change
-    # TODO: change list element
+    Attribute('users.extraUsers.sample.extraGroups."[0]"'): OptionDefinition.from_object("foogroup"),  # change
     Attribute('users.extraGroups.foo'): OptionDefinition.from_object(111),  # create
-    Attribute('users.extraUsers.renamedsample.extraGroups."[5]"'): OptionDefinition.from_object("othergroup"),  # create
+    Attribute('users.extraUsers.sample.extraGroups."[5]"'): OptionDefinition.from_object("othergroup"),  # create
+    Attribute('users.extraUsers.sample.newListAttr."[1]"'): OptionDefinition.from_object(8),  # create
+    Attribute('users.extraUsers.sample.newListAttr."[0]"'): OptionDefinition.from_object(43290.43209),  # create
+    Attribute('services.unbound.settings.forward-zone."[0]".forward-addr."[2]"'): OptionDefinition.from_object('foobar'),
+    Attribute('services.unbound.settings.forward-zone."[0]".forward-addr."[3]".test.test2."[0]"'): OptionDefinition.from_object('aaa'),
 }
 
 
@@ -199,8 +219,8 @@ def test_persist_multiple_changes():
     assert Attribute('fileSystems."/".label') not in new_option_def_map
 
     # TODO: fix
-    #assert Attribute('users.extraGroups.vboxusers.members."[1]"') in old_option_def_map
-    #assert Attribute('users.extraGroups.vboxusers.members."[1]"') not in new_option_def_map
+    assert Attribute('users.extraGroups.vboxusers.members."[1]"') in old_option_def_map
+    assert Attribute('users.extraGroups.vboxusers.members."[1]"') not in new_option_def_map
 
     assert old_option_def_map[Attribute('users.extraUsers.sample.home')].obj == '/home/sample'
     assert new_option_def_map[Attribute('users.extraUsers.sample.home')].obj == '/home/sample_number_2'
@@ -208,21 +228,104 @@ def test_persist_multiple_changes():
     assert Attribute('users.extraGroups.foo') not in old_option_def_map
     assert new_option_def_map[Attribute('users.extraGroups.foo')].obj == 111
 
-    assert Attribute('users.extraUsers.renamedsample.extraGroups."[5]"') not in old_option_def_map
-    assert new_option_def_map[Attribute('users.extraUsers.renamedsample.extraGroups."[5]"')].obj == 'othergroup'
+    assert Attribute('users.extraUsers.sample.extraGroups."[5]"') not in old_option_def_map
+    assert new_option_def_map[Attribute('users.extraUsers.sample.extraGroups."[5]"')].obj == 'othergroup'
+
+    assert Attribute('users.extraUsers.sample.newListAttr."[0]"') not in old_option_def_map
+    assert new_option_def_map[Attribute('users.extraUsers.sample.newListAttr."[0]"')].obj == 43290.43209
+
+    assert Attribute('users.extraUsers.sample.newListAttr."[1]"') not in old_option_def_map
+    assert new_option_def_map[Attribute('users.extraUsers.sample.newListAttr."[1]"')].obj == 8
+
+    assert Attribute('services.unbound.settings.forward-zone."[0]".forward-addr."[2]"') not in old_option_def_map
+    assert new_option_def_map[Attribute('services.unbound.settings.forward-zone."[0]".forward-addr."[2]"')].obj == 'foobar'
+
+    assert Attribute('services.unbound.settings.forward-zone."[0]".forward-addr."[3]".test.test2."[0]"') not in old_option_def_map
+    assert new_option_def_map[Attribute('services.unbound.settings.forward-zone."[0]".forward-addr."[3]".test.test2."[0]"')].obj == 'aaa'
 
     # delete all changes from both option_def_map's and assert they're equivalent otherwise
-    del old_option_def_map[Attribute('fileSystems."/".options')]
-    del old_option_def_map[Attribute('fileSystems."/".options."[0]"')]
-    del old_option_def_map[Attribute('fileSystems."/".options."[1]"')]
-    del old_option_def_map[Attribute('fileSystems."/".options."[2]"')]
-    del old_option_def_map[Attribute('fileSystems."/".label')]
-    #del old_option_def_map[Attribute('users.extraGroups.vboxusers.members."[1]"')]
-    del old_option_def_map[Attribute('users.extraUsers.sample.home')]
-    del old_option_def_map[Attribute('users.extraUsers.sample')]
-    del new_option_def_map[Attribute('users.extraUsers.sample')]
-    del new_option_def_map[Attribute('users.extraUsers.sample.home')]
-    del new_option_def_map[Attribute('users.extraGroups.foo')]
-    del new_option_def_map[Attribute('users.extraUsers.renamedsample.extraGroups."[5]"')]
-    Attribute('users.extraGroups.vboxusers.members."[1]"')
-    assert {k: v.expression_string for k, v in new_option_def_map.items()} == {k: v.expression_string for k, v in old_option_def_map.items()}
+    for attr in SAMPLE_CHANGES:
+        to_delete = []
+        for k in old_option_def_map:
+            if k.startswith(attr) or attr.startswith(k):
+                to_delete.append(k)
+        for d in to_delete:
+            del old_option_def_map[d]
+        to_delete = []
+        for k in new_option_def_map:
+            if k.startswith(attr) or attr.startswith(k):
+                to_delete.append(k)
+        for d in to_delete:
+            del new_option_def_map[d]
+
+    new_untouched_expression_dict = {k: v.expression_string for k, v in new_option_def_map.items()}
+    old_untouched_expression_dict = {k: v.expression_string for k, v in old_option_def_map.items()}
+    assert new_untouched_expression_dict == old_untouched_expression_dict
+
+def test_sane_placement(freezer):
+    freezer.move_to("2001-02-03 04:56:01")
+    tf = tempfile.NamedTemporaryFile(mode='w')
+    tf.write(SAMPLE_MODULE_STR)
+    tf.flush()
+    module_path = tf.name
+    changed_module_str = parser.calculate_changed_module(module_path, SAMPLE_CHANGES)
+
+    expected_module_str = """
+    { config, pkgs, ... }:
+    {
+        imports = [];
+
+        users.extraGroups.vboxusers.members = [ "sample"  ];# Nix-Gui removed users.extraGroups.vboxusers.members."[1]" on 2001-02-03 04:56:01
+        users.extraGroups.foo = 111;  # Changed by Nix-Gui on 2001-02-03 04:56:01
+        users.extraUsers.sample = {
+            isNormalUser = true;
+            home = "/home/sample_number_2";  # Changed by Nix-Gui on 2001-02-03 04:56:01
+            description = "Sample";
+            extraGroups = ["foogroup" "networkmanager" "vboxsf" "dialout" "libvirtd" "othergroup"];  # Changed by Nix-Gui on 2001-02-03 04:56:01
+            newListAttr = [ 43290.43209 8 ];  # Changed by Nix-Gui on 2001-02-03 04:56:01
+        };
+
+        services.unbound.settings = {
+            server = {
+                cache-min-ttl = "1000";
+                do-tcp = "yes";
+            };
+            forward-zone = [{
+                forward-addr = [
+                    "dot-ch.blahdns.com@853"
+                    "dot-sg.blahdns.com@853"  # a comment
+                    "foobar"  # Changed by Nix-Gui on 2001-02-03 04:56:01
+                    { test.test2 = [ "aaa" ]; }  # Changed by Nix-Gui on 2001-02-03 04:56:01
+                ];
+                name = ".";
+                forward-tls-upstream = "yes";
+            }];
+        };
+
+        # Nix-Gui removed fileSystems."/".options on 2001-02-03 04:56:01
+        # Nix-Gui removed fileSystems."/".label on 2001-02-03 04:56:01
+    }
+"""
+    assert changed_module_str == expected_module_str, changed_module_str
+
+    """
+    TODO: should be on previous line since it exceeds max line length
+    extraGroups = ["foogroup" "networkmanager" "vboxsf" "dialout" "libvirtd" "othergroup"];# Changed by Nix-Gui on 2001-02-03 04:56:01
+should be
+    # Changed by Nix-Gui on 2001-02-03 04:56:01
+    extraGroups = ["foogroup" "networkmanager" "vboxsf" "dialout" "libvirtd" "othergroup"];
+
+    TODO: should say changed, not deleted since we changed an inline collection definition
+        # Changed by Nix-Gui on 2001-02-03 04:56:01
+        users.extraGroups.vboxusers.members = [ "sample"  ];
+
+    TODO: fix whitespace
+    users.extraGroups.vboxusers.members = [ "sample"  ];
+    should be
+    users.extraGroups.vboxusers.members = [ "sample" ];
+
+    TODO: two spaces before comment when its an inline deletion
+    users.extraGroups.vboxusers.members = [ "sample"  ];# Nix-Gui removed users.extraGroups.vboxusers.members."[1]" on 2001-02-03 04:56:01
+    should be
+    users.extraGroups.vboxusers.members = [ "sample"  ];  # Nix-Gui removed users.extraGroups.vboxusers.members."[1]" on 2001-02-03 04:56:01
+    """
