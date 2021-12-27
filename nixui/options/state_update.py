@@ -1,5 +1,6 @@
 import abc
 import dataclasses
+import uuid
 
 from treelib import Tree
 
@@ -98,6 +99,25 @@ class RenameUpdate(Update):
 
     def reversion_impacted_attribute(self):
         return self.old_attribute
+
+
+@dataclasses.dataclass(frozen=True, unsafe_hash=True)
+class SwapNamesUpdate(Update):
+    attribute0: Attribute
+    attribute1: Attribute
+
+    def revert(self, option_tree):
+        placeholder = str(uuid.uuid4())
+        option_tree.rename_attribute(self.attribute0, placeholder)
+        option_tree.rename_attribute(self.attribute1, self.attribute0)
+        option_tree.rename_attribute(placeholder, self.attribute1)
+
+    def details_string(self):
+        return f'Swapped attributes {self.attribute0} and {self.attribute0}'
+
+    def reversion_impacted_attribute(self):
+        return self.attribute0
+
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)
 class RemoveUpdate(Update):

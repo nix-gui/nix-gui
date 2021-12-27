@@ -159,3 +159,24 @@ def test_remove_option_simple(minimal_state_model):
     assert Attribute('myAttrs.newAttribute') in set(minimal_state_model.option_tree.iter_attributes())
 
     assert hash(minimal_state_model.option_tree) == start_hash
+
+
+def test_swap_names_simple(minimal_state_model):
+    minimal_state_model.add_new_option(Attribute('name0'))
+    minimal_state_model.change_definition(Attribute('name0'), OptionDefinition.from_object('zero'))
+    minimal_state_model.add_new_option(Attribute('name1'))
+    minimal_state_model.change_definition(Attribute('name1'), OptionDefinition.from_object('one'))
+
+    start_hash = hash(minimal_state_model.option_tree)
+
+    # swap
+    minimal_state_model.swap_options(Attribute('name0'), Attribute('name1'))
+    assert minimal_state_model.get_definition(Attribute('name0')).obj == 'one'
+    assert minimal_state_model.get_definition(Attribute('name1')).obj == 'zero'
+
+    # revert
+    minimal_state_model.undo()
+    assert minimal_state_model.get_definition(Attribute('name0')).obj == 'zero'
+    assert minimal_state_model.get_definition(Attribute('name1')).obj == 'one'
+
+    assert hash(minimal_state_model.option_tree) == start_hash

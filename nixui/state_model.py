@@ -1,4 +1,5 @@
 import collections
+import uuid
 
 from nixui.options import api, types, state_update
 from nixui.options.attribute import Attribute
@@ -40,6 +41,17 @@ class StateModel:
         update = state_update.RenameUpdate(
             old_attribute=old_option,
             new_attribute=option
+        )
+        self._record_update(update)
+
+    def swap_options(self, option0, option1):
+        placeholder = str(uuid.uuid4())
+        self.option_tree.rename_attribute(option0, placeholder)
+        self.option_tree.rename_attribute(option0, option0)
+        self.option_tree.rename_attribute(placeholder, option1)
+        update = state_update.SwapNamesUpdate(
+            attribute0=option0,
+            attribute1=option1,
         )
         self._record_update(update)
 
