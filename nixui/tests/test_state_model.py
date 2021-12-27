@@ -162,21 +162,22 @@ def test_remove_option_simple(minimal_state_model):
 
 
 def test_swap_names_simple(minimal_state_model):
-    minimal_state_model.add_new_option(Attribute('name0'))
-    minimal_state_model.change_definition(Attribute('name0'), OptionDefinition.from_object('zero'))
-    minimal_state_model.add_new_option(Attribute('name1'))
-    minimal_state_model.change_definition(Attribute('name1'), OptionDefinition.from_object('one'))
+    # prepare option paths to be swapped
+    minimal_state_model.add_new_option(Attribute('myAttrs'))
+    minimal_state_model.change_definition(Attribute('myAttrs.newAttribute'), OptionDefinition.from_object('zero'))
+    minimal_state_model.add_new_option(Attribute('myAttrs'))
+    minimal_state_model.change_definition(Attribute('myAttrs.newAttribute0'), OptionDefinition.from_object('one'))
 
     start_hash = hash(minimal_state_model.option_tree)
 
     # swap
-    minimal_state_model.swap_options(Attribute('name0'), Attribute('name1'))
-    assert minimal_state_model.get_definition(Attribute('name0')).obj == 'one'
-    assert minimal_state_model.get_definition(Attribute('name1')).obj == 'zero'
+    minimal_state_model.swap_options(Attribute('myAttrs.newAttribute'), Attribute('myAttrs.newAttribute0'))
+    assert minimal_state_model.get_definition(Attribute('myAttrs.newAttribute')).obj == 'one'
+    assert minimal_state_model.get_definition(Attribute('myAttrs.newAttribute0')).obj == 'zero'
 
     # revert
     minimal_state_model.undo()
-    assert minimal_state_model.get_definition(Attribute('name0')).obj == 'zero'
-    assert minimal_state_model.get_definition(Attribute('name1')).obj == 'one'
+    assert minimal_state_model.get_definition(Attribute('myAttrs.newAttribute')).obj == 'zero'
+    assert minimal_state_model.get_definition(Attribute('myAttrs.newAttribute0')).obj == 'one'
 
     assert hash(minimal_state_model.option_tree) == start_hash

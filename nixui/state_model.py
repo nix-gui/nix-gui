@@ -47,7 +47,7 @@ class StateModel:
     def swap_options(self, option0, option1):
         placeholder = str(uuid.uuid4())
         self.option_tree.rename_attribute(option0, placeholder)
-        self.option_tree.rename_attribute(option0, option0)
+        self.option_tree.rename_attribute(option1, option0)
         self.option_tree.rename_attribute(placeholder, option1)
         update = state_update.SwapNamesUpdate(
             attribute0=option0,
