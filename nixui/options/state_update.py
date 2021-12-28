@@ -113,7 +113,7 @@ class SwapNamesUpdate(Update):
         option_tree.rename_attribute(placeholder, self.attribute1)
 
     def details_string(self):
-        return f'Swapped attributes {self.attribute0} and {self.attribute0}'
+        return f'Swapped attributes {self.attribute0} and {self.attribute1}'
 
     def reversion_impacted_attribute(self):
         return self.attribute0
