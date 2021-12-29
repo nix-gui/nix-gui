@@ -166,15 +166,16 @@ class OptionScrollListSelector(generic_widgets.DoubleClickableQListWidget):
         self.itemWasSingleClicked.connect(self.set_option_path_callback)
         self.itemWasDoubleClicked.connect(self.enter_new_option_path_callback)
 
-        # load options
-        options = api.get_option_tree().children(base_option_path)
+        self.load_data()
+        self._setup_scroll_list_selector_theme()  # form look and feel
+
+    def load_data(self):
+        options = api.get_option_tree().children(self.base_option_path)
         self.option_item_map = {}
         for option in options:
             item = OptionListItem(option)
             self.addItem(item)
             self.option_item_map[option.get_end()] = item
-
-        self._setup_scroll_list_selector_theme()  # form look and feel
 
     def _setup_scroll_list_selector_theme(self):
         self.setAlternatingRowColors(True)
@@ -334,16 +335,28 @@ class DynamicListOf(QtWidgets.QWidget):
         current_row = self.list_widget.currentRow()
         if current_row == 0:
             logger.info('Cannot move item up, current index is 0')
-        current_item = self.list_widget.takeItem(current_row)
-        self.list_widget.insertItem(current_row - 1, current_item)
+        self.statemodel.swap_options(
+            self.list_widget.item(current_row).option,
+            self.list_widget.item(current_row - 1).option
+        )
+        self.refresh()
 
     def down_clicked(self):
         last_item_idx = self.list_widget.count() - 1
         current_row = self.list_widget.currentRow()
         if current_row == last_item_idx:
             logger.info('Cannot move item up, current index is end of list')
-        current_item = self.list_widget.takeItem(current_row)
-        self.list_widget.addItem(current_item)
+        self.statemodel.swap_options(
+            self.list_widget.item(current_row).option,
+            self.list_widget.item(current_row + 1).option
+        )
+        self.refresh()
+
+    def refresh(self):
+        current_option = self.list_widget.currentItem().option
+        self.list_widget.clear()
+        self.list_widget.load_data()
+        self.list_widget.set_current_option(current_option[-1])
 
     def insert_items(self):
         for option in api.get_option_tree().children(self.option_path):
