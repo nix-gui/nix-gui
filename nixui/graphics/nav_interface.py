@@ -55,7 +55,8 @@ class OptionNavigationInterface(QtWidgets.QWidget):
             if lookup_key.startswith('options:'):
                 option_str = lookup_key.removeprefix('options:')
                 self.set_option_path(
-                    Attribute(option_str)
+                    Attribute(option_str),
+                    select_end=False
                 )
             elif lookup_key.startswith('search:'):
                 search_str = lookup_key.removeprefix('search:')
@@ -68,7 +69,7 @@ class OptionNavigationInterface(QtWidgets.QWidget):
 
     # TODO: incorporate display_as_single_field and option_type into URI
     # TODO: max_renderable_field_widgets should be part of Preferences
-    def set_option_path(self, option_path, option_type=None, display_as_single_field=False, max_renderable_field_widgets=10):
+    def set_option_path(self, option_path, select_end=True, option_type=None, display_as_single_field=False, max_renderable_field_widgets=10):
         """
         Update the navlist and option display to show the option path
 
@@ -77,6 +78,7 @@ class OptionNavigationInterface(QtWidgets.QWidget):
             render the options FieldWidget in the option display
 
         option_path: The path of the option to be displayed
+        select_end: Determines whether to render `my.option.path` with nothing selected, or `my.opition` with `path` selected
         option_type: Force the option to be rendered as option_type
         display_as_single_field: Regardless of whether it's a container type, force the option to be displayed as a FieldWidget
         max_renderable_field_widgets: We can display multiple widgets in the option display. If there are fewer descendent
@@ -94,41 +96,21 @@ class OptionNavigationInterface(QtWidgets.QWidget):
         # otherwise, show list of attributes within the clicked attribute and blank to the right
         # TODO: option type checking should probably take place in the same place where all type -> field resolving occurs
 
-        # If the current option definition conforms to one of the valid navlist types then construct the navlist with said type
-        option_def = api.get_option_tree().get_definition(option_path)
+        # TODO: this logic should determine whether to show fields in the fields_view or a list of child attributes and metadata
         dynamic_navlist_types = (types.AttrsOfType, types.ListOfType)
-        option_type = option_type or api.get_option_tree().get_type(option_path)
-
-        # if the option can legally be a dynamic navlist and its current value is a dynamic navlist, use that type
-        if isinstance(option_type, (types.AnythingType, types.EitherType)):
-            if any([isinstance(t, dynamic_navlist_types) for t in option_type.subtypes]):
-                if any([isinstance(t, dynamic_navlist_types) for t in option_def._type.subtypes]):
-                    option_type = option_def._type
-        # else if it has a strict type (not Anything or Either), let that type determine whether it qualifies
-
         show_path_in_navlist = (
             not display_as_single_field and (
                 isinstance(option_type, dynamic_navlist_types) or
                 (isinstance(option_type, types.AttrsType) and num_children > max_renderable_field_widgets)
             )
         )
-        if show_path_in_navlist:
+        if select_end:
             self.nav_list.replace_widget(
                 navlist.GenericNavListDisplay(
                     self.statemodel,
                     self.set_option_path,
-                    option_path,
-                    option_type
-                )
-            )
-            self.fields_view.replace_widget(QtWidgets.QLabel(''))
-        else:
-            self.nav_list.replace_widget(
-                navlist.GenericNavListDisplay(
-                    self.statemodel,
-                    self.set_option_path,
-                    option_path.get_set(),
-                    selected=option_path.get_end()
+                    option_path[:-1],
+                    selected=option_path[-1]
                 )
             )
             self.fields_view.replace_widget(
@@ -139,6 +121,16 @@ class OptionNavigationInterface(QtWidgets.QWidget):
                     only_display_parent=display_as_single_field
                 )
             )
+        else:
+            self.nav_list.replace_widget(
+                navlist.GenericNavListDisplay(
+                    self.statemodel,
+                    self.set_option_path,
+                    option_path,
+                    option_type
+                )
+            )
+            self.fields_view.replace_widget(QtWidgets.QLabel(''))
 
     def set_search_query(self, search_str):
         self.uri_stack.append(f'search:{search_str}')

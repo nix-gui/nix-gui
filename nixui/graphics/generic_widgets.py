@@ -3,6 +3,36 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from nixui.graphics import richtext, icon
 
 
+class DoubleClickableQListWidget(QtWidgets.QListWidget):
+    """
+    ensure single and double click are mutually exclusive
+    based on https://stackoverflow.com/a/22171158
+    """
+    itemWasSingleClicked = QtCore.pyqtSignal()
+    itemWasDoubleClicked = QtCore.pyqtSignal()
+
+    DOUBLE_CLICK_TIMEOUT = 200  # ms
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.itemClicked.connect(self._handle_item_clicked)
+        self._item_double_clicked = False
+        self.itemDoubleClicked.connect(self._handle_item_double_clicked)
+
+    def _handle_item_clicked(self, event):
+        if not self._item_double_clicked:
+            QtCore.QTimer.singleShot(300, self._item_clicked_timeout)
+
+    def _item_clicked_timeout(self):
+        if not self._item_double_clicked:
+            self.itemWasSingleClicked.emit()
+        self._item_double_clicked = False
+
+    def _handle_item_double_clicked(self, *args, **kwargs):
+        self._item_double_clicked = True
+        self.itemWasDoubleClicked.emit()
+
+
 class ReplacableWidget(QtWidgets.QStackedWidget):
     def __init__(self, starting_widget=None):
         super().__init__()
