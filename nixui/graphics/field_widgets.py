@@ -247,6 +247,8 @@ class OneOfComboBoxField(QtWidgets.QComboBox):
 class OneOfField:
     def __new__(cls, option):
         field_type = api.get_option_tree().get_type(option)
+        if isinstance(field_type, types.EitherType):
+            field_type = field_type.get_child_type(types.OneOfType)
 
         if len(field_type.choices) < 5:
             return OneOfRadioFrameField(option, field_type.choices)
