@@ -334,6 +334,7 @@ class DynamicListOf(QtWidgets.QWidget):
             self.list_widget.item(current_row).option,
             self.list_widget.item(current_row - 1).option
         )
+        self.list_widget.setCurrentRow(current_row - 1)
         self.refresh()
 
     def down_clicked(self):
@@ -345,14 +346,12 @@ class DynamicListOf(QtWidgets.QWidget):
             self.list_widget.item(current_row).option,
             self.list_widget.item(current_row + 1).option
         )
+        self.list_widget.setCurrentRow(current_row + 1)
         self.refresh()
 
     def refresh(self):
         current_option = self.list_widget.currentItem().option
-        self.list_widget.clear()
-        self.list_widget.load_data()
-        self.list_widget.set_current_option(current_option[-1])
-
+        self.list_widget.set_option_path_fn(current_option)
 
 
 class SearchResultListDisplay(QtWidgets.QListWidget):
