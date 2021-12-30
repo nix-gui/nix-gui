@@ -302,6 +302,11 @@ class OptionTree:
                 raise ValueError()
         except treelib.exceptions.NodeIDAbsentError:
             raise ValueError()
+
+        # all or no children are list indices, if they all are, sort them
+        if children[0].is_list_index():
+            assert all([c.data.is_list_index() for c in children])
+            children = sorted(children, key=lambda c: c.tag)
         return {
             node.tag: node.data
             for node in children
