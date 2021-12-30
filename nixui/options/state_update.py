@@ -47,7 +47,7 @@ class ChangeDefinitionUpdate(Update):
         option_tree.set_definition(self.attribute, self.old_definition)
 
     def merge_with_previous_update(self, previous_update):
-        if isinstance(previous_update, (CreateUpdate, ChangeDefinitionUpdate)):
+        if isinstance(previous_update, (CreateUpdate, ChangeDefinitionUpdate, SwapNamesUpdate)):
             return None
         elif previous_update.attribute != self.attribute:
             return None
