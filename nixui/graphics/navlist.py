@@ -265,11 +265,6 @@ class DynamicAttrsOf(QtWidgets.QWidget):
     def remove_clicked(self):
         self.list_widget.takeItem(self.list_widget.currentItem())
 
-    def insert_items(self):
-        for option in api.get_option_tree().children(self.option_path):
-            it = self.ItemCls(option)
-            self.list_widget.addItem(it)
-
 
 class DynamicListOf(QtWidgets.QWidget):
     def __init__(self, statemodel, option_path, set_option_path_fn, selected=None, *args, **kwargs):
@@ -358,10 +353,6 @@ class DynamicListOf(QtWidgets.QWidget):
         self.list_widget.load_data()
         self.list_widget.set_current_option(current_option[-1])
 
-    def insert_items(self):
-        for option in api.get_option_tree().children(self.option_path):
-            it = self.ItemCls(option)
-            self.list_widget.addItem(it)
 
 
 class SearchResultListDisplay(QtWidgets.QListWidget):
