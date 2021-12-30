@@ -304,8 +304,8 @@ class OptionTree:
             raise ValueError()
 
         # all or no children are list indices, if they all are, sort them
-        if children[0].is_list_index():
-            assert all([c.data.is_list_index() for c in children])
+        if children and children[0].tag.is_list_index():
+            assert all([c.tag.is_list_index() for c in children])
             children = sorted(children, key=lambda c: c.tag)
         return {
             node.tag: node.data
