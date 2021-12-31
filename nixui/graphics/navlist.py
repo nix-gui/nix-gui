@@ -299,15 +299,10 @@ class DynamicListOf(QtWidgets.QWidget):
         btn_hbox.addWidget(self.up_btn)
         btn_hbox.addWidget(self.down_btn)
 
-        self.list_widget.model().rowsRemoved.connect(lambda: self.remove_item)
-
         layout = QtWidgets.QVBoxLayout()
         layout.addLayout(btn_hbox)
         layout.addWidget(self.list_widget)
         self.setLayout(layout)
-
-    def remove_item(self, item):
-        print('not implemented')
 
     def add_clicked(self):
         item = OptionListItem(
