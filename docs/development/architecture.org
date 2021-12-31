@@ -101,7 +101,7 @@ Once constructed, the backend can perform five mutation operations:
 All updates to the =OptionTree= coming from the frontend pass through =nixui.state_model.StateModel=, which is a layer on top of the =OptionTree= with =Update='s integrated. Each mutating method results in an =Update= (an object containing information necessary to revert a change) being appended to =StateModel.update_history=.
 
 The =StateModel='s mutating methods include
-- =record_update=: Update the =in_memory_definition= of an attribute in the =OptionTree=
+- =change_definition=: Update the =in_memory_definition= of an attribute in the =OptionTree=
 - =rename_option=: Rename a submodule, e.g. =filesystems."/".foo= -> ="filesystems."/boot".foo=
 - =add_new_option=: Add an attribute or element to a =submodule= or =list of=.
 - =remove_option=: Remove an attribute or element from a =submodule= or =list of=.
