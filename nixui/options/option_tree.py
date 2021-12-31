@@ -309,7 +309,7 @@ class OptionTree:
         # all or no children are list indices, if they all are, sort them
         if children and children[0].tag.is_list_index():
             assert all([c.tag.is_list_index() for c in children])
-            children = sorted(children, key=lambda c: c.tag)
+            children = sorted(children, key=lambda c: Attribute.get_attr_key_list_index(c.tag[-1]))
         return {
             node.tag: node.data
             for node in children
