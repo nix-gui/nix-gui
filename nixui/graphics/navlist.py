@@ -261,6 +261,7 @@ class DynamicAttrsOf(QtWidgets.QWidget):
 
     def rename_item(self, item):
         self.statemodel.rename_option(item.previous_option, item.option)
+        self.refresh()
 
     def add_clicked(self):
         item = OptionListItem(
@@ -320,7 +321,7 @@ class DynamicListOf(QtWidgets.QWidget):
         )
         self.list_widget.addItem(item)
         self.statemodel.add_new_option(item.option)
-
+        self.refresh()
 
     def up_clicked(self):
         current_row = self.list_widget.currentRow()
