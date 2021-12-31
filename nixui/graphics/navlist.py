@@ -213,7 +213,20 @@ class StaticAttrsOf(OptionScrollListSelector):
             self.set_current_option(selected)
 
 
+class CommonDynamicNav:
+    def refresh(self):
+        current_option = self.list_widget.currentItem().option
+        self.list_widget.set_option_path_fn(current_option)
+
+    def remove_clicked(self):
+        self.state_model.remove_option(self.list_widget.currentItem().option)
+        self.refresh()
+
+
 class DynamicAttrsOf(QtWidgets.QWidget):
+    refresh = CommonDynamicNav.refresh
+    remove_clicked = CommonDynamicNav.remove_clicked
+
     def __init__(self, statemodel, option_path, set_option_path_fn, selected=None, *args, **kwargs):
         super().__init__()
 
@@ -258,11 +271,11 @@ class DynamicAttrsOf(QtWidgets.QWidget):
         self.statemodel.add_new_option(item.option)
         self.list_widget.editItem(item)
 
-    def remove_clicked(self):
-        self.list_widget.takeItem(self.list_widget.currentItem())
-
 
 class DynamicListOf(QtWidgets.QWidget):
+    refresh = CommonDynamicNav.refresh
+    remove_clicked = CommonDynamicNav.remove_clicked
+
     def __init__(self, statemodel, option_path, set_option_path_fn, selected=None, *args, **kwargs):
         super().__init__()
 
@@ -308,8 +321,6 @@ class DynamicListOf(QtWidgets.QWidget):
         self.list_widget.addItem(item)
         self.statemodel.add_new_option(item.option)
 
-    def remove_clicked(self):
-        self.list_widget.takeItem(self.list_widget.currentItem())
 
     def up_clicked(self):
         current_row = self.list_widget.currentRow()
@@ -333,10 +344,6 @@ class DynamicListOf(QtWidgets.QWidget):
         )
         self.list_widget.setCurrentRow(current_row + 1)
         self.refresh()
-
-    def refresh(self):
-        current_option = self.list_widget.currentItem().option
-        self.list_widget.set_option_path_fn(current_option)
 
 
 class SearchResultListDisplay(QtWidgets.QListWidget):
