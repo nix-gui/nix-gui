@@ -219,7 +219,7 @@ class CommonDynamicNav:
         self.list_widget.set_option_path_fn(current_option)
 
     def remove_clicked(self):
-        self.state_model.remove_option(self.list_widget.currentItem().option)
+        self.statemodel.remove_option(self.list_widget.currentItem().option)
         self.refresh()
 
 
