@@ -299,7 +299,6 @@ class DynamicListOf(QtWidgets.QWidget):
         btn_hbox.addWidget(self.up_btn)
         btn_hbox.addWidget(self.down_btn)
 
-        self.list_widget.itemDoubleClicked.connect(self.list_widget.editItem)
         self.list_widget.itemChanged.connect(self.rename_item)
         self.list_widget.model().rowsRemoved.connect(lambda: self.remove_item)
 
@@ -316,12 +315,11 @@ class DynamicListOf(QtWidgets.QWidget):
 
     def add_clicked(self):
         item = OptionListItem(
-            Attribute.from_insertion(self.option_path, 'newAttribute'),  # TODO: fix this
+            Attribute.from_insertion(self.option_path, '[{len(self.list_widget.count())}]'),
             editable=True
         )
         self.list_widget.addItem(item)
         self.statemodel.add_new_option(item.option)
-        self.list_widget.editItem(item)
 
     def remove_clicked(self):
         self.list_widget.takeItem(self.list_widget.currentItem())
