@@ -213,7 +213,24 @@ class StaticAttrsOf(OptionScrollListSelector):
             self.set_current_option(selected)
 
 
+class CommonDynamicNav:
+    def refresh(self):
+        current_item = self.list_widget.currentItem()
+        if current_item is None:
+            self.list_widget.set_option_path_fn(self.option_path, select_end=False)
+        else:
+            self.list_widget.set_option_path_fn(current_item.option)
+
+    def remove_clicked(self):
+        self.statemodel.remove_option(self.list_widget.currentItem().option)
+        self.list_widget.setCurrentItem(None)
+        self.refresh()
+
+
 class DynamicAttrsOf(QtWidgets.QWidget):
+    refresh = CommonDynamicNav.refresh
+    remove_clicked = CommonDynamicNav.remove_clicked
+
     def __init__(self, statemodel, option_path, set_option_path_fn, selected=None, *args, **kwargs):
         super().__init__()
 
@@ -240,33 +257,32 @@ class DynamicAttrsOf(QtWidgets.QWidget):
 
         self.list_widget.itemDoubleClicked.connect(self.list_widget.editItem)
         self.list_widget.itemChanged.connect(self.rename_item)
-        self.list_widget.model().rowsRemoved.connect(lambda: self.remove_item)
 
         layout = QtWidgets.QVBoxLayout()
         layout.addLayout(btn_hbox)
         layout.addWidget(self.list_widget)
         self.setLayout(layout)
 
-    def remove_item(self, item):
-        print('not implemented')
-
     def rename_item(self, item):
         self.statemodel.rename_option(item.previous_option, item.option)
+        self.refresh()
 
     def add_clicked(self):
+        new_option_path = self.statemodel.get_new_child_option_name(self.option_path, parent_type=types.AttrsOfType())
+        self.statemodel.add_new_option(new_option_path)
         item = OptionListItem(
-            Attribute.from_insertion(self.option_path, 'newAttribute'),
+            new_option_path,
             editable=True
         )
         self.list_widget.addItem(item)
-        self.statemodel.add_new_option(item.option)
+        self.refresh()
         self.list_widget.editItem(item)
-
-    def remove_clicked(self):
-        self.list_widget.takeItem(self.list_widget.currentItem())
 
 
 class DynamicListOf(QtWidgets.QWidget):
+    refresh = CommonDynamicNav.refresh
+    remove_clicked = CommonDynamicNav.remove_clicked
+
     def __init__(self, statemodel, option_path, set_option_path_fn, selected=None, *args, **kwargs):
         super().__init__()
 
@@ -299,32 +315,17 @@ class DynamicListOf(QtWidgets.QWidget):
         btn_hbox.addWidget(self.up_btn)
         btn_hbox.addWidget(self.down_btn)
 
-        self.list_widget.itemDoubleClicked.connect(self.list_widget.editItem)
-        self.list_widget.itemChanged.connect(self.rename_item)
-        self.list_widget.model().rowsRemoved.connect(lambda: self.remove_item)
-
         layout = QtWidgets.QVBoxLayout()
         layout.addLayout(btn_hbox)
         layout.addWidget(self.list_widget)
         self.setLayout(layout)
 
-    def remove_item(self, item):
-        print('not implemented')
-
-    def rename_item(self, item):
-        self.statemodel.rename_option(item.previous_option, item.option)
-
     def add_clicked(self):
-        item = OptionListItem(
-            Attribute.from_insertion(self.option_path, 'newAttribute'),  # TODO: fix this
-            editable=True
-        )
+        new_option_path = self.statemodel.get_new_child_option_name(self.option_path, parent_type=types.ListOfType())
+        self.statemodel.add_new_option(new_option_path)
+        item = OptionListItem(new_option_path)
         self.list_widget.addItem(item)
-        self.statemodel.add_new_option(item.option)
-        self.list_widget.editItem(item)
-
-    def remove_clicked(self):
-        self.list_widget.takeItem(self.list_widget.currentItem())
+        self.refresh()
 
     def up_clicked(self):
         current_row = self.list_widget.currentRow()
@@ -348,10 +349,6 @@ class DynamicListOf(QtWidgets.QWidget):
         )
         self.list_widget.setCurrentRow(current_row + 1)
         self.refresh()
-
-    def refresh(self):
-        current_option = self.list_widget.currentItem().option
-        self.list_widget.set_option_path_fn(current_option)
 
 
 class SearchResultListDisplay(QtWidgets.QListWidget):
