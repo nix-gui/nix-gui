@@ -65,29 +65,26 @@ class StateModel:
         )
         self._record_update(update)
 
-    def add_new_option(self, parent_option):
-        parent_type = self.option_tree.get_type(parent_option)
-
-        # get best default name
-        # TODO: logic for getting name should be moved to option_tree.py?
+    def get_new_child_option_name(self, parent_option, parent_type=None):
+        parent_type = parent_type or self.option_tree.get_type(parent_option)
         child_keys = set([c[-1] for c in self.option_tree.children(parent_option).keys()])
         if isinstance(parent_type, types.ListOfType):
-            new_child_attribute_path = Attribute.from_insertion(parent_option, f'[{len(child_keys)}]')
+            return Attribute.from_insertion(parent_option, f'[{len(child_keys)}]')
         elif isinstance(parent_type, types.AttrsOfType):
             suggested_child_key = 'newAttribute'
             for i in range(len(child_keys)):
                 if suggested_child_key not in child_keys:
                     break
                 suggested_child_key = f'newAttribute{i}'
-            new_child_attribute_path = Attribute.from_insertion(parent_option, suggested_child_key)
+            return Attribute.from_insertion(parent_option, suggested_child_key)
         else:
             raise TypeError
 
+    def add_new_option(self, option):
         # add to option tree, append update, and return name
-        self.option_tree.insert_attribute(new_child_attribute_path)
-        update = state_update.CreateUpdate(attribute=new_child_attribute_path)
+        self.option_tree.insert_attribute(option)
+        update = state_update.CreateUpdate(attribute=option)
         self._record_update(update)
-        return new_child_attribute_path
 
     def change_definition(self, option, new_definition):
         old_definition = self.option_tree.get_definition(option)

@@ -215,11 +215,15 @@ class StaticAttrsOf(OptionScrollListSelector):
 
 class CommonDynamicNav:
     def refresh(self):
-        current_option = self.list_widget.currentItem().option
-        self.list_widget.set_option_path_fn(current_option)
+        current_item = self.list_widget.currentItem()
+        if current_item is None:
+            self.list_widget.set_option_path_fn(self.option_path, select_end=False)
+        else:
+            self.list_widget.set_option_path_fn(current_item.option)
 
     def remove_clicked(self):
         self.statemodel.remove_option(self.list_widget.currentItem().option)
+        self.list_widget.setCurrentItem(None)
         self.refresh()
 
 
@@ -264,12 +268,13 @@ class DynamicAttrsOf(QtWidgets.QWidget):
         self.refresh()
 
     def add_clicked(self):
+        new_option_path = self.statemodel.get_new_child_option_name(self.option_path, parent_type=types.AttrsOfType())
+        self.statemodel.add_new_option(new_option_path)
         item = OptionListItem(
-            Attribute.from_insertion(self.option_path, 'newAttribute'),
+            new_option_path,
             editable=True
         )
         self.list_widget.addItem(item)
-        self.statemodel.add_new_option(item.option)
         self.refresh()
         self.list_widget.editItem(item)
 
@@ -316,12 +321,10 @@ class DynamicListOf(QtWidgets.QWidget):
         self.setLayout(layout)
 
     def add_clicked(self):
-        item = OptionListItem(
-            Attribute.from_insertion(self.option_path, '[{len(self.list_widget.count())}]'),
-            editable=True
-        )
+        new_option_path = self.statemodel.get_new_child_option_name(self.option_path, parent_type=types.ListOfType())
+        self.statemodel.add_new_option(new_option_path)
+        item = OptionListItem(new_option_path)
         self.list_widget.addItem(item)
-        self.statemodel.add_new_option(item.option)
         self.refresh()
 
     def up_clicked(self):
