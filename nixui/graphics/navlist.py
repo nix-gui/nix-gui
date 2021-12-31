@@ -240,15 +240,11 @@ class DynamicAttrsOf(QtWidgets.QWidget):
 
         self.list_widget.itemDoubleClicked.connect(self.list_widget.editItem)
         self.list_widget.itemChanged.connect(self.rename_item)
-        self.list_widget.model().rowsRemoved.connect(lambda: self.remove_item)
 
         layout = QtWidgets.QVBoxLayout()
         layout.addLayout(btn_hbox)
         layout.addWidget(self.list_widget)
         self.setLayout(layout)
-
-    def remove_item(self, item):
-        print('not implemented')
 
     def rename_item(self, item):
         self.statemodel.rename_option(item.previous_option, item.option)
