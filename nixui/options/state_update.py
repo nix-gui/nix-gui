@@ -107,7 +107,8 @@ class SwapNamesUpdate(Update):
     attribute1: Attribute
 
     def revert(self, option_tree):
-        placeholder = str(uuid.uuid4())
+        # TODO: fix this hack, only using <name> because it isn't shown in OptionTree.children
+        placeholder = Attribute(f'"<name>".{uuid.uuid4()}')
         option_tree.rename_attribute(self.attribute0, placeholder)
         option_tree.rename_attribute(self.attribute1, self.attribute0)
         option_tree.rename_attribute(placeholder, self.attribute1)

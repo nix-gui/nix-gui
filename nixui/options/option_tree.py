@@ -148,10 +148,10 @@ class OptionTree:
             return tree
 
     def _get_data(self, attribute):
-        result = self.tree.get_node(attribute).data
-        if result == None:
-            raise ValueError()
-        return result
+        result = self.tree.get_node(attribute)
+        if result is None or result.data is None:
+            return OptionData()
+        return result.data
 
     def get_changes(self, get_configured_changes=False):
         """
@@ -216,7 +216,7 @@ class OptionTree:
             self.in_memory_diff[old_attribute] = None
 
         # update tree
-        self.tree.update_node(old_attribute, identifier=new_attribute, tag=new_attribute)
+        self._upsert_node_data(new_attribute, {'in_memory_definition': self.get_in_memory_definition(old_attribute)})
         for old_child_attribute in self.children(new_attribute):
             new_child_attribute = Attribute.from_insertion(new_attribute, old_child_attribute.get_end())
             self.rename_attribute(old_child_attribute, new_child_attribute)
