@@ -270,6 +270,7 @@ class DynamicAttrsOf(QtWidgets.QWidget):
         )
         self.list_widget.addItem(item)
         self.statemodel.add_new_option(item.option)
+        self.refresh()
         self.list_widget.editItem(item)
 
 
