@@ -92,11 +92,13 @@ class GenericOptionDisplay(QtWidgets.QWidget):
         text = generic_widgets.ClickableLabel(str(option))
         text.clicked.connect(lambda: set_option_path_fn(option))
         description_text = api.get_option_tree().get_description(option)
+        example = api.get_option_tree().get_example(option)
         tooltip = generic_widgets.ToolTip(
             richtext.get_option_html(
                 option,
                 type_label=api.get_option_tree().get_type_string(option),
                 description=description_text if description_text != option_definition.Undefined else None,
+                example=example if example != option_definition.Undefined else None,
             )
         )
         option_details_layout = QtWidgets.QHBoxLayout()
@@ -116,7 +118,6 @@ class GenericOptionDisplay(QtWidgets.QWidget):
             else:
                 field = field_widget_class(option)
             field.stateChanged.connect(self.handle_state_change)
-            self.statemodel.slotmapper.add_slot(('update_field', option), self._load_definition)
             fields.append(field)
         return fields
 

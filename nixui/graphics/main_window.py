@@ -85,11 +85,11 @@ class NixuiStatusBar(QtWidgets.QStatusBar):
         statemodel.slotmapper.add_slot('undo_performed', self.display_undo_performed)
         statemodel.slotmapper.add_slot('changes_saved', self.display_changes_saved)
 
-    def display_value_change(self, option, old_value, new_value):
-        self.showMessage(f'UPDATE {option}: changed from `{old_value}` to `{new_value}`')
+    def display_value_change(self, update_details_str):
+        self.showMessage(f'UPDATE: {update_details_str}')
 
-    def display_undo_performed(self, option, reverted_to, reverted_from):
-        self.showMessage(f'UNDO {option}: reverted from `{reverted_from}` to `{reverted_to}`')
+    def display_undo_performed(self, update_details_str):
+        self.showMessage(f'UPDATE REVERTED: {update_details_str}')
 
     def display_changes_saved(self, save_path):
         self.showMessage(f'SAVED changes to {save_path}')

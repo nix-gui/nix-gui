@@ -1,15 +1,3 @@
-* Running
-Prerequisites:
-- Ensure nixos is installed
-- Ensure =nix.extraOptions = ''experimental-features = nix-command flakes'';= is set in =configuration.nix= (and you've rebuilt) to enable [[https://nixos.wiki/wiki/Flakes][Nix Flakes]]
-
-
-Run
-- =nix run github:nix-gui/nix-gui=
-
-Print help string
-- =nix run github:nix-gui/nix-gui -- --help=
-
 * Interface
 Nix-Gui allows for navigation and editing of Nixos options through a GUI.
 
@@ -26,17 +14,17 @@ The toolbar consists of three functioning tools:
 ** Navbar
 The navbar is used to manipulate the "URI" being shown in the navlist and options editor. It contains the following:
 - Back Button: Return to previous URI.
-- Up Button: Change URI from =options:option.path.foo.bar= to =options:option.path.foo=.
-- URI Field: Display the current URI. Can be edited if clicked. For option paths, the URI format is =options:option.path.here=, and for searches, the URI format is =search:search text here=.
+- Up Button: Change URI from =config:option.path.foo.bar= to =config:option.path.foo=.
+- URI Field: Display the current URI. Can be edited if clicked. For option paths, the URI format is =config:option.path.here=, and for searches, the URI format is =search:search text here=.
 - Search Box: Change the URI to =search:entered text=.
 
 ** Navlist
-The navlist displays option paths available for selection. For example, given a URI of =options:i18n= (internationalization options) the navlist will display =i18n.defaultLocale=, =i18n.extraLocaleSettings=, =i18n.glibcLocales=, =i18n.inputMethods=, and =i18n.supportedLocales=. Clicking =i18n.defaultLocale= will change the URI to =options:i18n.defaultLocale=, and load *option editors* with =i18n.defaultLocal=.
+The navlist displays option paths available for selection. For example, given a URI of =config:i18n= (internationalization options) the navlist will display =i18n.defaultLocale=, =i18n.extraLocaleSettings=, =i18n.glibcLocales=, =i18n.inputMethods=, and =i18n.supportedLocales=. Clicking =i18n.defaultLocale= will change the URI to =config:i18n.defaultLocale=, and load *option editors* with =i18n.defaultLocal=.
 
 The navlist provides metadata about option paths, including the number of direct children in the option heirarchy (the parenthesized number), and the state of the option and/or descendants. Green items indicate options whose value has been changed in this session, but not yet committed to disk, yellow items indicate options which are defined in your =nixos-config= path, and white indicates options which are all undefined in your =nixos-config= path.
 
 ** Options Editors
-The option editors section contains widgets for each option available for editing given a URI. For example, in the image above =options:sound= is loaded and =sound.enable=, =sound.enableOSSEmulation=, =sound.extraConfig=, =sound.mediaKeys.enable=, and =sound.mediaKeys.volumeStep= option editors are shown.
+The option editors section contains widgets for each option available for editing given a URI. For example, in the image above =config:sound= is loaded and =sound.enable=, =sound.enableOSSEmulation=, =sound.extraConfig=, =sound.mediaKeys.enable=, and =sound.mediaKeys.volumeStep= option editors are shown.
 
 Each option editor contains metadata about the field including its name, description, and type.
 

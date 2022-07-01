@@ -87,6 +87,7 @@ def get_all_nixos_options():
     {
       "option.name": {
         "description": String              # description declared on the option
+        "example": Optional, Any           # example declared on the option
         "loc": [ String ]                  # the path of the option e.g.: [ "services" "foo" "enable" ]
         "readOnly": Bool                   # is the option user-customizable?
         "type": String                     # either "boolean", "set", "list", "int", "float", or "string"
