@@ -99,6 +99,10 @@ def get_all_nixos_options():
     # TODO: remove key from this expression, it isn't used
     return {Attribute(v['loc']): v for v in res.values()}
 
+def _expand_directory(path):
+    if (os.path.isdir(path)):
+        return os.path.join(path, "default.nix")
+    return path
 
 @cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
 def get_modules_evaluated_import_paths(module_path):
@@ -107,7 +111,8 @@ def get_modules_evaluated_import_paths(module_path):
     returns a list of full-path strings
     """
     with find_library('get_modules_evaluated_import_paths') as fn:
-        return nix_instantiate_eval(f'{fn} {module_path}', strict=True)
+        return list(map(_expand_directory, nix_instantiate_eval(f'{fn} {module_path}', strict=True)))
+        
 
 
 @cache.cache(return_copy=True, retain_hash_fn=cache.first_arg_path_hash_fn)
