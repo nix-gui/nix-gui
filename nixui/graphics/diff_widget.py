@@ -10,11 +10,11 @@ class DiffedOptionListSelector(generic_widgets.ScrollListStackSelector):
 
     def __init__(self, updates, *args, **kwargs):
         self.updates_map = {
-            u.option: (
-                u.old_definition.expression_string,
-                u.new_definition.expression_string
+            attr: (
+                old_definition.expression_string if old_definition is not None else None,
+                new_definition.expression_string if new_definition is not None else None
             )
-            for u in updates
+            for attr, (old_definition, new_definition) in updates.items()
         }
         super().__init__(*args, **kwargs)
 
@@ -61,7 +61,7 @@ class DiffDialogBase(QtWidgets.QDialog):
 
         self.statemodel = statemodel
 
-        diff_table = DiffedOptionListSelector(statemodel.get_update_set())
+        diff_table = DiffedOptionListSelector(statemodel.get_diffs())
 
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(diff_table)
@@ -87,5 +87,5 @@ class SaveDialog(DiffDialogBase):
         return btn_box
 
     def save(self):
-        self.statemodel.persist_updates()
+        self.statemodel.persist_changes()
         self.accept()

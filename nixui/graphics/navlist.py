@@ -22,6 +22,7 @@ class GenericNavListDisplay:
 
 class OptionListItemDelegate(QtWidgets.QStyledItemDelegate):
     padding = 5
+    default_font_family = QtGui.QFont().family()
 
     def paint(self, painter, option, index):
         # ensure different background colors are applied for selected rows
@@ -77,7 +78,7 @@ class OptionListItemDelegate(QtWidgets.QStyledItemDelegate):
             extra_text_rect.setY(text_rect.y() + option.rect.height() / 3)
             text_rect.setY(text_rect.y() - option.rect.height() / 3)
 
-            extra_text_font = QtGui.QFont(italic=True, pointSize=-2, weight=QtGui.QFont.Light)
+            extra_text_font = QtGui.QFont(self.default_font_family, italic=True, pointSize=-2, weight=QtGui.QFont.Light)
             painter.setFont(extra_text_font)
             painter.drawText(extra_text_rect, QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter, '\t' + data['extra_text'])
             painter.restore()

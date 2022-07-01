@@ -73,6 +73,7 @@
                 nix-dump-syntax-tree-json
                 pythonPackages.pytest
                 pythonPackages.pytest-env
+                pythonPackages.pytest-freezegun
                 pythonPackages.pytest-datafiles
                 pythonPackages.pytest-mock
                 pythonPackages.pytest-qt

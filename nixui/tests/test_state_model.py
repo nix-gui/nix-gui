@@ -13,7 +13,7 @@ SAMPLES_PATH = 'tests/sample'
     (Attribute('services.logind.lidSwitch'), OptionDefinition.from_object('dosomething')),  # string
     (Attribute('services.redshift.temperature.day'), OptionDefinition.from_object(1000)),  # integer
     (Attribute('networking.firewall.allowedTCPPorts'), OptionDefinition.from_object([1, 2, 3, 4, 5])),  # list of ints
-    #(Attribute('users.extraUsers.sample.isNormalUser'), OptionDefinition.from_object(False)),  # modify submodule
+    (Attribute('users.extraUsers.sample.isNormalUser'), OptionDefinition.from_object(False)),  # modify submodule
 ])
 @pytest.mark.datafiles(SAMPLES_PATH)
 def test_load_edit_save(option_loc, new_value):
@@ -28,8 +28,8 @@ def test_load_edit_save(option_loc, new_value):
     # open, update, save
     m0 = state_model.StateModel()
     v0 = m0.get_definition(option_loc)
-    m0.record_update(option_loc, new_value)
-    m0.persist_updates()
+    m0.change_definition(option_loc, new_value)
+    m0.persist_changes()
 
     # reopen, verify
     m1 = state_model.StateModel()
@@ -37,8 +37,8 @@ def test_load_edit_save(option_loc, new_value):
     assert v1 == new_value
 
     # reset, verify same as original
-    m1.record_update(option_loc, v0)
-    m1.persist_updates()
+    m1.change_definition(option_loc, v0)
+    m1.persist_changes()
 
     m2 = state_model.StateModel()
     v2 = m2.get_definition(option_loc)
@@ -46,19 +46,19 @@ def test_load_edit_save(option_loc, new_value):
 
 
 def test_get_update_set_simple(statemodel):
-    statemodel.record_update(
+    statemodel.change_definition(
         Attribute('sound.enable'),
         OptionDefinition.from_object(False)
     )
-    statemodel.persist_updates()
-    statemodel.record_update(
+    statemodel.persist_changes()
+    statemodel.change_definition(
         Attribute('sound.enable'),
         OptionDefinition.from_object(True)
     )
-    updates = statemodel.get_update_set()
+    updates = statemodel.option_tree.get_changes()
     assert len(updates) == 1
-    assert updates[0].old_definition.obj == False
-    assert updates[0].new_definition.obj == True
+    update = list(updates.values())[0]
+    assert update.obj == True
 
 
 def test_get_update_set_defined_by_descendent(statemodel):
@@ -80,21 +80,104 @@ def test_get_update_set_defined_by_descendent(statemodel):
         ];
         ...
     """
-    statemodel.record_update(
+    statemodel.change_definition(
         Attribute('services.bookstack.nginx.listen."[0]".addr'),
         OptionDefinition.from_object('10.0.0.1')
     )
-    statemodel.record_update(
+    statemodel.change_definition(
         Attribute('services.bookstack.nginx.listen."[1]".port'),
         OptionDefinition.from_object(101)
     )
-    updates = statemodel.get_update_set()
+    updates = statemodel.option_tree.get_changes()
     assert len(updates) == 2
 
-    assert updates[0].option == Attribute('services.bookstack.nginx.listen."[0]".addr')
-    assert updates[0].old_definition.obj == "195.154.1.1"
-    assert updates[0].new_definition.obj == "10.0.0.1"
+    assert updates[Attribute('services.bookstack.nginx.listen."[0]".addr')].obj == "10.0.0.1"
+    assert updates[Attribute('services.bookstack.nginx.listen."[1]".port')].obj == 101
 
-    assert updates[1].option == Attribute('services.bookstack.nginx.listen."[1]".port')
-    assert updates[1].old_definition.obj == 80
-    assert updates[1].new_definition.obj == 101
+
+def test_change_definition_simple(minimal_state_model):
+    start_hash = hash(minimal_state_model.option_tree)
+
+    minimal_state_model.add_new_option(Attribute('myAttrs'))
+    assert Attribute('myAttrs.newAttribute') in set(minimal_state_model.option_tree.iter_attributes())
+
+    # assert undefined
+    assert minimal_state_model.get_definition(Attribute('myAttrs.newAttribute')).is_undefined
+
+    # change
+    minimal_state_model.change_definition(Attribute('myAttrs.newAttribute'), OptionDefinition.from_object(5))
+    assert minimal_state_model.get_definition(Attribute('myAttrs.newAttribute')).obj == 5
+
+    # revert
+    minimal_state_model.undo()
+    assert minimal_state_model.get_definition(Attribute('myAttrs.newAttribute')).is_undefined
+
+    assert hash(minimal_state_model.option_tree) == start_hash
+
+
+def test_add_new_option_simple(minimal_state_model):
+    start_hash = hash(minimal_state_model.option_tree)
+
+    minimal_state_model.add_new_option(Attribute('myAttrs'))
+    assert len(set(minimal_state_model.option_tree.iter_attributes())) == 4
+    assert Attribute('myAttrs.newAttribute') in set(minimal_state_model.option_tree.iter_attributes())
+
+    # revert
+    minimal_state_model.undo()
+    assert len(set(minimal_state_model.option_tree.iter_attributes())) == 3
+    assert Attribute('myAttrs.newAttribute') not in set(minimal_state_model.option_tree.iter_attributes())
+
+    assert hash(minimal_state_model.option_tree) == start_hash
+
+
+def test_rename_option_simple(minimal_state_model):
+    start_hash = hash(minimal_state_model.option_tree)
+
+    # rename
+    minimal_state_model.rename_option(Attribute('myAttrs'), Attribute('myAttrs2'))
+    assert Attribute('myAttrs') not in set(minimal_state_model.option_tree.iter_attributes())
+    assert Attribute('myAttrs2') in set(minimal_state_model.option_tree.iter_attributes())
+
+    # revert
+    minimal_state_model.undo()
+    assert Attribute('myAttrs') in set(minimal_state_model.option_tree.iter_attributes())
+    assert Attribute('myAttrs2') not in set(minimal_state_model.option_tree.iter_attributes())
+
+    assert hash(minimal_state_model.option_tree) == start_hash
+
+
+def test_remove_option_simple(minimal_state_model):
+    minimal_state_model.add_new_option(Attribute('myAttrs'))
+    start_hash = hash(minimal_state_model.option_tree)
+
+    # remove
+    minimal_state_model.remove_option(Attribute('myAttrs.newAttribute'))
+    assert Attribute('myAttrs.newAttribute') not in set(minimal_state_model.option_tree.iter_attributes())
+
+    # revert
+    minimal_state_model.undo()
+    assert Attribute('myAttrs.newAttribute') in set(minimal_state_model.option_tree.iter_attributes())
+
+    assert hash(minimal_state_model.option_tree) == start_hash
+
+
+def test_swap_names_simple(minimal_state_model):
+    # prepare option paths to be swapped
+    minimal_state_model.add_new_option(Attribute('myAttrs'))
+    minimal_state_model.change_definition(Attribute('myAttrs.newAttribute'), OptionDefinition.from_object('zero'))
+    minimal_state_model.add_new_option(Attribute('myAttrs'))
+    minimal_state_model.change_definition(Attribute('myAttrs.newAttribute0'), OptionDefinition.from_object('one'))
+
+    start_hash = hash(minimal_state_model.option_tree)
+
+    # swap
+    minimal_state_model.swap_options(Attribute('myAttrs.newAttribute'), Attribute('myAttrs.newAttribute0'))
+    assert minimal_state_model.get_definition(Attribute('myAttrs.newAttribute')).obj == 'one'
+    assert minimal_state_model.get_definition(Attribute('myAttrs.newAttribute0')).obj == 'zero'
+
+    # revert
+    minimal_state_model.undo()
+    assert minimal_state_model.get_definition(Attribute('myAttrs.newAttribute')).obj == 'zero'
+    assert minimal_state_model.get_definition(Attribute('myAttrs.newAttribute0')).obj == 'one'
+
+    assert hash(minimal_state_model.option_tree) == start_hash
