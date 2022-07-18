@@ -351,6 +351,9 @@ class EitherType(NixType):
         else:
             raise TypeError("Attempted to get child types, but no Either.subtypes allow children.", self)
 
+    def get_child_type(self, type_cls):
+        return [t for t in self.subtypes if isinstance(t, type_cls)][0]
+
 
 
 @dataclasses.dataclass(frozen=True, unsafe_hash=True)

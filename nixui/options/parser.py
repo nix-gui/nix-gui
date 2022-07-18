@@ -61,7 +61,7 @@ def apply_remove_definition(tree, option, current_datetime):
     for attr, node in valid_matching_attr_nodes.items():
         if attr[:len(option)] == option:
             # if list index, remove the element, otherwise remove the key in the attribute set too
-            if attr.is_list_index(-1):
+            if attr.is_list_index():
                 assert tree.get_parent(node).name == 'NODE_LIST'
             else:
                 node = tree.get_parent(node)

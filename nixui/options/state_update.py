@@ -47,7 +47,7 @@ class ChangeDefinitionUpdate(Update):
         option_tree.set_definition(self.attribute, self.old_definition)
 
     def merge_with_previous_update(self, previous_update):
-        if isinstance(previous_update, (CreateUpdate, ChangeDefinitionUpdate)):
+        if isinstance(previous_update, (CreateUpdate, ChangeDefinitionUpdate, SwapNamesUpdate)):
             return None
         elif previous_update.attribute != self.attribute:
             return None
@@ -107,7 +107,8 @@ class SwapNamesUpdate(Update):
     attribute1: Attribute
 
     def revert(self, option_tree):
-        placeholder = str(uuid.uuid4())
+        # TODO: fix this hack, only using <name> because it isn't shown in OptionTree.children
+        placeholder = Attribute(f'"<name>".{uuid.uuid4()}')
         option_tree.rename_attribute(self.attribute0, placeholder)
         option_tree.rename_attribute(self.attribute1, self.attribute0)
         option_tree.rename_attribute(placeholder, self.attribute1)

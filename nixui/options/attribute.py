@@ -35,7 +35,7 @@ class Attribute:
                 return False
         return True
 
-    def is_list_index(self, key_idx):
+    def is_list_index(self, key_idx=-1):
         """
         Determines whether the key at index idx is a list index.
         For example, in foo.bar."[5]".baz, the 2nd key, "[5]" is a list index

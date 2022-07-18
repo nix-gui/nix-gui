@@ -3,7 +3,7 @@ import csv
 
 from PyQt5 import QtWidgets, QtCore, QtGui
 
-from nixui.graphics import icon, richtext, color_indicator
+from nixui.graphics import icon, richtext, color_indicator, generic_widgets
 from nixui.options.attribute import Attribute
 from nixui.options import api, option_definition, types
 from nixui.utils.logger import logger
@@ -11,7 +11,14 @@ from nixui.utils.logger import logger
 
 class GenericNavListDisplay:
     def __new__(cls, statemodel, set_option_path_fn, option_path, option_type=None, selected=None):
-        option_type = option_type or api.get_option_tree().get_type(option_path)
+        option_tree = api.get_option_tree()
+
+        # if the option can legally be a dynamic navlist and its current value is a dynamic navlist, use that type
+        # else if it has a strict type (not Anything or Either), let that type determine whether it qualifies
+        option_type = option_type or option_tree.get_type(option_path)
+        if isinstance(option_type, (types.AnythingType, types.EitherType)):
+            option_type = option_tree.get_definition(option_path)._type
+
         if isinstance(option_type, types.AttrsOfType):
             return DynamicAttrsOf(statemodel, option_path, set_option_path_fn, selected)
         elif isinstance(option_type, types.ListOfType):
@@ -148,24 +155,27 @@ class OptionListItem(QtWidgets.QListWidgetItem):
         return color
 
 
-class OptionScrollListSelector(QtWidgets.QListWidget):
+class OptionScrollListSelector(generic_widgets.DoubleClickableQListWidget):
     def __init__(self, base_option_path, set_option_path_fn=None):
         super().__init__()
 
         # change selected callback
         self.base_option_path = base_option_path
         self.set_option_path_fn = set_option_path_fn
-        self.itemClicked.connect(self.set_option_path_callback)
 
-        # load options
-        options = api.get_option_tree().children(base_option_path)
+        self.itemWasSingleClicked.connect(self.set_option_path_callback)
+        self.itemWasDoubleClicked.connect(self.enter_new_option_path_callback)
+
+        self.load_data()
+        self._setup_scroll_list_selector_theme()  # form look and feel
+
+    def load_data(self):
+        options = api.get_option_tree().children(self.base_option_path)
         self.option_item_map = {}
         for option in options:
             item = OptionListItem(option)
             self.addItem(item)
             self.option_item_map[option.get_end()] = item
-
-        self._setup_scroll_list_selector_theme()  # form look and feel
 
     def _setup_scroll_list_selector_theme(self):
         self.setAlternatingRowColors(True)
@@ -186,6 +196,14 @@ class OptionScrollListSelector(QtWidgets.QListWidget):
                 self.currentItem().option.get_end()
             )
             self.set_option_path_fn(attr)
+
+    def enter_new_option_path_callback(self, *args, **kwargs):
+        if self.set_option_path_fn:
+            attr = Attribute.from_insertion(
+                self.base_option_path,
+                self.currentItem().option.get_end()
+            )
+            self.set_option_path_fn(attr, select_end=False)
 
 
 class StaticAttrsOf(OptionScrollListSelector):
@@ -246,11 +264,6 @@ class DynamicAttrsOf(QtWidgets.QWidget):
 
     def remove_clicked(self):
         self.list_widget.takeItem(self.list_widget.currentItem())
-
-    def insert_items(self):
-        for option in api.get_option_tree().children(self.option_path):
-            it = self.ItemCls(option)
-            self.list_widget.addItem(it)
 
 
 class DynamicListOf(QtWidgets.QWidget):
@@ -317,21 +330,28 @@ class DynamicListOf(QtWidgets.QWidget):
         current_row = self.list_widget.currentRow()
         if current_row == 0:
             logger.info('Cannot move item up, current index is 0')
-        current_item = self.list_widget.takeItem(current_row)
-        self.list_widget.insertItem(current_row - 1, current_item)
+        self.statemodel.swap_options(
+            self.list_widget.item(current_row).option,
+            self.list_widget.item(current_row - 1).option
+        )
+        self.list_widget.setCurrentRow(current_row - 1)
+        self.refresh()
 
     def down_clicked(self):
         last_item_idx = self.list_widget.count() - 1
         current_row = self.list_widget.currentRow()
         if current_row == last_item_idx:
             logger.info('Cannot move item up, current index is end of list')
-        current_item = self.list_widget.takeItem(current_row)
-        self.list_widget.addItem(current_item)
+        self.statemodel.swap_options(
+            self.list_widget.item(current_row).option,
+            self.list_widget.item(current_row + 1).option
+        )
+        self.list_widget.setCurrentRow(current_row + 1)
+        self.refresh()
 
-    def insert_items(self):
-        for option in api.get_option_tree().children(self.option_path):
-            it = self.ItemCls(option)
-            self.list_widget.addItem(it)
+    def refresh(self):
+        current_option = self.list_widget.currentItem().option
+        self.list_widget.set_option_path_fn(current_option)
 
 
 class SearchResultListDisplay(QtWidgets.QListWidget):

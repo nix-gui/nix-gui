@@ -45,7 +45,8 @@ class StateModel:
         self._record_update(update)
 
     def swap_options(self, option0, option1):
-        placeholder = str(uuid.uuid4())
+        # TODO: fix this hack, only using <name> because it isn't shown in OptionTree.children
+        placeholder = Attribute(f'"<name>".{uuid.uuid4()}')
         self.option_tree.rename_attribute(option0, placeholder)
         self.option_tree.rename_attribute(option1, option0)
         self.option_tree.rename_attribute(placeholder, option1)
