@@ -29,6 +29,8 @@ class DiffedOptionListSelector(generic_widgets.ScrollListStackSelector):
     def change_selected_item(self):
         option = self.item_list.currentItem().option
         old_value, new_value = self.updates_map[option]
+        old_value = old_value if old_value is not None else ''
+        new_value = new_value if new_value is not None else ''
 
         diff = difflib.unified_diff(
             old_value.splitlines(1),

@@ -89,20 +89,23 @@ Nix expression strings are immediately converted to =nixui.options.option_defini
 Additionally =OptionDefinition='s can be used to convert Python objects to nix expressions, which is useful for the "Commit Changes to Disk" section below.
 
 ** State Management
-Once constructed, the backend can perform four mutation operations:
+Once constructed, the backend can perform five mutation operations:
 - replacing an old =in_memory_definition= (=OptionDefinition=) with a new one
 - adding a new attribute with a new =OptionDefinition=
 - renaming an attribute
 - removing an attribute
+- swapping two attributes
 
 =OptionTree.in_memory_diff= contains a cache of all state changes represented simply as a mapping between attributes and their new =OptionDefinition= (or =None= if deleted).
 
 All updates to the =OptionTree= coming from the frontend pass through =nixui.state_model.StateModel=, which is a layer on top of the =OptionTree= with =Update='s integrated. Each mutating method results in an =Update= (an object containing information necessary to revert a change) being appended to =StateModel.update_history=.
 
 The =StateModel='s mutating methods include
-- =record_update=: Update the =in_memory_definition= of an attribute in the =OptionTree=
-- =rename_option=: Generally used to rename a submodule, e.g. =filesystems."/".foo= -> ="filesystems."/boot".foo=
-- =add_new_option=: Generally used to add an attribute or element to a =submodule= or =list of=.
+- =change_definition=: Update the =in_memory_definition= of an attribute in the =OptionTree=
+- =rename_option=: Rename a submodule, e.g. =filesystems."/".foo= -> ="filesystems."/boot".foo=
+- =add_new_option=: Add an attribute or element to a =submodule= or =list of=.
+- =remove_option=: Remove an attribute or element from a =submodule= or =list of=.
+- =swap_options=: Used to swap the list indices within a =list of= attribute.
 - =undo=: Revert the latest =Update= in =update_history=
 
 ** Commit Changes to Disk

@@ -50,7 +50,7 @@ class OptionTree:
     system_option_data: mapping from Attribute to dict containing {'description', 'readOnly', 'type', 'default'}
     config_options: mapping from Attribute to configured definition
 
-    in_memory_change_cache is a dictionary storing all changes made to the tree. This makes calculating the hash of
+    in_memory_diff is a dictionary storing all changes made to the tree. This makes calculating the hash of
     the OptionTree trivial. Note that a value of `None` indicates deletion of the definition.
     """
     def __init__(self, system_option_data, config_options):
@@ -148,10 +148,10 @@ class OptionTree:
             return tree
 
     def _get_data(self, attribute):
-        result = self.tree.get_node(attribute).data
-        if result == None:
-            raise ValueError()
-        return result
+        result = self.tree.get_node(attribute)
+        if result is None or result.data is None:
+            return OptionData()
+        return result.data
 
     def get_changes(self, get_configured_changes=False):
         """
@@ -203,18 +203,21 @@ class OptionTree:
 
     def rename_attribute(self, old_attribute, new_attribute):
         # update in_memory_diff
-        if old_attribute in self.in_memory_diff:
-            self.in_memory_diff[new_attribute] = self.in_memory_diff[old_attribute]
-            # if its not defined in configuration, deletion results in no diff recorded
-            if self.get_configured_definition(old_attribute) == OptionDefinition.undefined():
-                del self.in_memory_diff[old_attribute]
-            # if defined in configuration, record None to indicate deletion
-            else:
-                self.in_memory_diff[old_attribute] = None
+
+        # give new attribute the old definition if it is defined
+        old_definition = self.get_definition(old_attribute)
+        if old_definition != OptionDefinition.undefined():
+            self.in_memory_diff[new_attribute] = old_definition
+
+        # mark old attribute for deletion, or if its not on disk, simply remove from diff
+        if self.get_configured_definition(old_attribute) == OptionDefinition.undefined():
+            self.in_memory_diff.pop(old_attribute, None)
+        else:
+            self.in_memory_diff[old_attribute] = None
+
         # update tree
-        self.tree.update_node(old_attribute, identifier=new_attribute, tag=new_attribute)
-        for node in self.tree.children(new_attribute):
-            old_child_attribute = node.identifier
+        self._upsert_node_data(new_attribute, {'in_memory_definition': self.get_in_memory_definition(old_attribute)})
+        for old_child_attribute in self.children(new_attribute):
             new_child_attribute = Attribute.from_insertion(new_attribute, old_child_attribute.get_end())
             self.rename_attribute(old_child_attribute, new_child_attribute)
 
@@ -302,10 +305,15 @@ class OptionTree:
                 raise ValueError()
         except treelib.exceptions.NodeIDAbsentError:
             raise ValueError()
+
+        # all or no children are list indices, if they all are, sort them
+        if children and children[0].tag.is_list_index():
+            assert all([c.tag.is_list_index() for c in children])
+            children = sorted(children, key=lambda c: c.tag)
         return {
             node.tag: node.data
             for node in children
-            if '"<name>"' not in node.tag
+            if '<name>' not in node.tag
         }
 
     @functools.lru_cache(100000)  # this breaks when nixos has 100,000 attributes
