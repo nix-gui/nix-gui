@@ -11,7 +11,7 @@
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        python = pkgs.python39;
+        python = pkgs.python3;
         pythonPackages = python.pkgs;
 
         nix-dump-syntax-tree-json = with pkgs; rustPlatform.buildRustPackage rec {
