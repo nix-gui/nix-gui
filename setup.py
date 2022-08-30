@@ -20,8 +20,10 @@ setup(
         'nixui',
         'nixui.options',
         'nixui.graphics',
+        'nixui.icons',
         'nixui.utils',
         'nixui.nix',
+        'nixui.tests.sample',
         'scrape_github',
     ],
     package_data={
