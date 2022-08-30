@@ -85,7 +85,7 @@ in {
       displayManager.lightdm.enable = true;
 
       displayManager.sessionCommands = ''
-        ${pkgs.xlibs.xsetroot}/bin/xsetroot -cursor_name left_ptr
+        ${pkgs.xorg.xsetroot}/bin/xsetroot -cursor_name left_ptr
 
         ${pkgs.xorg.xmodmap}/bin/xmodmap ~/.Xmodmap
 
