@@ -214,7 +214,7 @@ def from_nix_type_str(nix_type_str, or_legal=True):
         return AnythingType()
 
     else:
-        raise ValueError(nix_type_str)
+        raise ValueError(f'unknown nix_type_str: {nix_type_str}')
 
 
 def type_of_to_type_obj(type_of_str):
