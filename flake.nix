@@ -122,6 +122,7 @@
             drv = self.packages."${system}".scrape-github;
           };
           */
+          default = self.apps."${system}".nix-gui;
         };
         defaultApp = self.apps."${system}".nix-gui;
 
